@@ -87,7 +87,11 @@ const endpoint = `${API_URL}/songs?${params.toString()}`;
                 }
             </h1>
 
-            <CategoryFilter client:load isAdmin={user?.role === "ADMIN"} />
+            <CategoryFilter
+                client:load
+                isAdmin={user?.role === "ADMIN"}
+                currentCategoryId={currentCategoryId as any}
+            />
 
             <div class="mt-4">
                 <GridSongs client:load endpoint={endpoint} />
