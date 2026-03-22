@@ -1,25 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import MisaCardSkeleton from './skeletons/MisaCardSkeleton';
 import { getMisas } from '../services/misas';
-import { jwtDecode } from "jwt-decode";
 
 const MisaListReact = ({ token }) => {
     const [loading, setLoading] = useState(true);
     const [misas, setMisas] = useState([]);
-    const [userId, setUserId] = useState(null);
     const [showAllPasadas, setShowAllPasadas] = useState(false);
 
     useEffect(() => {
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                // Adjust this based on your actual token payload structure
-                setUserId(decoded.id || decoded.sub);
-            } catch (e) {
-                console.error("Error decoding token:", e);
-            }
-        }
-
         const fetchMisas = async () => {
             try {
                 const { success, data } = await getMisas(token);
@@ -99,8 +87,8 @@ const MisaListReact = ({ token }) => {
     today.setHours(0, 0, 0, 0);
 
     // Group misas
-    const myMisas = misas.filter(m => m.userId === userId);
-    const otherPublicMisas = misas.filter(m => m.userId !== userId && m.visibility === 'PUBLIC');
+    const myMisas = misas.filter(m => m.isOwner);
+    const otherPublicMisas = misas.filter(m => !m.isOwner && m.visibility === 'PUBLIC');
 
     // Sort helper
     const sortMisas = (list) => {
@@ -144,7 +132,7 @@ const MisaListReact = ({ token }) => {
                 <p className="text-sm text-gray-500">
                     {misa.misaSongs.length} canciones
                 </p>
-                {misa.user && misa.userId !== userId && (
+                {misa.user && !misa.isOwner && (
                     <p className="text-xs text-gray-400">
                         Por: {misa.user.name}
                     </p>
