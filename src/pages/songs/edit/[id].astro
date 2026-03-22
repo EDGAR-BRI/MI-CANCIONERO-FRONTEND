@@ -17,7 +17,8 @@ import { API_URL } from "@/services/songs";
 import AiAutocompleteButton from "@/components/Ui/AiAutocompleteButton.astro";
 
 const token = Astro.cookies.get("token")?.value;
-const user = getUserFromToken(token);
+const sessionUser = Astro.cookies.get("auth_user")?.value;
+const user = getUserFromToken(token, sessionUser);
 
 if (!token || !user) {
     return Astro.redirect("/login");

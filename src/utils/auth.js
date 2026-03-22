@@ -1,12 +1,36 @@
-export const getUserFromToken = (token) => {
-    if (!token) return null;
+const parseSessionUser = (rawSessionUser) => {
+    if (!rawSessionUser) return null;
+
     try {
-        console.log("getUserFromToken - Token received (first 10 chars):", token.substring(0, 10));
-        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-        return payload;
-    } catch (e) {
-        console.error("Error parsing token:", e);
+        const decoded = decodeURIComponent(rawSessionUser);
+        const parsed = JSON.parse(decoded);
+        if (!parsed || typeof parsed !== "object") return null;
+        return parsed;
+    } catch {
         return null;
+    }
+};
+
+export const getUserFromToken = (token, rawSessionUser) => {
+    if (!token) return null;
+
+    const sessionUser = parseSessionUser(rawSessionUser);
+
+    try {
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+
+        // Supabase access token does not include app role/permissions from Prisma.
+        // Merge role and permissions from the session cookie when available.
+        return {
+            ...payload,
+            id: sessionUser?.id ?? payload.id,
+            role: sessionUser?.role ?? payload.role,
+            permissions: sessionUser?.permissions ?? payload.permissions,
+            email: sessionUser?.email ?? payload.email
+        };
+    } catch {
+        // If token payload cannot be parsed, fallback to session user for SSR rendering.
+        return sessionUser;
     }
 };
 
