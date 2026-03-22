@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { login, register } from "../services/auth";
+import { forgotPassword, login, register, resetPassword } from "../services/auth";
 import { supabase } from "@/lib/supabase";
 
 export const server = {
@@ -79,7 +79,10 @@ export const server = {
                     });
                 }
 
-                return { success: true, message: "Usuario registrado correctamente" };
+                return {
+                    success: true,
+                    message: "Cuenta creada. Revisa tu correo para verificarla antes de iniciar sesion."
+                };
             } catch (error) {
                 if (error instanceof ActionError) throw error;
                 throw new ActionError({
@@ -141,9 +144,16 @@ export const server = {
                         message: "Error: No se recibió el token de autenticación.",
                     });
                 } else {
+                    let message = "Credenciales incorrectas";
+                    try {
+                        const err = await response?.clone().json();
+                        if (err?.error) message = err.error;
+                    } catch (e) {
+                        // ignore and use default message
+                    }
                     throw new ActionError({
                         code: "UNAUTHORIZED",
-                        message: "Credenciales incorrectas",
+                        message,
                     });
                 }
             } catch (error) {
@@ -156,6 +166,54 @@ export const server = {
                     message: "Error interno del servidor",
                 });
             }
+        },
+    }),
+    forgotPassword: defineAction({
+        accept: "json",
+        input: z.object({
+            email: z.string().email(),
+        }),
+        handler: async ({ email }) => {
+            const response = await forgotPassword(email);
+
+            if (!response?.ok) {
+                let message = "No se pudo enviar el correo de recuperacion";
+                try {
+                    const err = await response.json();
+                    message = err.error || message;
+                } catch (e) {
+                    // ignore
+                }
+                throw new ActionError({ code: "BAD_REQUEST", message });
+            }
+
+            return {
+                success: true,
+                message: "Si el correo existe, enviamos instrucciones para recuperar tu contrasena."
+            };
+        },
+    }),
+    resetPassword: defineAction({
+        accept: "json",
+        input: z.object({
+            accessToken: z.string().min(1),
+            newPassword: z.string().min(6),
+        }),
+        handler: async ({ accessToken, newPassword }) => {
+            const response = await resetPassword(accessToken, newPassword);
+
+            if (!response?.ok) {
+                let message = "No se pudo actualizar la contrasena";
+                try {
+                    const err = await response.json();
+                    message = err.error || message;
+                } catch (e) {
+                    // ignore
+                }
+                throw new ActionError({ code: "BAD_REQUEST", message });
+            }
+
+            return { success: true, message: "Contrasena actualizada correctamente" };
         },
     }),
     createMisa: defineAction({
