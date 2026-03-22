@@ -26,11 +26,12 @@ let stats: Stats = { totalSongs: 0, totalCategories: 0, activeSongs: 0 };
 let error = null;
 
 const token = Astro.cookies.get("token")?.value;
+const sessionUser = Astro.cookies.get("auth_user")?.value;
 const headers: Record<string, string> = token
 	? { Authorization: `Bearer ${token}` }
 	: {};
 
-const user = getUserFromToken(token);
+const user = getUserFromToken(token, sessionUser);
 
 // try {
 // 	// Fetch stats

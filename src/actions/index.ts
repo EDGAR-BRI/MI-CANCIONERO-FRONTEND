@@ -99,44 +99,42 @@ export const server = {
         handler: async ({ email, password }, context) => {
             try {
                 const response = await login(email, password);
+                const responseBody = await response?.clone().json().catch(() => null);
 
                 if (response && response.ok) {
                     // Forward cookies from backend to client
                     const setCookie = response.headers.get("set-cookie");
-                    console.log("Action login - response set-cookie header:", setCookie);
 
+                    let token: string | null = null;
                     if (setCookie) {
                         const match = setCookie.match(/token=([^;]+)/);
-                        const token = match ? match[1] : null;
+                        token = match ? match[1] : null;
+                    }
 
-                        if (token) {
-                            context.cookies.set("token", token, {
+                    if (!token && responseBody?.token) {
+                        token = responseBody.token;
+                    }
+
+                    if (token) {
+                        context.cookies.set("token", token, {
+                            path: "/",
+                            httpOnly: true,
+                            secure: import.meta.env.PROD,
+                            sameSite: "lax",
+                        });
+
+                        if (responseBody?.user) {
+                            context.cookies.set("auth_user", encodeURIComponent(JSON.stringify(responseBody.user)), {
                                 path: "/",
                                 httpOnly: true,
                                 secure: import.meta.env.PROD,
                                 sameSite: "lax",
                             });
-                            return { success: true };
                         }
-                    } else {
-                        // Fallback for token in body
-                        const responseClone = response.clone();
-                        try {
-                            const responseBody = await responseClone.json();
-                            if (responseBody.token) {
-                                console.log("Action login - Token found in body, setting cookie");
-                                context.cookies.set("token", responseBody.token, {
-                                    path: "/",
-                                    httpOnly: true,
-                                    secure: import.meta.env.PROD,
-                                    sameSite: "lax",
-                                });
-                                return { success: true };
-                            }
-                        } catch (e) {
-                            // ignore
-                        }
+
+                        return { success: true };
                     }
+
                     throw new ActionError({
                         code: "UNAUTHORIZED",
                         message: "Error: No se recibió el token de autenticación.",
@@ -144,7 +142,7 @@ export const server = {
                 } else {
                     let message = "Credenciales incorrectas";
                     try {
-                        const err = await response?.clone().json();
+                        const err = responseBody || await response?.clone().json();
                         if (err?.error) message = err.error;
                     } catch (e) {
                         // ignore and use default message

@@ -1,7 +1,8 @@
 ---
 import { getUserFromToken, hasPermission } from "@/utils/auth";
 const token = Astro.cookies.get("token")?.value;
-const user = getUserFromToken(token);
+const sessionUser = Astro.cookies.get("auth_user")?.value;
+const user = getUserFromToken(token, sessionUser);
 const isLoggedIn = !!user;
 
 const canCreateSong = hasPermission(user, "song.create");
