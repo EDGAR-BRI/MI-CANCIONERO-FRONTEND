@@ -10,6 +10,27 @@ const FALLBACK_PREFIXES = [
     { code: "+1", label: "US +1" },
 ];
 
+const dedupePrefixes = (list) => {
+    const bestByCountry = new Map();
+
+    for (const item of list) {
+        if (!item?.code || !item?.label) continue;
+
+        const iso2 = String(item.label).split(" ")[0] || item.label;
+        const current = bestByCountry.get(iso2);
+
+        if (
+            !current ||
+            item.code.length < current.code.length ||
+            (item.code.length === current.code.length && item.code < current.code)
+        ) {
+            bestByCountry.set(iso2, item);
+        }
+    }
+
+    return Array.from(bestByCountry.values()).sort((a, b) => a.label.localeCompare(b.label));
+};
+
 const PhoneInputSkeleton = () => {
     return (
         <div className="grid grid-cols-[120px_1fr] gap-2 animate-pulse">
@@ -43,9 +64,10 @@ const PhoneInputReact = ({ apiUrl = "http://localhost:3000/api" }) => {
                     : [];
 
                 if (mounted && dynamicPrefixes.length) {
-                    setPrefixes(dynamicPrefixes);
-                    const hasAr = dynamicPrefixes.some((p) => p.code === "+54");
-                    setSelectedPrefix(hasAr ? "+54" : dynamicPrefixes[0].code);
+                    const uniquePrefixes = dedupePrefixes(dynamicPrefixes);
+                    setPrefixes(uniquePrefixes);
+                    const hasAr = uniquePrefixes.some((p) => p.code === "+54");
+                    setSelectedPrefix(hasAr ? "+54" : uniquePrefixes[0].code);
                 }
             } catch (error) {
                 // Keep fallback prefixes if API is unavailable.

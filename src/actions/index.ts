@@ -95,8 +95,9 @@ export const server = {
         input: z.object({
             email: z.string().email(),
             password: z.string().min(1),
+            rememberMe: z.boolean().optional().default(false),
         }),
-        handler: async ({ email, password }, context) => {
+        handler: async ({ email, password, rememberMe }, context) => {
             try {
                 const response = await login(email, password);
                 const responseBody = await response?.clone().json().catch(() => null);
@@ -116,19 +117,42 @@ export const server = {
                     }
 
                     if (token) {
-                        context.cookies.set("token", token, {
+                        const baseCookieOptions = {
                             path: "/",
                             httpOnly: true,
                             secure: import.meta.env.PROD,
-                            sameSite: "lax",
+                            sameSite: "lax" as const,
+                        };
+
+                        const getTokenMaxAgeSeconds = (jwt: string) => {
+                            try {
+                                const payloadPart = jwt.split(".")[1];
+                                if (!payloadPart) return undefined;
+
+                                const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+                                const payloadJson = Buffer.from(normalized, "base64").toString("utf-8");
+                                const payload = JSON.parse(payloadJson);
+                                const exp = Number(payload?.exp);
+                                if (!Number.isFinite(exp)) return undefined;
+
+                                const now = Math.floor(Date.now() / 1000);
+                                return Math.max(exp - now, 1);
+                            } catch {
+                                return undefined;
+                            }
+                        };
+
+                        const maxAge = rememberMe ? getTokenMaxAgeSeconds(token) : undefined;
+
+                        context.cookies.set("token", token, {
+                            ...baseCookieOptions,
+                            ...(maxAge ? { maxAge } : {}),
                         });
 
                         if (responseBody?.user) {
                             context.cookies.set("auth_user", encodeURIComponent(JSON.stringify(responseBody.user)), {
-                                path: "/",
-                                httpOnly: true,
-                                secure: import.meta.env.PROD,
-                                sameSite: "lax",
+                                ...baseCookieOptions,
+                                ...(maxAge ? { maxAge } : {}),
                             });
                         }
 
