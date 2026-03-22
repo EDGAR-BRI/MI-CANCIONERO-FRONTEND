@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { forgotPassword, login, register, resetPassword } from "../services/auth";
-import { supabase } from "@/lib/supabase";
+import { API_URL } from "../services/songs";
 
 export const server = {
     deleteSong: defineAction({
@@ -11,7 +11,6 @@ export const server = {
         }),
         handler: async ({ id }, context) => {
             const token = context.cookies.get("token")?.value;
-            console.log("Action deleteSong - Token from cookie:", token ? "FOUND" : "MISSING");
 
             if (!token) {
                 throw new ActionError({
@@ -20,26 +19,25 @@ export const server = {
                 });
             }
 
-            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-            if (authError || !user) {
-                throw new ActionError({
-                    code: "UNAUTHORIZED",
-                    message: "Sesión inválida",
-                });
-            }
-
             try {
-                const { error } = await supabase
-                    .from("songs")
-                    .delete()
-                    .eq("id", id);
+                const response = await fetch(`${API_URL}/songs/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
-                if (error) {
-                    console.error("Supabase delete error:", error);
+                if (!response.ok) {
+                    let message = "Error al eliminar en base de datos";
+                    try {
+                        const err = await response.json();
+                        message = err.error || message;
+                    } catch (e) {
+                        // ignore
+                    }
                     throw new ActionError({
                         code: "INTERNAL_SERVER_ERROR",
-                        message: "Error al eliminar en base de datos",
+                        message,
                     });
                 }
 
@@ -233,34 +231,31 @@ export const server = {
                 });
             }
 
-            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-            if (authError || !user) {
-                throw new ActionError({
-                    code: "UNAUTHORIZED",
-                    message: "Sesión inválida",
-                });
-            }
-
             try {
-                const { data, error } = await supabase
-                    .from("misas")
-                    .insert({
-                        title,
-                        date: dateMisa, // Assuming the DB column is 'date'
-                        visibility,
-                        id_user: user.id
-                    })
-                    .select()
-                    .single();
+                const response = await fetch(`${API_URL}/misas`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ title, dateMisa, visibility }),
+                });
 
-                if (error) {
-                    console.error("Supabase insert error:", error);
+                if (!response.ok) {
+                    let message = "Error al crear la misa en base de datos";
+                    try {
+                        const err = await response.json();
+                        message = err.error || message;
+                    } catch (e) {
+                        // ignore
+                    }
                     throw new ActionError({
                         code: "INTERNAL_SERVER_ERROR",
-                        message: "Error al crear la misa en base de datos",
+                        message,
                     });
                 }
+
+                const data = await response.json();
 
                 return { success: true, data };
             } catch (e) {
