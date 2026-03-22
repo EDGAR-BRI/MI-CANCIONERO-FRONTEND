@@ -7,5 +7,9 @@ Astro.cookies.delete("auth_user", {
     path: "/",
 });
 
+Astro.cookies.delete("refresh_token", {
+    path: "/",
+});
+
 return Astro.redirect("/");
 ---

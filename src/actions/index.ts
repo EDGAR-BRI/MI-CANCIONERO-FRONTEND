@@ -95,11 +95,11 @@ export const server = {
         input: z.object({
             email: z.string().email(),
             password: z.string().min(1),
-            rememberMe: z.boolean().optional().default(false),
+            rememberMe: z.boolean().optional().default(true),
         }),
         handler: async ({ email, password, rememberMe }, context) => {
             try {
-                const response = await login(email, password);
+                const response = await login(email, password, rememberMe);
                 const responseBody = await response?.clone().json().catch(() => null);
 
                 if (response && response.ok) {
@@ -107,13 +107,20 @@ export const server = {
                     const setCookie = response.headers.get("set-cookie");
 
                     let token: string | null = null;
+                    let refreshToken: string | null = null;
                     if (setCookie) {
                         const match = setCookie.match(/token=([^;]+)/);
                         token = match ? match[1] : null;
+                        const refreshMatch = setCookie.match(/refresh_token=([^;]+)/);
+                        refreshToken = refreshMatch ? refreshMatch[1] : null;
                     }
 
                     if (!token && responseBody?.token) {
                         token = responseBody.token;
+                    }
+
+                    if (!refreshToken && responseBody?.refreshToken) {
+                        refreshToken = responseBody.refreshToken;
                     }
 
                     if (token) {
@@ -143,6 +150,9 @@ export const server = {
                         };
 
                         const maxAge = rememberMe ? getTokenMaxAgeSeconds(token) : undefined;
+                        const refreshMaxAge = rememberMe
+                            ? (Number(import.meta.env.REFRESH_TOKEN_COOKIE_DAYS) || 30) * 24 * 60 * 60
+                            : undefined;
 
                         context.cookies.set("token", token, {
                             ...baseCookieOptions,
@@ -153,6 +163,13 @@ export const server = {
                             context.cookies.set("auth_user", encodeURIComponent(JSON.stringify(responseBody.user)), {
                                 ...baseCookieOptions,
                                 ...(maxAge ? { maxAge } : {}),
+                            });
+                        }
+
+                        if (refreshToken) {
+                            context.cookies.set("refresh_token", refreshToken, {
+                                ...baseCookieOptions,
+                                ...(refreshMaxAge ? { maxAge: refreshMaxAge } : {}),
                             });
                         }
 
