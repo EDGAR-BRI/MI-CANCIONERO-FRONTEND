@@ -14,7 +14,11 @@ export const register = async (name: string, email: string, password: string, ph
     return response;
 };
 
-export const login = async (email: FormDataEntryValue | null, password: FormDataEntryValue | null) => {
+export const login = async (
+    email: FormDataEntryValue | null,
+    password: FormDataEntryValue | null,
+    rememberMe: boolean = true
+) => {
 
 
     if (!email || !password) {
@@ -27,7 +31,7 @@ export const login = async (email: FormDataEntryValue | null, password: FormData
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
         credentials: "include",
     });
 
