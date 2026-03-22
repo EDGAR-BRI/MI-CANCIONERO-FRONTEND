@@ -50,6 +50,16 @@ import "../styles/global.css";
                     </div>
                 </div>
 
+                <label class="flex items-center gap-2 text-sm text-text-secondary select-none">
+                    <input
+                        type="checkbox"
+                        id="rememberMe"
+                        name="rememberMe"
+                        class="h-4 w-4 rounded border-white/20 bg-bg-main text-accent-main focus:ring-accent-main"
+                    />
+                    Recuérdame
+                </label>
+
                 <button
                     id="submitBtn"
                     type="submit"
@@ -75,6 +85,9 @@ import "../styles/global.css";
 
     const form = document.getElementById("loginForm") as HTMLFormElement;
     const btn = document.getElementById("submitBtn") as HTMLButtonElement;
+    const emailInput = document.getElementById("email") as HTMLInputElement;
+    const rememberMeInput = document.getElementById("rememberMe") as HTMLInputElement;
+    const REMEMBERED_EMAIL_KEY = "remembered_login_email";
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("verified") === "1") {
@@ -83,6 +96,14 @@ import "../styles/global.css";
             title: "Correo verificado",
             text: "Ya puedes iniciar sesion con tu cuenta.",
         });
+    }
+
+    if (emailInput && rememberMeInput) {
+        const savedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY);
+        if (savedEmail) {
+            emailInput.value = savedEmail;
+            rememberMeInput.checked = true;
+        }
     }
 
     if (form && btn) {
@@ -105,10 +126,18 @@ import "../styles/global.css";
                 const formData = new FormData(form);
                 const email = formData.get("email") as string;
                 const password = formData.get("password") as string;
+                const rememberMe = Boolean(formData.get("rememberMe"));
+
+                if (rememberMe) {
+                    localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+                } else {
+                    localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+                }
 
                 const { data, error } = await actions.login({
                     email,
                     password,
+                    rememberMe,
                 });
 
                 if (!error && data?.success) {
