@@ -115,11 +115,41 @@ import "../styles/global.css";
                     await showSuccessToast("Sesión iniciada correctamente");
                     window.location.href = "/";
                 } else {
+                    const backendMessage = error?.message || "Credenciales incorrectas";
+
+                    if (/verificar tu correo|email not confirmed/i.test(backendMessage)) {
+                        const resend = await showAlert({
+                            icon: "warning",
+                            title: "Correo sin verificar",
+                            text: "Debes verificar tu correo antes de iniciar sesion. ¿Quieres reenviar el enlace?",
+                            showCancelButton: true,
+                            confirmButtonText: "Reenviar",
+                            cancelButtonText: "Cancelar",
+                        });
+
+                        if (resend.isConfirmed) {
+                            const resendResult = await actions.resendVerification({ email });
+                            if (!resendResult.error) {
+                                showAlert({
+                                    icon: "success",
+                                    title: "Correo reenviado",
+                                    text: resendResult.data?.message || "Revisa tu bandeja de entrada",
+                                });
+                            } else {
+                                showAlert({
+                                    icon: "error",
+                                    title: "No se pudo reenviar",
+                                    text: resendResult.error.message || "Intenta nuevamente",
+                                });
+                            }
+                        }
+                    } else {
                     showAlert({
                         icon: "error",
                         title: "Error de acceso",
-                        text: error?.message || "Credenciales incorrectas",
+                        text: backendMessage,
                     });
+                    }
                     // Reset button state
                     btn.disabled = false;
                     btn.innerHTML = originalBtnContent;

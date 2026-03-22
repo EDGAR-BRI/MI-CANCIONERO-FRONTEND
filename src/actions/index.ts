@@ -1,6 +1,6 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
-import { forgotPassword, login, register, resetPassword } from "../services/auth";
+import { forgotPassword, login, register, resendVerification, resetPassword } from "../services/auth";
 import { API_URL } from "../services/songs";
 
 export const server = {
@@ -188,6 +188,31 @@ export const server = {
             return {
                 success: true,
                 message: "Si el correo existe, enviamos instrucciones para recuperar tu contrasena."
+            };
+        },
+    }),
+    resendVerification: defineAction({
+        accept: "json",
+        input: z.object({
+            email: z.string().email(),
+        }),
+        handler: async ({ email }) => {
+            const response = await resendVerification(email);
+
+            if (!response?.ok) {
+                let message = "No se pudo reenviar el correo de verificacion";
+                try {
+                    const err = await response.json();
+                    message = err.error || message;
+                } catch (e) {
+                    // ignore
+                }
+                throw new ActionError({ code: "BAD_REQUEST", message });
+            }
+
+            return {
+                success: true,
+                message: "Si el correo existe, enviamos un nuevo enlace de verificacion."
             };
         },
     }),

@@ -1,6 +1,9 @@
 ---
 import Layout from "../layouts/LoginLayout.astro";
 import "../styles/global.css";
+import PhoneInputReact from "../components/PhoneInputReact.jsx";
+
+const API_URL = import.meta.env.PUBLIC_API_URL || "http://localhost:3000/api";
 ---
 
 <Layout title="Registrarse - Cancionero">
@@ -51,13 +54,7 @@ import "../styles/global.css";
                         class="block text-sm font-medium text-text-secondary mb-2"
                         >Teléfono</label
                     >
-                    <input
-                        type="tel"
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        class="w-full bg-bg-main border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent-main transition-colors"
-                        placeholder="+54 9 11 1234 5678"
-                    />
+                    <PhoneInputReact client:load apiUrl={API_URL} />
                 </div>
 
                 <div>
@@ -94,6 +91,8 @@ import "../styles/global.css";
             </p>
         </section>
     </div>
+
+    <div id="register-data" data-api-url={API_URL} class="hidden"></div>
 </Layout>
 
 <script>
@@ -124,7 +123,7 @@ import "../styles/global.css";
                 const name = formData.get("name") as string;
                 const email = formData.get("email") as string;
                 const password = formData.get("password") as string;
-                const phoneNumber = formData.get("phoneNumber") as string;
+                const phoneNumber = String(formData.get("phoneNumber") || "");
 
                 const { data, error } = await actions.register({
                     name,
@@ -135,7 +134,7 @@ import "../styles/global.css";
 
                 if (!error && data?.success) {
                     await showSuccessToast(
-                        "Cuenta creada correctamente. Inicia sesión.",
+                        "Cuenta creada. Revisa tu correo y confirma tu cuenta antes de iniciar sesion.",
                     );
                     window.location.href = "/login";
                 } else {

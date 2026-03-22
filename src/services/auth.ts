@@ -44,6 +44,16 @@ export const forgotPassword = async (email: string) => {
     });
 };
 
+export const resendVerification = async (email: string) => {
+    return fetch(`${API_URL}/auth/resend-verification`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+    });
+};
+
 export const resetPassword = async (accessToken: string, newPassword: string) => {
     return fetch(`${API_URL}/auth/reset-password`, {
         method: "POST",
