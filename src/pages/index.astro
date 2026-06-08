@@ -50,7 +50,7 @@ const user = getUserFromToken(token, sessionUser);
 
 const seoTitle = "Mi Cancionero Online | Letras y Acordes Católicos";
 const seoDescription =
-	"Mi Cancionero Online el mejor cancionero digital para músicos católicos. Encuentra letras, acordes y herramientas de transposición para tu ministerio de música. Además crear tus misas con tus canciones favoritas.";
+	"Mi Cancionero Online: canciones católicas con letras, acordes y tonos para guitarra. Canciones de alabanza para ministerio. Crea y organiza tus misas con canciones disponibles. Gratis.";
 
 const schema = {
 	"@context": "https://schema.org",
@@ -64,6 +64,14 @@ const schema = {
 		"query-input": "required name=search_term_string",
 	},
 };
+
+const organizationSchema = {
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	name: "Mi Cancionero Online",
+	url: Astro.url.origin,
+	description: "Cancionero católico online con letras, acordes y tonos para guitarra. Canciones de alabanza para ministerio de música.",
+};
 ---
 
 <Layout title={seoTitle} description={seoDescription}>
@@ -72,13 +80,22 @@ const schema = {
 		slot="head"
 		set:html={JSON.stringify(schema)}
 	/>
+	<script
+		type="application/ld+json"
+		slot="head"
+		set:html={JSON.stringify(organizationSchema)}
+	/>
 	<div class="flex flex-col h-fullbg-bg-main text-text-main">
 		<main class="flex-1 max-w-6xl mx-auto w-full p-6 md:p-10">
 			<!-- Dashboard Stats -->
 			<section class="mb-12">
-				<h1 class="text-3xl font-bold text-accent-main mb-6">
-					Mi Cancionero Online
+				<h1 class="text-3xl font-bold text-accent-main mb-2">
+					Mi Cancionero Online - Cancionero Católico de Letras y Acordes
 				</h1>
+				<p class="text-text-secondary mb-6">
+					El mejor cancionero católico online para músicos de ministerio. 
+					Encuentra letras, acordes y tonos de canciones de alabanza y adoración para guitarra.
+				</p>
 				<DashboardStats client:load isAdmin={user?.role === "ADMIN"} />
 			</section>
 
@@ -92,13 +109,28 @@ const schema = {
 						class="text-sm font-medium text-accent-main hover:text-white transition-colors"
 						data-astro-prefetch
 					>
-						Ver todas →
+						Ver todas las canciones →
 					</a>
 				</div>
 
 				<CategoryFilter client:load isAdmin={user?.role === "ADMIN"} />
 
 				<GridSongs client:load endpoint={`${API_URL}/songs?limit=12`} />
+			</section>
+
+			<!-- Sección SEO: Sobre Mi Cancionero Online -->
+			<section class="mt-12 p-6 bg-bg-secondary rounded-xl">
+				<h2 class="text-xl font-bold text-white mb-4">
+					Sobre Mi Cancionero Online
+				</h2>
+				<p class="text-text-secondary">
+					Mi Cancionero Online es el cancionero católico digital más completo 
+					para músicos de ministerio. Contiene letras, acordes y tonos de 
+					canciones de alabanza y adoración para guitarra. Organiza tus misas 
+					con nuestras canciones favoritas, crea nuevas misas y transpone 
+					canciones al tono que necesites. Totalmente gratis para la 
+					comunidad católica.
+				</p>
 			</section>
 		</main>
 	</div>
