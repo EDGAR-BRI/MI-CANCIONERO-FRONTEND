@@ -34,7 +34,8 @@ if (id) {
 <html lang="es">
     <head>
         <meta charset="UTF-8" />
-        <title>{song ? `${song.title} - Imprimir` : "Error"}</title>
+        <meta name="robots" content="noindex, nofollow" />
+        <title>{song ? `${song.title} - Imprimir | Mi Cancionero Online` : "Error"}</title>
     </head>
     <body class="bg-white">
         {error ? (
@@ -42,7 +43,7 @@ if (id) {
         ) : (
             <div class="print-container">
                 <div class="print-header">
-                     <img src="/medium-logo-light.svg" alt="Cancionero Digital" class="print-logo" />
+                     <img src="/medium-logo-light.svg" alt="Mi Cancionero Online" class="print-logo" />
                      <div>
                         <h1 class="text-accent-main" style="font-size: 24pt; font-weight: bold; margin: 0;">{song.title}</h1>
                         <h2 style="font-size: 14pt; color: #666; margin: 0;">{song.artist}</h2>
