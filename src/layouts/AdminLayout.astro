@@ -18,17 +18,24 @@ import "@fontsource/jetbrains-mono";
 
 // In a real app we would verify the JWT and check admin role here
 // For now relying on API to block data
+
+const canonicalURL = new URL(
+    Astro.url.pathname,
+    Astro.site,
+);
 ---
 
 <!doctype html>
 <html lang="es">
     <head>
         <meta charset="UTF-8" />
-        <meta name="description" content="Admin Panel" />
+        <meta name="description" content="Panel de administración - Mi Cancionero Online" />
         <meta name="viewport" content="width=device-width" />
+        <meta name="robots" content="noindex, nofollow" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="generator" content={Astro.generator} />
         <title>{title} | Panel de Administración</title>
+        <link rel="canonical" href={canonicalURL} />
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"

@@ -7,7 +7,7 @@ import "@fontsource/outfit";
 import "@fontsource/jetbrains-mono";
 const {
 	title,
-	description = "Mi canciónero el mejor cancionero digital para músicos católicos. Encuentra letras, acordes y herramientas de transposición para tu ministerio de música. Ademas crear tus misas con tus canciones favoritas.",
+	description = "Mi Cancionero Online el mejor cancionero digital para músicos católicos. Encuentra letras, acordes y herramientas de transposición para tu ministerio de música. Además crear tus misas con tus canciones favoritas.",
 	image = "/favicon.svg", // Falta una imagen real de OG, usamos el favicon por ahora o un placeholder
 } = Astro.props;
 
@@ -19,7 +19,7 @@ interface Props {
 
 const canonicalURL = new URL(
 	Astro.url.pathname,
-	Astro.site || "https://tusitio.com",
+	Astro.site,
 );
 
 import Header from "../components/Header.astro";

@@ -11,7 +11,7 @@ import sitemap from '@astrojs/sitemap';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  site: 'https://www.micancionero.online',
+  site: 'https://micancionero.online',
   output: 'server', // O 'hybrid' si algunas páginas son estáticas
   adapter: vercel(),
   integrations: [react(), AstroPWA({

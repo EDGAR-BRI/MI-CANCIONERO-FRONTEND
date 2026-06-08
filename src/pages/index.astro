@@ -48,19 +48,19 @@ const user = getUserFromToken(token, sessionUser);
 // 	}
 // }
 
-const seoTitle = "Cancionero Digital | Letras y Acordes Católicos";
+const seoTitle = "Mi Cancionero Online | Letras y Acordes Católicos";
 const seoDescription =
-	"Mi canciónero el mejor cancionero digital para músicos católicos. Encuentra letras, acordes y herramientas de transposición para tu ministerio de música. Ademas crear tus misas con tus canciones favoritas.";
+	"Mi Cancionero Online el mejor cancionero digital para músicos católicos. Encuentra letras, acordes y herramientas de transposición para tu ministerio de música. Además crear tus misas con tus canciones favoritas.";
 
 const schema = {
 	"@context": "https://schema.org",
 	"@type": "WebSite",
-	name: "Cancionero Digital",
+	name: "Mi Cancionero Online",
 	url: Astro.url.origin,
 	description: seoDescription,
 	potentialAction: {
 		"@type": "SearchAction",
-		target: `${Astro.url.origin}/search/all?q={search_term_string}`,
+		target: `${Astro.url.origin}/songs/search/all?q={search_term_string}`,
 		"query-input": "required name=search_term_string",
 	},
 };
