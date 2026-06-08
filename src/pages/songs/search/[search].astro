@@ -77,7 +77,7 @@ if (activeParam) {
 const endpoint = `${API_URL}/songs?${params.toString()}`;
 ---
 
-<Layout title={`CancioneroDigital - Buscando: ${decodedSearch}`}>
+<Layout title={`Mi Cancionero Online - ${decodedSearch === "all" ? "Todas las canciones" : decodedSearch}`}>
     <div class="flex flex-col min-h-screen bg-bg-main text-text-main">
         <main class="flex-1 max-w-6xl mx-auto w-full p-6 md:p-10">
             <h1 class="text-3xl font-bold text-accent-main mb-8">
