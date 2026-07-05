@@ -113,6 +113,8 @@ const MisaListReact = ({ token }) => {
     const myMisasPasadas = showAllPasadas ? allMyMisasPasadas : allMyMisasPasadas.slice(0, 6);
 
     const publicMisasVigentes = sortMisas(otherPublicMisas.filter(m => new Date(m.dateMisa) >= today));
+    const allPublicMisasPasadas = sortMisas(otherPublicMisas.filter(m => new Date(m.dateMisa) < today)).reverse();
+    const publicMisasPasadas = showAllPasadas ? allPublicMisasPasadas : allPublicMisasPasadas.slice(0, 6);
 
     const renderMisaCard = (misa) => (
         <a
@@ -220,15 +222,37 @@ const MisaListReact = ({ token }) => {
                 </section>
             )}
 
-            {!token && publicMisasVigentes.length > 0 && (
-                <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
-                        Próximas Misas Públicas
-                    </h2>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {publicMisasVigentes.map(renderMisaCard)}
+            {allPublicMisasPasadas.length > 0 && (
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-semibold text-gray-500 flex items-center gap-2">
+                            <span>history</span> Misas Públicas Anteriores
+                        </h3>
+                        {!showAllPasadas && allPublicMisasPasadas.length > 6 && (
+                            <button
+                                onClick={() => setShowAllPasadas(true)}
+                                className="text-accent-main hover:text-accent-main text-sm font-medium hover:underline"
+                            >
+                                Ver todas &rarr;
+                            </button>
+                        )}
                     </div>
-                </section>
+
+                    <div className="grid gap-4 opacity-80 hover:opacity-100 transition-opacity sm:grid-cols-2 lg:grid-cols-3">
+                        {publicMisasPasadas.map(renderMisaCard)}
+                    </div>
+
+                    {showAllPasadas && (
+                        <div className="mt-4 text-center">
+                            <button
+                                onClick={() => setShowAllPasadas(false)}
+                                className="text-gray-500 hover:text-gray-700 text-sm hover:underline"
+                            >
+                                Ver menos
+                            </button>
+                        </div>
+                    )}
+                </div>
             )}
         </div>
     );
