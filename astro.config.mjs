@@ -11,6 +11,9 @@ import sitemap from '@astrojs/sitemap';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  server: {
+    port: 4321
+  },
   site: 'https://www.micancionero.online',
   output: 'server', // O 'hybrid' si algunas páginas son estáticas
   adapter: vercel(),
@@ -53,6 +56,9 @@ export default defineConfig({
     plugins: [
       tailwindcss(),
     ],
+    optimizeDeps: {
+      include: ['@blobatar/react', 'blobatar', 'blobatar/expression']
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src')

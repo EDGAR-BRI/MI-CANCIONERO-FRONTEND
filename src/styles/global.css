@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "blobatar/motion.css";
 
 @theme {
     --color-bg-main: #050505;

@@ -1,5 +1,8 @@
 ---
 import { getUserFromToken, hasPermission } from "@/utils/auth";
+import { blobatar } from "blobatar";
+import * as expressions from "blobatar/expression";
+
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
 const isLoggedIn = !!user;
@@ -7,6 +10,38 @@ const isLoggedIn = !!user;
 const canCreateSong = hasPermission(user, "song.create");
 const canViewAdmin = hasPermission(user, "view.admin");
 import SearchInput from "./SearchInput.astro";
+
+const isBlobatar = Boolean(user?.avatarUrl?.startsWith("blobatar:"));
+let avatarSeed = (user?.name || user?.email || "Usuario").trim();
+let avatarHue: number | undefined = undefined;
+let avatarExpr = "idle";
+
+if (isBlobatar && user?.avatarUrl) {
+    const raw = user.avatarUrl.slice(9);
+    if (raw.includes("?")) {
+        const [s, q] = raw.split("?");
+        const params = new URLSearchParams(q);
+        if (s) avatarSeed = s.trim();
+        const h = params.get("hue");
+        if (h !== null && !isNaN(Number(h))) avatarHue = Number(h);
+        const ex = params.get("expr");
+        if (ex && (expressions as Record<string, any>)[ex]) {
+            avatarExpr = ex;
+        }
+    } else if (raw) {
+        avatarSeed = raw.trim();
+    }
+}
+
+const resolvedExpression = (expressions as Record<string, any>)[avatarExpr] || expressions.idle;
+
+const fallbackAvatar = isLoggedIn
+    ? `data:image/svg+xml;utf8,${encodeURIComponent(blobatar(avatarSeed, {
+        ...(avatarHue !== undefined ? { hue: avatarHue } : {}),
+        expression: resolvedExpression
+    }))}`
+    : "";
+const hasExternalPhoto = Boolean(user?.avatarUrl && !isBlobatar);
 ---
 
 <header
@@ -62,6 +97,30 @@ import SearchInput from "./SearchInput.astro";
                         <li class="hover:text-text-main cursor-pointer transition-colors">
                             <a href="/admin/users" data-astro-prefetch>
                                 Admin
+                            </a>
+                        </li>
+                    )
+                }
+                {
+                    isLoggedIn && (
+                        <li class="hover:text-text-main cursor-pointer transition-colors">
+                            <a href="/perfil" class="flex items-center gap-2" data-astro-prefetch>
+                                {hasExternalPhoto ? (
+                                    <img
+                                        src={user.avatarUrl}
+                                        alt={user.name || "Perfil"}
+                                        referrerpolicy="no-referrer"
+                                        class="w-6 h-6 rounded-full object-cover border border-amber-500/40 shrink-0"
+                                        onerror={`this.onerror=null; this.src='${fallbackAvatar}';`}
+                                    />
+                                ) : (
+                                    <img
+                                        src={fallbackAvatar}
+                                        alt={user?.name || "Perfil"}
+                                        class="w-6 h-6 rounded-full object-cover border border-amber-500/40 shrink-0"
+                                    />
+                                )}
+                                <span>{user?.name ? user.name.split(' ')[0] : 'Perfil'}</span>
                             </a>
                         </li>
                     )

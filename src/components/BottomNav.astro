@@ -83,11 +83,12 @@ const isActive = (path: string) => {
         {
             isLoggedIn ? (
                 <a
-                    href="/logout"
-                    class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-secondary hover:text-red-400"
+                    href="/perfil"
+                    class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/perfil") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
+                    data-astro-prefetch
                 >
-                    <i class="fa-solid fa-arrow-right-from-bracket text-xl" />
-                    <span class="text-[10px] font-medium">Salir</span>
+                    <i class="fa-solid fa-users text-xl" />
+                    <span class="text-[10px] font-medium">Perfil</span>
                 </a>
             ) : (
                 <a
