@@ -1,7 +1,7 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
 import { login, register } from "../services/auth";
-import { supabase } from "@/lib/supabase";
+import { API_URL } from "../services/songs";
 
 export const server = {
     deleteSong: defineAction({
@@ -11,7 +11,6 @@ export const server = {
         }),
         handler: async ({ id }, context) => {
             const token = context.cookies.get("token")?.value;
-            console.log("Action deleteSong - Token from cookie:", token ? "FOUND" : "MISSING");
 
             if (!token) {
                 throw new ActionError({
@@ -20,26 +19,20 @@ export const server = {
                 });
             }
 
-            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-            if (authError || !user) {
-                throw new ActionError({
-                    code: "UNAUTHORIZED",
-                    message: "Sesión inválida",
-                });
-            }
-
             try {
-                const { error } = await supabase
-                    .from("songs")
-                    .delete()
-                    .eq("id", id);
+                const response = await fetch(`${API_URL}/songs/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Cookie": `token=${token}`,
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
 
-                if (error) {
-                    console.error("Supabase delete error:", error);
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
                     throw new ActionError({
                         code: "INTERNAL_SERVER_ERROR",
-                        message: "Error al eliminar en base de datos",
+                        message: errData.error || "Error al eliminar la canción",
                     });
                 }
 
@@ -171,39 +164,34 @@ export const server = {
             if (!token) {
                 throw new ActionError({
                     code: "UNAUTHORIZED",
-                    message: "No autorizado",
-                });
-            }
-
-            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-            if (authError || !user) {
-                throw new ActionError({
-                    code: "UNAUTHORIZED",
-                    message: "Sesión inválida",
+                    message: "No autorizado. Inicia sesión para continuar.",
                 });
             }
 
             try {
-                const { data, error } = await supabase
-                    .from("misas")
-                    .insert({
+                const response = await fetch(`${API_URL}/misas`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Cookie": `token=${token}`,
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
                         title,
-                        date: dateMisa, // Assuming the DB column is 'date'
+                        dateMisa,
                         visibility,
-                        id_user: user.id
-                    })
-                    .select()
-                    .single();
+                    }),
+                });
 
-                if (error) {
-                    console.error("Supabase insert error:", error);
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
                     throw new ActionError({
                         code: "INTERNAL_SERVER_ERROR",
-                        message: "Error al crear la misa en base de datos",
+                        message: errData.error || "Error al crear la misa",
                     });
                 }
 
+                const data = await response.json();
                 return { success: true, data };
             } catch (e) {
                 if (e instanceof ActionError) throw e;

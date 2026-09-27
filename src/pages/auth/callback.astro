@@ -1,0 +1,148 @@
+---
+import Layout from "@/layouts/LoginLayout.astro";
+import { API_URL } from "@/services/songs";
+
+const code = Astro.url.searchParams.get("code");
+const error = Astro.url.searchParams.get("error");
+const errorDescription = Astro.url.searchParams.get("error_description");
+
+let serverError: string | null = error ? (errorDescription || error) : null;
+
+// If authorization code is present in query parameters (Authorization Code flow)
+if (code && !serverError) {
+    try {
+        const redirectUri = import.meta.env.PROD
+            ? `${Astro.url.origin}/auth/callback`
+            : "http://localhost:4321/auth/callback";
+        const response = await fetch(`${API_URL}/auth/google/callback`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, redirectUri })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok) {
+            let token = data.token;
+            let refreshToken = data.refreshToken;
+
+            // Also check headers if set-cookie is present
+            const setCookie = response.headers.get("set-cookie");
+            if (setCookie) {
+                const tokenMatch = setCookie.match(/token=([^;]+)/);
+                if (tokenMatch && !token) token = tokenMatch[1];
+
+                const refreshMatch = setCookie.match(/refresh_token=([^;]+)/);
+                if (refreshMatch && !refreshToken) refreshToken = refreshMatch[1];
+            }
+
+            if (token) {
+                Astro.cookies.set("token", token, {
+                    path: "/",
+                    httpOnly: true,
+                    secure: import.meta.env.PROD,
+                    sameSite: "lax",
+                    maxAge: 7 * 24 * 60 * 60
+                });
+
+                if (refreshToken) {
+                    Astro.cookies.set("refresh_token", refreshToken, {
+                        path: "/",
+                        httpOnly: true,
+                        secure: import.meta.env.PROD,
+                        sameSite: "lax",
+                        maxAge: 30 * 24 * 60 * 60
+                    });
+                }
+
+                return Astro.redirect("/");
+            } else {
+                serverError = "No se recibió el token de autenticación del servidor.";
+            }
+        } else {
+            serverError = data.error || "No se pudo completar el inicio de sesión con Google.";
+        }
+    } catch (e: any) {
+        console.error("OAuth callback error:", e);
+        serverError = e.message || "Error al conectar con el servidor.";
+    }
+}
+---
+
+<Layout title="Autenticando con Google - Cancionero">
+    <div class="w-full flex-1 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-[#171717] p-8 rounded-2xl shadow-2xl border border-white/10 text-center space-y-6">
+            {serverError ? (
+                <div class="space-y-4">
+                    <div class="w-16 h-16 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto text-2xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h2 class="text-xl font-bold text-white">Error de Autenticación</h2>
+                        <p class="text-zinc-400 text-sm">{serverError}</p>
+                    </div>
+                    <div class="pt-2">
+                        <a
+                            href="/login"
+                            class="inline-block px-6 py-2.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-sm rounded-xl transition-all shadow-lg active:scale-95"
+                        >
+                            Volver al Inicio de Sesión
+                        </a>
+                    </div>
+                </div>
+            ) : (
+                <div id="loadingContainer" class="space-y-4">
+                    <div class="w-16 h-16 rounded-2xl bg-accent-main/10 border border-accent-main/20 text-accent-main flex items-center justify-center mx-auto text-2xl shadow-lg animate-pulse">
+                        <i class="fa-brands fa-google"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h2 class="text-xl font-bold text-white">Iniciando sesión con Google</h2>
+                        <p id="statusText" class="text-zinc-400 text-sm">
+                            Verificando tus credenciales, por favor espera un momento...
+                        </p>
+                    </div>
+                    <div class="flex justify-center pt-2">
+                        <div class="w-8 h-8 border-4 border-accent-main/30 border-t-accent-main rounded-full animate-spin"></div>
+                    </div>
+                </div>
+            )}
+        </div>
+    </div>
+</Layout>
+
+<script define:vars={{ API_URL }}>
+    // Client-side fallback for Implicit Flow (tokens in URL hash #access_token=...)
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (accessToken) {
+            const statusEl = document.getElementById('statusText');
+            if (statusEl) statusEl.textContent = 'Sincronizando sesión...';
+
+            fetch(`${API_URL}/auth/google/callback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ accessToken, refreshToken })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.token) {
+                    // Set cookie on client if needed
+                    document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+                    window.location.href = '/';
+                } else {
+                    alert(data.error || 'Error al autenticar');
+                    window.location.href = '/login';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error al sincronizar sesión');
+                window.location.href = '/login';
+            });
+        }
+    }
+</script>
