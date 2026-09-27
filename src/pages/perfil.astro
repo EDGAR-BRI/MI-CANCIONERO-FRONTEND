@@ -1,0 +1,27 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getUserFromToken } from "@/utils/auth";
+import ProfileReact from "@/components/ProfileReact.jsx";
+
+const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
+
+if (!user) {
+    return Astro.redirect("/login");
+}
+---
+
+<Layout title="Mi Perfil y Ministerios | Cancionero">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-28 md:pb-12">
+        <div class="mb-6">
+            <h1 class="text-3xl font-extrabold text-white tracking-tight">
+                Mi Perfil
+            </h1>
+            <p class="text-zinc-400 text-sm mt-1">
+                Administra tu cuenta de músico y tus agrupaciones litúrgicas.
+            </p>
+        </div>
+
+        <ProfileReact client:load user={user} token={token} />
+    </main>
+</Layout>
