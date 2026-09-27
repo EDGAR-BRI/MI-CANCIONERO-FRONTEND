@@ -63,21 +63,18 @@ import BottomNav from "@/components/BottomNav.astro";
 		<ClientRouter />
 		<slot name="head" />
 	</head>
-	<body class="bg-bg-main text-text-main h-full w-full flex flex-col">
+	<body class="bg-bg-main text-text-main min-h-screen w-full flex flex-col">
 		<Header class="" />
 		<div
-			class="flex-1 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-28"
+			class="flex-1 flex flex-col w-full pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
 		>
-			<slot />
-			<div class="block md:hidden mt-8">
+			<div class="flex-1 w-full flex flex-col">
+				<slot />
+			</div>
+			<div class="mt-auto">
 				<Footer />
 			</div>
 		</div>
-		<!-- <div class="fixed bottom-0 left-0 w-full z-50"> -->
-		<div class="hidden md:block fixed bottom-0 left-0 w-full z-50">
-			<Footer />
-		</div>
 		<BottomNav />
-		<!-- </div> -->
 	</body>
 </html>
