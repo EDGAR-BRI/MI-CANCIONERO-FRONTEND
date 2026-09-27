@@ -1,0 +1,34 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getUserFromToken } from "@/utils/auth";
+import MinistryWorkspaceReact from "@/components/MinistryWorkspaceReact.jsx";
+
+const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
+
+if (!user) {
+    return Astro.redirect(`/login?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
+
+const { id } = Astro.params;
+
+if (!id) {
+    return Astro.redirect("/perfil");
+}
+---
+
+<Layout title="Espacio del Ministerio | Cancionero">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-28 md:pb-12">
+        <div class="mb-4">
+            <a
+                href="/perfil"
+                class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-accent-main transition-colors mb-4"
+            >
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Volver a mis ministerios</span>
+            </a>
+        </div>
+
+        <MinistryWorkspaceReact client:load ministryId={id} currentUser={user} token={token} />
+    </main>
+</Layout>

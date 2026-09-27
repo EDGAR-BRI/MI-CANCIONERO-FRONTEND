@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getUserFromToken } from "@/utils/auth";
+import JoinMinistryReact from "@/components/JoinMinistryReact.jsx";
+
+const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
+const isLoggedIn = !!user;
+
+const code = Astro.url.searchParams.get("codigo") || "";
+---
+
+<Layout title="Unirse a un Ministerio | Cancionero">
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 pb-28 md:pb-16 flex flex-col justify-center min-h-[70vh]">
+        <JoinMinistryReact client:load code={code} isLoggedIn={isLoggedIn} token={token} />
+    </main>
+</Layout>
