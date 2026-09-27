@@ -8,6 +8,7 @@ export interface MinistryMember {
     userId: number;
     name: string;
     email: string;
+    avatarUrl?: string | null;
     phoneNumber?: string | null;
     role: MinistryRole;
     joinedAt: string;
@@ -18,6 +19,7 @@ export interface MinistryPendingRequest {
     userId: number;
     name: string;
     email: string;
+    avatarUrl?: string | null;
     phoneNumber?: string | null;
     requestedAt: string;
 }
@@ -82,6 +84,7 @@ export interface SearchUserResult {
     id: number;
     name: string;
     email: string;
+    avatarUrl?: string | null;
     phoneNumber?: string | null;
 }
 

@@ -240,12 +240,12 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
     return (
         <div className="space-y-8">
             {/* Header Card */}
-            <div className="bg-[#171717] border border-white/10 rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden">
+            <div className="bg-[#171717] border border-white/10 rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-accent-main/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
 
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                    <div className="flex items-start gap-5">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-tr from-accent-main/20 to-amber-500/10 border border-accent-main/30 text-accent-main flex items-center justify-center text-3xl shrink-0 shadow-lg">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-5 sm:gap-6">
+                    <div className="flex items-start gap-3.5 sm:gap-5">
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-tr from-accent-main/20 to-amber-500/10 border border-accent-main/30 text-accent-main flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-lg">
                             <i className="fa-solid fa-church"></i>
                         </div>
 
@@ -292,14 +292,14 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     <div className="flex flex-row md:flex-col items-center md:items-end gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
                         <button
                             onClick={handleShareWhatsApp}
-                            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md active:scale-95"
+                            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md active:scale-95 whitespace-nowrap"
                         >
                             <i className="fa-brands fa-whatsapp text-sm"></i>
-                            <span>Compartir en WhatsApp</span>
+                            <span><span className="hidden sm:inline">Compartir en </span>WhatsApp</span>
                         </button>
                         <button
                             onClick={handleCopyInviteLink}
-                            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#262626] hover:bg-[#333333] border border-white/10 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white transition-all active:scale-95"
+                            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#262626] hover:bg-[#333333] border border-white/10 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white transition-all active:scale-95 whitespace-nowrap"
                         >
                             <i className="fa-regular fa-copy"></i>
                             <span>Copiar Enlace</span>
@@ -308,10 +308,10 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                 </div>
 
                 {/* Navigation Tabs */}
-                <div className="flex items-center gap-2 pt-6 mt-6 border-t border-white/10 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-2 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/10 overflow-x-auto no-scrollbar pb-1">
                     <button
                         onClick={() => setActiveTab('miembros')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                        className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
                             activeTab === 'miembros'
                                 ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                 : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
@@ -324,7 +324,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     {canManageInvites && (
                         <button
                             onClick={() => setActiveTab('solicitudes')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
                                 activeTab === 'solicitudes'
                                     ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                     : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
@@ -342,7 +342,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
 
                     <button
                         onClick={() => setActiveTab('misas')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                        className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
                             activeTab === 'misas'
                                 ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                 : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
@@ -355,7 +355,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     {isGroupAdmin && (
                         <button
                             onClick={() => setActiveTab('ajustes')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
                                 activeTab === 'ajustes'
                                     ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                     : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
@@ -371,8 +371,8 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
             {/* TAB CONTENT: MIEMBROS */}
             {activeTab === 'miembros' && (
                 <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-3">
+                        <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                             <span>Lista de Integrantes</span>
                             <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-zinc-400">
                                 {ministry.activeMembers?.length}
@@ -382,10 +382,13 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                         {canManageInvites && (
                             <button
                                 onClick={() => setShowAddMemberModal(true)}
-                                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-accent-main hover:bg-amber-600 rounded-xl text-xs font-bold text-black transition-all shadow-md active:scale-95"
+                                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-accent-main hover:bg-amber-600 rounded-xl text-xs font-bold text-black transition-all shadow-md active:scale-95 shrink-0"
                             >
-                                <i className="fa-solid fa-user-plus"></i>
-                                <span>Agregar Integrante</span>
+                                <i className="fa-solid fa-user-plus text-[11px]"></i>
+                                <span>
+                                    <span className="hidden sm:inline">Agregar Integrante</span>
+                                    <span className="sm:hidden">Agregar</span>
+                                </span>
                             </button>
                         )}
                     </div>
@@ -394,22 +397,23 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                         {ministry.activeMembers?.map(m => {
                             const isMemberAdmin = m.role === 'ADMIN';
                             const isMe = currentUser?.id === m.userId;
+                            const memberAvatarUrl = m.avatarUrl || (isMe ? currentUser?.avatarUrl : null);
 
                             return (
-                                <div key={m.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
-                                    <div className="flex items-center gap-3.5">
+                                <div key={m.id} className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
                                         <UserAvatar
-                                            user={m}
+                                            user={{ ...m, avatarUrl: memberAvatarUrl }}
                                             size="w-10 h-10"
                                             rounded="rounded-xl"
                                             border="border border-white/10"
                                         />
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-white text-sm">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                <span className="font-semibold text-white text-sm truncate">
                                                     {m.name} {isMe && '(Tú)'}
                                                 </span>
-                                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+                                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full shrink-0 ${
                                                     isMemberAdmin
                                                         ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                                                         : 'bg-zinc-800 text-zinc-400 border border-white/10'
@@ -417,36 +421,47 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                                     {isMemberAdmin ? '👑 Admin' : 'Miembro'}
                                                 </span>
                                             </div>
-                                            <span className="text-xs text-zinc-400 block">{m.email}</span>
+                                            <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-400 mt-0.5 min-w-0">
+                                                <span className="truncate">{m.email}</span>
+                                                {m.phoneNumber && (
+                                                    <>
+                                                        <span className="text-zinc-600 hidden xs:inline">•</span>
+                                                        <span className="flex items-center gap-1 text-zinc-400 shrink-0">
+                                                            <i className="fa-solid fa-phone text-[10px] text-zinc-500"></i>
+                                                            <span>{m.phoneNumber}</span>
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Action Buttons for Members */}
-                                    <div className="flex items-center gap-2 self-end sm:self-center">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                         {isGroupAdmin && !isMe && (
                                             <>
                                                 {isMemberAdmin ? (
                                                     <button
                                                         onClick={() => handleRoleChange(m, 'MEMBER')}
                                                         title="Degradar a miembro regular"
-                                                        className="px-2.5 py-1 text-xs rounded-lg border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                                                        className="px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs rounded-lg border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5 transition-colors whitespace-nowrap"
                                                     >
-                                                        Hacer Miembro
+                                                        <span className="hidden sm:inline">Hacer </span>Miembro
                                                     </button>
                                                 ) : (
                                                     <button
                                                         onClick={() => handleRoleChange(m, 'ADMIN')}
                                                         title="Promover a administrador del grupo"
-                                                        className="px-2.5 py-1 text-xs rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                                                        className="px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-colors whitespace-nowrap"
                                                     >
-                                                        👑 Hacer Admin
+                                                        👑 <span className="hidden sm:inline">Hacer </span>Admin
                                                     </button>
                                                 )}
 
                                                 <button
                                                     onClick={() => handleRemoveMember(m)}
                                                     title="Expulsar integrante"
-                                                    className="w-8 h-8 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors"
+                                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors shrink-0"
                                                 >
                                                     <i className="fa-solid fa-user-xmark text-xs"></i>
                                                 </button>
@@ -456,9 +471,9 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                         {isMe && (
                                             <button
                                                 onClick={() => handleRemoveMember(m, true)}
-                                                className="px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 rounded-lg transition-colors font-medium"
+                                                className="px-2.5 py-1.5 sm:px-3 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 rounded-lg transition-colors font-medium whitespace-nowrap"
                                             >
-                                                Salir del grupo
+                                                <span>Salir<span className="hidden sm:inline"> del grupo</span></span>
                                             </button>
                                         )}
                                     </div>
@@ -490,30 +505,44 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     ) : (
                         <div className="bg-[#171717] border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/5">
                             {ministry.pendingRequests.map(req => (
-                                <div key={req.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3.5">
-                                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-sm flex items-center justify-center shrink-0">
-                                            {req.name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold text-white text-sm block">{req.name}</span>
-                                            <span className="text-xs text-zinc-400 block">{req.email}</span>
+                                <div key={req.id} className="p-3 sm:p-4 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <UserAvatar
+                                            user={req}
+                                            size="w-10 h-10"
+                                            rounded="rounded-xl"
+                                            border="border border-white/10"
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <span className="font-semibold text-white text-sm block truncate">{req.name}</span>
+                                            <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-400 min-w-0">
+                                                <span className="truncate">{req.email}</span>
+                                                {req.phoneNumber && (
+                                                    <>
+                                                        <span className="text-zinc-600 hidden xs:inline">•</span>
+                                                        <span className="flex items-center gap-1 text-zinc-400 shrink-0">
+                                                            <i className="fa-solid fa-phone text-[10px] text-zinc-500"></i>
+                                                            <span>{req.phoneNumber}</span>
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
                                             <span className="text-[10px] text-zinc-500 block mt-0.5">
                                                 Solicitado: {new Date(req.requestedAt).toLocaleDateString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2.5 self-end sm:self-center">
+                                    <div className="flex items-center gap-2 shrink-0">
                                         <button
                                             onClick={() => handleRequestDecision(req, 'REJECT')}
-                                            className="px-3.5 py-1.5 rounded-xl border border-white/10 text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
+                                            className="px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-white/10 text-xs font-semibold text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
                                         >
                                             Rechazar
                                         </button>
                                         <button
                                             onClick={() => handleRequestDecision(req, 'ACCEPT')}
-                                            className="px-4 py-1.5 rounded-xl bg-accent-main hover:bg-amber-600 text-xs font-bold text-black transition-all shadow-md active:scale-95"
+                                            className="px-3 sm:px-4 py-1.5 rounded-xl bg-accent-main hover:bg-amber-600 text-xs font-bold text-black transition-all shadow-md active:scale-95"
                                         >
                                             Aceptar
                                         </button>
@@ -748,14 +777,33 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                             ) : searchResults.length > 0 ? (
                                 searchResults.map(userItem => (
                                     <div key={userItem.id} className="pt-2 flex items-center justify-between gap-3">
-                                        <div>
-                                            <span className="font-semibold text-white text-sm block">{userItem.name}</span>
-                                            <span className="text-xs text-zinc-400 block">{userItem.email}</span>
+                                        <div className="flex items-center gap-3">
+                                            <UserAvatar
+                                                user={userItem}
+                                                size="w-9 h-9"
+                                                rounded="rounded-xl"
+                                                border="border border-white/10"
+                                            />
+                                            <div>
+                                                <span className="font-semibold text-white text-sm block">{userItem.name}</span>
+                                                <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-400">
+                                                    <span>{userItem.email}</span>
+                                                    {userItem.phoneNumber && (
+                                                        <>
+                                                            <span className="text-zinc-600">•</span>
+                                                            <span className="flex items-center gap-1 text-zinc-400">
+                                                                <i className="fa-solid fa-phone text-[10px] text-zinc-500"></i>
+                                                                <span>{userItem.phoneNumber}</span>
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                         <button
                                             onClick={() => handleAddDirect(userItem)}
                                             disabled={addingUserId === userItem.id}
-                                            className="px-3.5 py-1.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                            className="px-3.5 py-1.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 shrink-0"
                                         >
                                             {addingUserId === userItem.id ? 'Agregando...' : '+ Agregar'}
                                         </button>
