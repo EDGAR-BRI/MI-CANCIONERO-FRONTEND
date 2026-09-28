@@ -70,11 +70,19 @@ const canViewAdmin = hasPermission(user, "view.admin");
                     ) : (
                         <a
                             href="/login"
-                            class="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-accent-main hover:bg-accent-main/10 hover:border-accent-main/30 active:scale-95 transition-all shrink-0 shadow-sm"
+                            class="shrink-0 active:scale-95 transition-transform flex items-center justify-center"
                             title="Ingresar"
                             data-astro-prefetch
                         >
-                            <i class="fa-solid fa-user text-sm" />
+                            <UserAvatar
+                                client:load
+                                name="alain00"
+                                traits={{ shape: 0.11 }}
+                                expression="surprised"
+                                size="w-11 h-11"
+                                animate="always"
+                                headColor="#f26a38"
+                            />
                         </a>
                     )
                 }
