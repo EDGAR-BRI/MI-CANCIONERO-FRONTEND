@@ -2,7 +2,24 @@ import React, { useState, useEffect } from 'react';
 import MisaCardSkeleton from './skeletons/MisaCardSkeleton';
 import { getMisas, createMisa } from '../services/misas';
 import { showError, showSuccessToast } from '../utils/alerts';
-import { jwtDecode } from "jwt-decode";
+
+const parseJwt = (tokenStr) => {
+    if (!tokenStr) return null;
+    try {
+        const base64Url = tokenStr.split('.')[1];
+        if (!base64Url) return null;
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch {
+        return null;
+    }
+};
 
 const getTodayString = () => {
     const today = new Date();
@@ -12,10 +29,17 @@ const getTodayString = () => {
     return `${year}-${month}-${day}`;
 };
 
-const MisaListReact = ({ token }) => {
-    const [loading, setLoading] = useState(true);
-    const [misas, setMisas] = useState([]);
-    const [userId, setUserId] = useState(null);
+const MisaListReact = ({ token, currentUser, initialMisas }) => {
+    const [loading, setLoading] = useState(initialMisas === undefined);
+    const [misas, setMisas] = useState(initialMisas || []);
+    const [userId, setUserId] = useState(() => {
+        if (currentUser?.id) return currentUser.id;
+        if (token) {
+            const decoded = parseJwt(token);
+            return decoded?.id || decoded?.sub || null;
+        }
+        return null;
+    });
     const [showAllPasadas, setShowAllPasadas] = useState(false);
 
     // Modal state for creating misa
@@ -26,23 +50,26 @@ const MisaListReact = ({ token }) => {
     const [creating, setCreating] = useState(false);
 
     useEffect(() => {
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                setUserId(decoded.id || decoded.sub);
-            } catch (e) {
-                console.error("Error decoding token:", e);
+        if (!userId && token) {
+            const decoded = parseJwt(token);
+            if (decoded) {
+                setUserId(decoded.id || decoded.sub || null);
             }
         }
 
-        fetchMisas();
+        if (initialMisas === undefined) {
+            fetchMisas();
+        }
     }, [token]);
 
     const fetchMisas = async () => {
         try {
-            const { success, data } = await getMisas(token);
-            if (success && data) {
+            setLoading(true);
+            const { success, data, error } = await getMisas(token);
+            if (success && Array.isArray(data)) {
                 setMisas(data);
+            } else if (error) {
+                console.error("Error fetching misas:", error);
             }
         } catch (error) {
             console.error("Error fetching misas:", error);
@@ -81,7 +108,7 @@ const MisaListReact = ({ token }) => {
             showError("Campo requerido", "Por favor selecciona una fecha");
             return;
         }
-        if (!token) {
+        if (!token && !currentUser) {
             showError("Sesión requerida", "Inicia sesión para crear misas");
             window.location.href = "/login?redirect=/misas";
             return;
@@ -119,8 +146,9 @@ const MisaListReact = ({ token }) => {
                 </div>
                 <span>Misas</span>
             </h1>
-            {token ? (
+            {token || currentUser ? (
                 <button
+                    type="button"
                     onClick={() => setShowCreateModal(true)}
                     className="bg-accent-main hover:bg-amber-600 text-black font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95 cursor-pointer"
                 >
@@ -143,7 +171,7 @@ const MisaListReact = ({ token }) => {
         if (!showCreateModal) return null;
         return (
             <div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+                className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
                 onClick={() => !creating && setShowCreateModal(false)}
             >
                 <div
@@ -295,7 +323,29 @@ const MisaListReact = ({ token }) => {
         );
     }
 
-    if (!loading && misas.length === 0) {
+    // Filter logic
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const myMisas = userId ? misas.filter(m => m.userId === userId) : [];
+    const otherPublicMisas = misas.filter(m => m.visibility === 'PUBLIC' && (!userId || m.userId !== userId));
+
+    const sortMisas = (list) => {
+        return [...list].sort((a, b) => new Date(a.dateMisa) - new Date(b.dateMisa));
+    };
+
+    const myMisasVigentes = sortMisas(myMisas.filter(m => new Date(m.dateMisa) >= today));
+    const allMyMisasPasadas = sortMisas(myMisas.filter(m => new Date(m.dateMisa) < today)).reverse();
+
+    const myMisasPasadas = showAllPasadas ? allMyMisasPasadas : allMyMisasPasadas.slice(0, 6);
+
+    const publicMisasVigentes = sortMisas(otherPublicMisas.filter(m => new Date(m.dateMisa) >= today));
+    const allPublicMisasPasadas = sortMisas(otherPublicMisas.filter(m => new Date(m.dateMisa) < today)).reverse();
+    const publicMisasPasadas = showAllPasadas ? allPublicMisasPasadas : allPublicMisasPasadas.slice(0, 6);
+
+    const hasAnyMisasToShow = myMisasVigentes.length > 0 || allMyMisasPasadas.length > 0 || publicMisasVigentes.length > 0 || allPublicMisasPasadas.length > 0;
+
+    if (!loading && (!misas.length || !hasAnyMisasToShow)) {
         return (
             <div>
                 {renderHeader()}
@@ -309,8 +359,9 @@ const MisaListReact = ({ token }) => {
                     <p className="text-xs text-zinc-400 max-w-sm">
                         Crea tu primera misa para planificar los cantos litúrgicos de tu comunidad o ministerio.
                     </p>
-                    {token ? (
+                    {token || currentUser ? (
                         <button
+                            type="button"
                             onClick={() => setShowCreateModal(true)}
                             className="mt-2 px-5 py-2.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95 cursor-pointer"
                         >
@@ -331,26 +382,6 @@ const MisaListReact = ({ token }) => {
             </div>
         );
     }
-
-    // Filter logic
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const myMisas = misas.filter(m => m.userId === userId);
-    const otherPublicMisas = misas.filter(m => m.userId !== userId && m.visibility === 'PUBLIC');
-
-    const sortMisas = (list) => {
-        return list.sort((a, b) => new Date(a.dateMisa) - new Date(b.dateMisa));
-    };
-
-    const myMisasVigentes = sortMisas(myMisas.filter(m => new Date(m.dateMisa) >= today));
-    const allMyMisasPasadas = sortMisas(myMisas.filter(m => new Date(m.dateMisa) < today)).reverse();
-
-    const myMisasPasadas = showAllPasadas ? allMyMisasPasadas : allMyMisasPasadas.slice(0, 6);
-
-    const publicMisasVigentes = sortMisas(otherPublicMisas.filter(m => new Date(m.dateMisa) >= today));
-    const allPublicMisasPasadas = sortMisas(otherPublicMisas.filter(m => new Date(m.dateMisa) < today)).reverse();
-    const publicMisasPasadas = showAllPasadas ? allPublicMisasPasadas : allPublicMisasPasadas.slice(0, 6);
 
     const renderMisaCard = (misa) => (
         <a

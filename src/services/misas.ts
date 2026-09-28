@@ -7,12 +7,16 @@ export const getMisas = async (token?: string): Promise<ServiceResponse<Misa[]>>
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
-        const res = await fetch(`${API_URL}/misas`, { headers });
+        const res = await fetch(`${API_URL}/misas`, {
+            headers,
+            credentials: "include",
+            signal: AbortSignal.timeout(10000)
+        });
         if (!res.ok) {
             return { success: false, error: "Error al obtener las misas." };
         }
         const data = await res.json();
-        return { success: true, data };
+        return { success: true, data: Array.isArray(data) ? data : [] };
     } catch (e) {
         console.error("Service exception:", e);
         return { success: false, error: e instanceof Error ? e.message : "Error de conexión." };
@@ -21,24 +25,23 @@ export const getMisas = async (token?: string): Promise<ServiceResponse<Misa[]>>
 
 export const createMisa = async (title: string, dateMisa: string, visibility: string = "PUBLIC", token?: string): Promise<ServiceResponse<Misa>> => {
     try {
-        console.log("createMisa called with:", { title, dateMisa, visibility, tokenExists: !!token });
         const headers: HeadersInit = { "Content-Type": "application/json" };
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
 
-        console.log("createMisa headers:", headers);
-
         const res = await fetch(`${API_URL}/misas`, {
             method: "POST",
             headers,
+            credentials: "include",
             body: JSON.stringify({ title, dateMisa, visibility }),
+            signal: AbortSignal.timeout(10000)
         });
 
         if (!res.ok) {
-            const errData = await res.json().catch(e => "Flux failed to parse error json");
+            const errData = await res.json().catch(() => null);
             console.error("createMisa failed:", res.status, res.statusText, errData);
-            return { success: false, error: "Error al crear la misa.", data: errData };
+            return { success: false, error: errData?.error || "Error al crear la misa." };
         }
 
         const data = await res.json();
@@ -64,11 +67,13 @@ export const updateMisa = async (id: number, title: string, dateMisa: string, vi
         const res = await fetch(url, {
             method: "PUT",
             headers,
+            credentials: "include",
             body: JSON.stringify({ title, dateMisa, visibility }),
+            signal: AbortSignal.timeout(10000)
         });
         if (!res.ok) {
-            const err = await res.json();
-            return { success: false, error: err.error || "Error al actualizar la misa." };
+            const err = await res.json().catch(() => null);
+            return { success: false, error: err?.error || "Error al actualizar la misa." };
         }
         const data = await res.json();
         return { success: true, data };
@@ -93,12 +98,14 @@ export const addSongToMisa = async (misaId: number, songId: number, momentId: nu
         const res = await fetch(url, {
             method: "POST",
             headers,
+            credentials: "include",
             body: JSON.stringify({ songId, momentId, key }),
+            signal: AbortSignal.timeout(10000)
         });
 
         if (!res.ok) {
-            const errData = await res.json();
-            return { success: false, error: "Error al agregar la canción.", data: errData };
+            const errData = await res.json().catch(() => null);
+            return { success: false, error: errData?.error || "Error al agregar la canción.", data: errData };
         }
 
         const data = await res.json();
@@ -124,10 +131,13 @@ export const removeSongFromMisa = async (misaId: number, misaSongId: number, tok
         const res = await fetch(url, {
             method: "DELETE",
             headers,
+            credentials: "include",
+            signal: AbortSignal.timeout(10000)
         });
 
         if (!res.ok) {
-            return { success: false, error: "Error al eliminar la canción." };
+            const errData = await res.json().catch(() => null);
+            return { success: false, error: errData?.error || "Error al eliminar la canción." };
         }
 
         return { success: true };
@@ -147,11 +157,13 @@ export const deleteMisa = async (id: number, token: string | undefined): Promise
         const res = await fetch(`${API_URL}/misas/${id}`, {
             method: "DELETE",
             headers,
+            credentials: "include",
+            signal: AbortSignal.timeout(10000)
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            return { success: false, error: err.error || "Error al eliminar la misa." };
+            const err = await res.json().catch(() => null);
+            return { success: false, error: err?.error || "Error al eliminar la misa." };
         }
 
         return { success: true };
@@ -176,12 +188,14 @@ export const updateMisaSong = async (misaId: number, misaSongId: number, key: st
         const res = await fetch(url, {
             method: "PUT",
             headers,
+            credentials: "include",
             body: JSON.stringify({ key }),
+            signal: AbortSignal.timeout(10000)
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            return { success: false, error: err.error || "Error al actualizar la canción." };
+            const err = await res.json().catch(() => null);
+            return { success: false, error: err?.error || "Error al actualizar la canción." };
         }
 
         const data = await res.json();
@@ -194,7 +208,6 @@ export const updateMisaSong = async (misaId: number, misaSongId: number, key: st
 
 export const cloneMisa = async (originalMisa: Misa, token: string): Promise<ServiceResponse<Misa>> => {
     try {
-        // 1. Create the new misa
         const createRes = await createMisa(`${originalMisa.title} (Copia)`, new Date().toISOString(), "PRIVATE", token);
 
         if (!createRes.success || !createRes.data) {
@@ -203,16 +216,12 @@ export const cloneMisa = async (originalMisa: Misa, token: string): Promise<Serv
 
         const newMisa = createRes.data;
 
-        // 2. Add songs to the new misa
-        // We run these sequentially to avoid overwhelming the server if there are many songs, 
-        // effectively simulating the user adding them one by one.
         for (const song of originalMisa.misaSongs) {
-            const key = song.key || song.song.key || "C"; // Fallback key
+            const key = song.key || song.song.key || "C";
             await addSongToMisa(newMisa.id, song.songId, song.momentId, key, token);
         }
 
         return { success: true, data: newMisa };
-
     } catch (e) {
         console.error("Service exception:", e);
         return { success: false, error: e instanceof Error ? e.message : "Error al clonar la misa." };

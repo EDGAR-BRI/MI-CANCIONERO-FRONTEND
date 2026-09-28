@@ -1,13 +1,35 @@
 ---
-// export const prerender = false;
+Astro.response.headers.set(
+	"Cache-Control",
+	"no-cache, no-store, must-revalidate",
+);
 import Layout from "@/layouts/Layout.astro";
 import MisaListReact from "@/components/MisaListReact";
+import { getMisas } from "@/services/misas";
+import { getUserFromToken } from "@/utils/auth";
+import type { Misa } from "@/types/misa";
 
 const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
+
+let initialMisas: Misa[] = [];
+try {
+	const res = await getMisas(token);
+	if (res.success && Array.isArray(res.data)) {
+		initialMisas = res.data;
+	}
+} catch (e) {
+	console.error("Error fetching misas on SSR:", e);
+}
 ---
 
 <Layout title="Misas - CancioneroDigital">
-    <main class="max-w-5xl mx-auto p-4 sm:p-6 w-full flex-1">
-        <MisaListReact client:load token={token} />
-    </main>
+	<main class="max-w-5xl mx-auto p-4 sm:p-6 w-full flex-1">
+		<MisaListReact
+			client:load
+			token={token}
+			currentUser={user}
+			initialMisas={initialMisas}
+		/>
+	</main>
 </Layout>
