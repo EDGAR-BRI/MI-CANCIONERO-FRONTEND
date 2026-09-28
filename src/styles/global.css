@@ -217,11 +217,139 @@
     display: none;
 }
 
-/* Hide scrollbars while allowing scrolling */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
+/* ==========================================================================
+   SISTEMA DE ESTILOS DE SCROLLBAR (CANCIONERO)
+   ========================================================================== */
+
+/* Variables CSS para personalización y adaptación de temas */
+:root {
+    --scrollbar-size: 8px;
+    --scrollbar-size-thin: 5px;
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.42);
+    --scrollbar-thumb-active: #FF5722;
+    --scrollbar-border-radius: 9999px;
 }
-.no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+/* Suavizado de desplazamiento global respetando accesibilidad */
+html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* 1. Soporte estándar W3C / Firefox (aislado para no anular pseudo-elementos WebKit en Chromium) */
+@supports not selector(::-webkit-scrollbar) {
+    html,
+    body,
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+
+    .scrollbar-thin {
+        scrollbar-width: thin;
+    }
+}
+
+/* 2. Motores WebKit y Chromium (Chrome, Edge, Safari, Brave, Opera) */
+::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: var(--scrollbar-border-radius);
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar-thumb-active);
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* 3. Variante delgada (.scrollbar-thin) para dropdowns, modales compactos, etc. */
+.scrollbar-thin::-webkit-scrollbar {
+    width: var(--scrollbar-size-thin);
+    height: var(--scrollbar-size-thin);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    border: 1px solid transparent;
+}
+
+/* 4. Variante con acento de marca (.scrollbar-accent) */
+.scrollbar-accent {
+    --scrollbar-thumb: rgba(255, 87, 34, 0.5);
+    --scrollbar-thumb-hover: rgba(255, 87, 34, 0.8);
+    --scrollbar-thumb-active: #FF5722;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    .scrollbar-accent {
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+}
+
+/* 5. Variante sutil (.scrollbar-subtle) */
+.scrollbar-subtle {
+    --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    .scrollbar-subtle {
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+}
+
+/* 6. Adaptación para contenedores con fondo claro */
+.light-scroll,
+.bg-\[\#fffbf6\],
+[data-theme="light"] {
+    --scrollbar-thumb: rgba(0, 0, 0, 0.22);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.45);
+    --scrollbar-thumb-active: #FF5722;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    .light-scroll,
+    .bg-\[\#fffbf6\],
+    [data-theme="light"] {
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }
+}
+
+/* 7. Ocultar scrollbars manteniendo scroll funcional (.no-scrollbar, .scrollbar-hide, .scrollbar-none) */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+    display: none !important;
+}
+
+.no-scrollbar,
+.scrollbar-hide,
+.scrollbar-none {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
 }
