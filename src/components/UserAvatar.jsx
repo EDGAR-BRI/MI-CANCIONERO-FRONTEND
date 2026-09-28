@@ -3,18 +3,18 @@ import { Blobatar } from '@blobatar/react';
 import * as expressions from 'blobatar/expression';
 
 export default function UserAvatar({
-    user,
-    avatarUrl,
-    name,
-    email,
-    hue,
-    expression,
-    animate = 'hover',
+    user = null,
+    avatarUrl = undefined,
+    name = '',
+    email = '',
+    hue = undefined,
+    expression = undefined,
+    animate = 'always',
     size = 'w-20 h-20',
     rounded = 'rounded-2xl',
     border = 'border-2 border-accent-main/40',
     className = ''
-}) {
+} = {}) {
     const [imgError, setImgError] = useState(false);
 
     const effectiveAvatarUrl = avatarUrl !== undefined ? avatarUrl : user?.avatarUrl;
@@ -69,7 +69,7 @@ export default function UserAvatar({
 
     return (
         <div
-            className={`${size} ${rounded} overflow-hidden ${border} shadow-lg shrink-0 bg-[#1e1e1e] flex items-center justify-center p-0.5 transition-transform duration-300 hover:scale-105 ${className}`}
+            className={`${size} shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-110 active:scale-95 ${className}`}
             title={effectiveName}
         >
             <Blobatar
@@ -77,7 +77,7 @@ export default function UserAvatar({
                 hue={blobatarHue}
                 expression={resolvedExpression}
                 animate={animate}
-                className="w-full h-full object-cover rounded-[inherit]"
+                className="w-full h-full scale-125 object-contain drop-shadow-sm select-none"
             />
         </div>
     );

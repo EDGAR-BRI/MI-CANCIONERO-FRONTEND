@@ -682,8 +682,7 @@ export default function ProfileReact({ user, token }) {
                                             : `Por defecto con tu nombre ("${currentUser?.name || 'Usuario'}")`}
                                     </span>
                                     <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-400 font-medium">
-                                        <i className="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
-                                        <span>¡Animación de hover activa! Pasa el cursor por encima</span>
+                                    
                                     </div>
                                     <button
                                         type="button"

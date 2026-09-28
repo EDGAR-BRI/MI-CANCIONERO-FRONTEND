@@ -1,7 +1,7 @@
 ---
 import { getUserFromToken, hasPermission } from "@/utils/auth";
-import { blobatar } from "blobatar";
-import * as expressions from "blobatar/expression";
+import SearchInput from "./SearchInput.astro";
+import UserAvatar from "./UserAvatar.jsx";
 
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
@@ -9,139 +9,138 @@ const isLoggedIn = !!user;
 
 const canCreateSong = hasPermission(user, "song.create");
 const canViewAdmin = hasPermission(user, "view.admin");
-import SearchInput from "./SearchInput.astro";
-
-const isBlobatar = Boolean(user?.avatarUrl?.startsWith("blobatar:"));
-let avatarSeed = (user?.name || user?.email || "Usuario").trim();
-let avatarHue: number | undefined = undefined;
-let avatarExpr = "idle";
-
-if (isBlobatar && user?.avatarUrl) {
-    const raw = user.avatarUrl.slice(9);
-    if (raw.includes("?")) {
-        const [s, q] = raw.split("?");
-        const params = new URLSearchParams(q);
-        if (s) avatarSeed = s.trim();
-        const h = params.get("hue");
-        if (h !== null && !isNaN(Number(h))) avatarHue = Number(h);
-        const ex = params.get("expr");
-        if (ex && (expressions as Record<string, any>)[ex]) {
-            avatarExpr = ex;
-        }
-    } else if (raw) {
-        avatarSeed = raw.trim();
-    }
-}
-
-const resolvedExpression = (expressions as Record<string, any>)[avatarExpr] || expressions.idle;
-
-const fallbackAvatar = isLoggedIn
-    ? `data:image/svg+xml;utf8,${encodeURIComponent(blobatar(avatarSeed, {
-        ...(avatarHue !== undefined ? { hue: avatarHue } : {}),
-        expression: resolvedExpression
-    }))}`
-    : "";
-const hasExternalPhoto = Boolean(user?.avatarUrl && !isBlobatar);
 ---
 
 <header
-    class="flex items-center justify-between px-4 md:px-8 py-3 bg-bg-secondary border-b border-white/10 sticky top-0 z-50"
+    class="w-full max-w-full flex items-center justify-between px-3 sm:px-4 md:px-8 py-2 sm:py-2.5 bg-bg-secondary/95 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 min-w-0 shadow-sm"
 >
-    <div class="max-w-6xl w-full mx-auto flex justify-between">
-        <div class="flex items-center gap-4">
+    <div class="max-w-6xl w-full mx-auto flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+        <!-- Logo -->
+        <div class="flex items-center gap-2 sm:gap-4 shrink-0">
             <a
                 href="/"
-                class="text-2xl font-bold text-accent-main tracking-tighter flex items-center"
+                class="text-2xl font-bold text-accent-main tracking-tighter flex items-center shrink-0"
                 data-astro-prefetch
             >
-                <!-- Large Logo (Desktop) -->
+                <!-- Small Icon (Mobile: solo isologo) -->
                 <img
-                    src="/large-logo.svg"
-                    alt="Logo"
-                    class="h-11 w-auto lg:block sm:hidden"
+                    src="/icono.svg"
+                    alt="Cancionero"
+                    class="h-8 w-auto block sm:hidden"
                 />
                 <!-- Medium Logo (Tablet) -->
                 <img
                     src="/medium-logo.svg"
-                    alt="Logo"
-                    class="h-10 w-auto hidden sm:block lg:hidden"
+                    alt="Cancionero"
+                    class="h-9 w-auto hidden sm:block lg:hidden"
                 />
-                <!-- Small Icon (Mobile) -->
-                <!-- <img src="/icono.svg" alt="Logo" class="h-9 w-auto sm:hidden" /> -->
+                <!-- Large Logo (Desktop) -->
+                <img
+                    src="/large-logo.svg"
+                    alt="Cancionero"
+                    class="h-10 w-auto hidden lg:block"
+                />
             </a>
         </div>
 
-        <SearchInput class="ml-auto md:mx-auto" />
+        <!-- Search Input (Ocupa el centro de forma responsiva) -->
+        <div class="flex-1 mx-1.5 sm:mx-6 min-w-0 max-w-sm sm:max-w-md md:max-w-lg">
+            <SearchInput class="w-full min-w-0" />
+        </div>
 
-        <nav class="flex items-center gap-4">
-            <ul
-                id="menu-list"
-                class="hidden md:flex absolute md:static top-full left-0 w-full md:w-auto flex-col md:flex-row items-center bg-bg-secondary md:bg-transparent border-b md:border-none border-white/10 md:h-9 gap-4 text-sm font-medium text-text-secondary py-4 md:py-0 shadow-lg md:shadow-none z-40"
-            >
-                <li
-                    class="hover:text-text-main cursor-pointer transition-colors"
-                >
-                    <a href="/misas" data-astro-prefetch>Misas</a>
-                </li>
-                {
-                    isLoggedIn && canCreateSong && (
-                        <li class="hover:text-text-main cursor-pointer transition-colors">
-                            <a href="/songs/add" data-astro-prefetch>
-                                Add
-                            </a>
-                        </li>
-                    )
-                }
-                {
-                    isLoggedIn && canViewAdmin && (
-                        <li class="hover:text-text-main cursor-pointer transition-colors">
-                            <a href="/admin/users" data-astro-prefetch>
-                                Admin
-                            </a>
-                        </li>
-                    )
-                }
-                {
-                    isLoggedIn && (
-                        <li class="hover:text-text-main cursor-pointer transition-colors">
-                            <a href="/perfil" class="flex items-center gap-2" data-astro-prefetch>
-                                {hasExternalPhoto ? (
-                                    <img
-                                        src={user.avatarUrl}
-                                        alt={user.name || "Perfil"}
-                                        referrerpolicy="no-referrer"
-                                        class="w-6 h-6 rounded-full object-cover border border-amber-500/40 shrink-0"
-                                        onerror={`this.onerror=null; this.src='${fallbackAvatar}';`}
-                                    />
-                                ) : (
-                                    <img
-                                        src={fallbackAvatar}
-                                        alt={user?.name || "Perfil"}
-                                        class="w-6 h-6 rounded-full object-cover border border-amber-500/40 shrink-0"
-                                    />
-                                )}
-                                <span>{user?.name ? user.name.split(' ')[0] : 'Perfil'}</span>
-                            </a>
-                        </li>
-                    )
-                }
-
+        <!-- Acciones Derecha (Perfil en móvil + Navegación en desktop) -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            <!-- Mobile User Profile / Login (Visible solo en móvil) -->
+            <div class="flex items-center md:hidden">
                 {
                     isLoggedIn ? (
-                        <li class="text-red-400 hover:text-red-300 cursor-pointer font-bold">
-                            <a href="/logout" data-astro-prefetch>
-                                Cerrar Sesión
-                            </a>
-                        </li>
+                        <a
+                            href="/perfil"
+                            class="shrink-0 active:scale-95 transition-transform flex items-center justify-center"
+                            title={user?.name || "Mi Perfil"}
+                            data-astro-prefetch
+                        >
+                            <UserAvatar
+                                client:load
+                                user={user}
+                                size="w-11 h-11"
+                                animate="always"
+                            />
+                        </a>
                     ) : (
-                        <li class="text-accent-main hover:text-accent-secondary cursor-pointer font-bold">
-                            <a href="/login" data-astro-prefetch>
-                                Ingresar
-                            </a>
-                        </li>
+                        <a
+                            href="/login"
+                            class="flex items-center justify-center w-9 h-9 rounded-full bg-white/5 border border-white/10 text-accent-main hover:bg-accent-main/10 hover:border-accent-main/30 active:scale-95 transition-all shrink-0 shadow-sm"
+                            title="Ingresar"
+                            data-astro-prefetch
+                        >
+                            <i class="fa-solid fa-user text-sm" />
+                        </a>
                     )
                 }
-            </ul>
-        </nav>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center gap-4">
+                <ul
+                    id="menu-list"
+                    class="flex items-center gap-4 text-sm font-medium text-text-secondary md:h-9"
+                >
+                    <li
+                        class="hover:text-text-main cursor-pointer transition-colors"
+                    >
+                        <a href="/misas" data-astro-prefetch>Misas</a>
+                    </li>
+                    <li
+                        class="hover:text-text-main cursor-pointer transition-colors"
+                    >
+                        <a href="/ministerios" data-astro-prefetch>Ministerios</a>
+                    </li>
+                    {
+                        isLoggedIn && canCreateSong && (
+                            <li class="hover:text-text-main cursor-pointer transition-colors">
+                                <a href="/songs/add" data-astro-prefetch>
+                                    Add
+                                </a>
+                            </li>
+                        )
+                    }
+                    {
+                        isLoggedIn && canViewAdmin && (
+                            <li class="hover:text-text-main cursor-pointer transition-colors">
+                                <a href="/admin/users" data-astro-prefetch>
+                                    Admin
+                                </a>
+                            </li>
+                        )
+                    }
+                    {
+                        isLoggedIn && (
+                            <li class="hover:text-text-main cursor-pointer transition-colors">
+                                <a href="/perfil" class="flex items-center gap-2 group" data-astro-prefetch>
+                                    <UserAvatar
+                                        client:load
+                                        user={user}
+                                        size="w-8 h-8"
+                                        animate="always"
+                                    />
+                                    <span class="group-hover:text-accent-main transition-colors font-medium">{user?.name ? user.name.split(' ')[0] : 'Perfil'}</span>
+                                </a>
+                            </li>
+                        )
+                    }
+
+                    {
+                        !isLoggedIn && (
+                            <li class="text-accent-main hover:text-accent-secondary cursor-pointer font-bold">
+                                <a href="/login" data-astro-prefetch>
+                                    Ingresar
+                                </a>
+                            </li>
+                        )
+                    }
+                </ul>
+            </nav>
+        </div>
     </div>
 </header>

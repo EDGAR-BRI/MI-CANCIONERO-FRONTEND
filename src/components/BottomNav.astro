@@ -80,27 +80,14 @@ const isActive = (path: string) => {
             )
         }
 
-        {
-            isLoggedIn ? (
-                <a
-                    href="/perfil"
-                    class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/perfil") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
-                    data-astro-prefetch
-                >
-                    <i class="fa-solid fa-users text-xl" />
-                    <span class="text-[10px] font-medium">Perfil</span>
-                </a>
-            ) : (
-                <a
-                    href="/login"
-                    class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/login") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
-                    data-astro-prefetch
-                >
-                    <i class="fa-solid fa-user text-xl" />
-                    <span class="text-[10px] font-medium">Ingresar</span>
-                </a>
-            )
-        }
+        <a
+            href="/ministerios"
+            class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/ministerios") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
+            data-astro-prefetch
+        >
+            <i class="fa-solid fa-users text-xl" />
+            <span class="text-[10px] font-medium">Ministerios</span>
+        </a>
     </div>
 </nav>
 

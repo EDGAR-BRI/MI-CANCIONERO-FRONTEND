@@ -1,29 +1,53 @@
 <footer
-    class="text-white border-t border-white/5 bg-bg-secondary text-xs md:text-sm flex flex-col sm:flex-row gap-1.5 justify-center items-center px-4 pb-12 sm:pb-6 pt-4 text-center"
+    class="w-full max-w-full overflow-hidden border-t border-white/10 bg-[#121212] text-xs text-zinc-400 px-4 pt-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 transition-colors"
 >
-    <p>
-        © {new Date().getFullYear()} Cancionero Digital. Todos los derechos reservados.
-    </p>
+    <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <!-- Brand & Copyright -->
+        <div class="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-zinc-400 text-xs">
+            <div class="flex items-center gap-2">
+                <img src="/icono.svg" alt="Cancionero" class="w-5 h-5 opacity-80" />
+                <span class="font-semibold text-zinc-200">Cancionero Digital</span>
+            </div>
+            <span class="hidden sm:inline text-zinc-600">•</span>
+            <span class="text-zinc-500">© {new Date().getFullYear()} Todos los derechos reservados</span>
+        </div>
 
-    <div>
-        <a
-            href="https://github.com/edgarbri26"
-            class="hover:underline hover:text-accent-main"
-            target="_blank">Desarrollado por Edgar Briceño</a
-        >
-        |
-        <a
-            href="https://github.com/edgarbri26/cancionero-digital-frontend"
-            class="hover:underline hover:text-accent-main text-accent-main"
-            target="_blank"><i class="fa-brands fa-github"></i> GitHub</a
-        >
-        |
-        <a
-            href="https://wa.me/584262498651?text=Hola%20Edgar,%20saludos%20musicales!%20🎵%20Quisiera%20saber%20más%20sobre%20el%20Cancionero%20Digital."
-            class="hover:underline hover:text-accent-main text-accent-main"
-            target="_blank"
-        >
-            <i class="fa-brands fa-whatsapp"></i> contacto</a
-        >
+        <!-- Developer & Contact Links -->
+        <div class="flex flex-wrap items-center justify-center sm:justify-end gap-2 text-xs">
+            <a
+                href="https://github.com/edgarbri26"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 text-zinc-400 hover:text-white transition-colors"
+            >
+                <span>Desarrollado por</span>
+                <span class="font-semibold text-zinc-200 hover:text-accent-main transition-colors">Edgar Briceño</span>
+            </a>
+
+            <div class="flex items-center gap-2">
+                <a
+                    href="https://github.com/edgarbri26/cancionero-digital-frontend"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition-all active:scale-95 text-xs font-medium"
+                    title="Repositorio en GitHub"
+                >
+                    <i class="fa-brands fa-github text-sm"></i>
+                    <span>GitHub</span>
+                </a>
+
+                <a
+                    href="https://wa.me/584262498651?text=Hola%20Edgar!%20🎵%20Quisiera%20saber%20más%20sobre%20el%20Cancionero."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 hover:text-emerald-300 transition-all active:scale-95 text-xs font-medium"
+                    title="Contactar por WhatsApp"
+                >
+                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                    <span>Contacto</span>
+                </a>
+            </div>
+        </div>
     </div>
 </footer>
+
