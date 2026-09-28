@@ -129,7 +129,8 @@ if (id) {
                                                 <div class="mb-4">
                                                     <HeaderLyric
                                                         title={ms.song.title}
-                                                        artist={ms.song.artist}
+                                                        author={ms.song.author}
+                                                        artist={ms.song.author?.name || "Desconocido"}
                                                         tone={
                                                             ms.key ||
                                                             ms.song.key

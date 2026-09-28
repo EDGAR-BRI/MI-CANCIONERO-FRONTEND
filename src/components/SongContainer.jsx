@@ -117,7 +117,8 @@ export default function SongContainer({ id, token, initialSong }) {
                 <HeaderLyricReact
                     id={id}
                     title={song.title}
-                    artist={song.artist}
+                    author={song.author}
+                    artist={song.author?.name || "Desconocido"}
                     tone={currentKey}
                     category={song.category}
                     categories={song.categories}

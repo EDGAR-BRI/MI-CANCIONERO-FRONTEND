@@ -1,8 +1,10 @@
 ---
 import type { Category } from "@/types/category";
+import type { Author } from "@/types/author";
 const {
     title = "Título Desconocido",
-    artist = "Artista Desconocido",
+    author,
+    artist,
     tone = "C",
     category,
     categories: categoriesProp,
@@ -14,6 +16,8 @@ const {
 const categories = categoriesProp && categoriesProp.length > 0
     ? categoriesProp
     : (category ? [category] : []);
+
+const authorDisplay = author?.name || (typeof author === "string" ? author : (artist || "Desconocido"));
 ---
 
 <header class="mb-8">
@@ -25,7 +29,7 @@ const categories = categoriesProp && categoriesProp.length > 0
     </h1>
     <h2 class="text-xl text-accent-main font-medium">
         <span class="text-text-secondary">Autor:</span>
-        <span transition:name={`song artist ${id}`}>{artist}</span>
+        <span transition:name={`song-artist-${id}`}>{authorDisplay}</span>
     </h2>
     <div
         class="flex flex-col sm:flex-row sm:justify-start justify-between gap-4 mt-4 text-sm text-text-secondary"

@@ -1,10 +1,11 @@
 import React from 'react';
 import { transposeChord } from "../utils/music";
 
-export const HeaderLyricReact = ({ id, title, artist, tone, category, categories: categoriesProp, user }) => {
+export const HeaderLyricReact = ({ id, title, author, artist, tone, category, categories: categoriesProp, user }) => {
     const categories = categoriesProp && categoriesProp.length > 0
         ? categoriesProp
         : (category ? [category] : []);
+    const authorName = author?.name || (typeof author === 'string' ? author : (artist || "Desconocido"));
 
     return (
         <header className="mb-8">
@@ -16,7 +17,7 @@ export const HeaderLyricReact = ({ id, title, artist, tone, category, categories
             </h1>
             <h2 className="text-xl text-accent-main font-medium">
                 <span className="text-text-secondary">Autor:</span>{" "}
-                <span style={{ viewTransitionName: `song-artist-${id}` }}>{artist || "Artista Desconocido"}</span>
+                <span style={{ viewTransitionName: `song-artist-${id}` }}>{authorName}</span>
             </h2>
             <div className="flex flex-col sm:flex-row sm:justify-start justify-between gap-4 mt-4 text-sm text-text-secondary">
                 <div className="flex flex-wrap items-center justify-start gap-2">

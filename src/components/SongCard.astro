@@ -3,6 +3,7 @@ const { song } = Astro.props;
 const categories = song.categories && song.categories.length > 0
     ? song.categories
     : (song.category ? [song.category] : []);
+const authorName = song.author?.name || song.author || "Desconocido";
 ---
 
 <a href={`/songs/${song.id}`} class="block group" data-astro-prefetch>
@@ -20,7 +21,7 @@ const categories = song.categories && song.categories.length > 0
                 transition:name={`song-artist-${song.id}`}
                 class="text-text-secondary text-sm mb-4 truncate"
             >
-                {song.artist}
+                {authorName}
             </p>
         </div>
 

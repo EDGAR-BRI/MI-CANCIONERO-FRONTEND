@@ -27,6 +27,7 @@ export interface ChordProResponse {
  */
 export interface SearchSongParams {
     lyricFragment: string;
+    author?: string;
     artist?: string;
     title?: string;
 }
@@ -74,7 +75,8 @@ export const searchSongByLyrics = async (
             headers,
             body: JSON.stringify({
                 lyricFragment: params.lyricFragment,
-                artist: params.artist || "",
+                author: params.author || params.artist || "",
+                artist: params.author || params.artist || "",
                 title: params.title || "",
             }),
         });

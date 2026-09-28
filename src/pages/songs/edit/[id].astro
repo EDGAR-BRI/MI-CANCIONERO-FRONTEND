@@ -2,6 +2,7 @@
 // export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
 import type { Category } from "@/types/category";
+import type { Author } from "@/types/author";
 import ChordEditor from "@/components/ChordEditor.jsx";
 import KeySelector from "@/components/KeySelector.astro";
 import "@/styles/global.css";
@@ -16,6 +17,7 @@ import {
 import { API_URL } from "@/services/songs";
 import AiAutocompleteButton from "@/components/Ui/AiAutocompleteButton.astro";
 import CategoryMultiSelectReact from "@/components/CategoryMultiSelectReact";
+import AuthorSelectReact from "@/components/AuthorSelectReact";
 
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
@@ -32,6 +34,7 @@ const { id } = Astro.params;
 
 let song = null;
 let categories: Category[] = [];
+let authors: Author[] = [];
 let error = null;
 
 // Fetch Categories
@@ -42,6 +45,16 @@ try {
     }
 } catch (e) {
     console.error("Error fetching categories:", e);
+}
+
+// Fetch Authors
+try {
+    const resAuthors = await fetch(`${API_URL}/authors`);
+    if (resAuthors.ok) {
+        authors = await resAuthors.json();
+    }
+} catch (e) {
+    console.error("Error fetching authors:", e);
 }
 
 // Fetch Song Data
@@ -93,16 +106,14 @@ if (Astro.request.method === "POST") {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="space-y-2">
                         <label
-                            for="artist"
                             class="block text-sm font-medium text-text-secondary"
-                            >Artista / Banda</label
+                            >Autor / Compositor</label
                         >
-                        <input
-                            type="text"
-                            id="artist"
-                            name="artist"
-                            value={song.artist}
-                            class="w-full bg-bg-secondary border border-white/10 rounded-lg p-3 text-text-main focus:outline-none focus:border-accent-main transition-colors placeholder-white/20"
+                        <AuthorSelectReact
+                            client:load
+                            authors={authors}
+                            selectedId={song?.authorId || song?.author?.id}
+                            token={token}
                         />
                     </div>
 

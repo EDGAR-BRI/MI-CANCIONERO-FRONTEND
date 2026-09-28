@@ -240,7 +240,7 @@ export default function MisaSongManager({ misaId, moments, token, editToken }) {
                                                             {song.title}
                                                         </div>
                                                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                            {song.artist}
+                                                            {song.author?.name || "Desconocido"}
                                                         </div>
                                                     </div>
                                                     <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-600 dark:text-gray-300">
@@ -273,7 +273,7 @@ export default function MisaSongManager({ misaId, moments, token, editToken }) {
                                                 {selectedSong.title}
                                             </h4>
                                             <p className="text-gray-600 dark:text-gray-400">
-                                                {selectedSong.artist}
+                                                {selectedSong.author?.name || "Desconocido"}
                                             </p>
                                         </div>
                                         <button

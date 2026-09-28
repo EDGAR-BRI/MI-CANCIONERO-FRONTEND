@@ -4,6 +4,7 @@ const SongCardReact = ({ song }) => {
     const categories = song.categories && song.categories.length > 0
         ? song.categories
         : (song.category ? [song.category] : []);
+    const authorName = song.author?.name || song.author || "Desconocido";
 
     return (
         <a href={`/songs/${song.id}`} className="block group">
@@ -19,7 +20,7 @@ const SongCardReact = ({ song }) => {
                         style={{ viewTransitionName: `song-artist-${song.id}` }}
                         className="text-text-secondary text-sm mb-4 truncate"
                     >
-                        {song.artist}
+                        {authorName}
                     </p>
                 </div>
 

@@ -569,8 +569,13 @@ if (Astro.request.method === "POST") {
                             if (data.metadata?.title && titleInput) {
                                 titleInput.value = data.metadata.title;
                             }
-                            if (data.metadata?.artist && artistInput) {
-                                artistInput.value = data.metadata.artist;
+                            const detectedAuthor = data.metadata?.author || data.metadata?.artist;
+                            if (detectedAuthor) {
+                                window.dispatchEvent(
+                                    new CustomEvent("set-author", {
+                                        detail: { name: detectedAuthor },
+                                    }),
+                                );
                             }
                             if (data.metadata?.key) {
                                 const keySelect = document.querySelector(

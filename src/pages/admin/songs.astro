@@ -82,7 +82,7 @@ try {
                             >Título</th
                         >
                         <th class="px-6 py-3 border-b border-white/10"
-                            >Artista</th
+                            >Autor</th
                         >
                         <th
                             class="px-6 py-3 border-b border-white/10 text-center"
@@ -106,7 +106,7 @@ try {
                                     {song.title}
                                 </td>
                                 <td class="px-6 py-4 text-text-secondary">
-                                    {song.artist}
+                                    {song.author?.name || "Desconocido"}
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <label class="relative inline-flex items-center cursor-pointer">
