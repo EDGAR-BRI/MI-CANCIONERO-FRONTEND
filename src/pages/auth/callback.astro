@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/LoginLayout.astro";
 import { API_URL } from "@/services/songs";
+import { getOAuthRedirectUri } from "@/services/auth";
 
 const code = Astro.url.searchParams.get("code");
 const error = Astro.url.searchParams.get("error");
@@ -11,9 +12,7 @@ let serverError: string | null = error ? (errorDescription || error) : null;
 // If authorization code is present in query parameters (Authorization Code flow)
 if (code && !serverError) {
     try {
-        const redirectUri = import.meta.env.PROD
-            ? `${Astro.url.origin}/auth/callback`
-            : "http://localhost:4321/auth/callback";
+        const redirectUri = getOAuthRedirectUri(Astro.request);
         const response = await fetch(`${API_URL}/auth/google/callback`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },

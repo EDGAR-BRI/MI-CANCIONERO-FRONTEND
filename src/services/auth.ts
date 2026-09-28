@@ -76,3 +76,29 @@ export const updateProfile = async (data: UpdateProfileData, token?: string) => 
     }
 };
 
+/**
+ * Resuelve la URI de redirección canónica para Google OAuth.
+ * Evita el problema de Vercel Serverless donde url.origin devuelve "https://localhost".
+ */
+export const getOAuthRedirectUri = (request?: Request): string => {
+    if (!import.meta.env.PROD) {
+        return "http://localhost:4321/auth/callback";
+    }
+
+    if (import.meta.env.PUBLIC_FRONTEND_URL) {
+        return `${import.meta.env.PUBLIC_FRONTEND_URL.replace(/\/$/, "")}/auth/callback`;
+    }
+
+    if (request) {
+        const forwardedHost = request.headers.get("x-forwarded-host");
+        const host = forwardedHost || request.headers.get("host");
+        const proto = request.headers.get("x-forwarded-proto") || "https";
+
+        if (host && !host.startsWith("localhost")) {
+            return `${proto}://${host}/auth/callback`;
+        }
+    }
+
+    return "https://www.micancionero.online/auth/callback";
+};
+

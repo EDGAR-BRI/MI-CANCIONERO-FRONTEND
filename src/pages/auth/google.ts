@@ -1,12 +1,10 @@
 import type { APIRoute } from "astro";
 import { API_URL } from "@/services/songs";
+import { getOAuthRedirectUri } from "@/services/auth";
 
-export const GET: APIRoute = async ({ url, redirect }) => {
+export const GET: APIRoute = async ({ request, redirect }) => {
     try {
-        // En desarrollo local siempre usar el puerto canónico 4321 autorizado en Google Cloud Console
-        const redirectUri = import.meta.env.PROD
-            ? `${url.origin}/auth/callback`
-            : "http://localhost:4321/auth/callback";
+        const redirectUri = getOAuthRedirectUri(request);
 
         const res = await fetch(`${API_URL}/auth/google?redirectUri=${encodeURIComponent(redirectUri)}&json=true`);
         if (res.ok) {
