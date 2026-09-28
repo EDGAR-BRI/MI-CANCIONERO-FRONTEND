@@ -18,6 +18,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
     const [loading, setLoading] = useState(true);
     const [ministry, setMinistry] = useState(null);
     const [activeTab, setActiveTab] = useState('miembros'); // 'miembros' | 'solicitudes' | 'misas' | 'ajustes'
+    const [copiedLink, setCopiedLink] = useState(false);
 
     // Member search modal state
     const [showAddMemberModal, setShowAddMemberModal] = useState(false);
@@ -199,10 +200,43 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
         return `${origin}/ministerios/unirse?codigo=${ministry.inviteCode}`;
     };
 
-    const handleCopyInviteLink = () => {
+    const handleCopyInviteLink = async () => {
         const url = getInviteUrl();
-        navigator.clipboard.writeText(url);
-        showSuccessToast("Copiado", "Enlace de invitación copiado al portapapeles.");
+        if (!url) return;
+
+        let copied = false;
+        if (navigator?.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(url);
+                copied = true;
+            } catch (err) {
+                console.warn("Clipboard API failed, using fallback:", err);
+            }
+        }
+
+        if (!copied) {
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = url;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                textArea.style.top = "-9999px";
+                textArea.setAttribute("readonly", "");
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                copied = document.execCommand("copy");
+                document.body.removeChild(textArea);
+            } catch (e) {
+                console.error("Fallback copy failed:", e);
+            }
+        }
+
+        setCopiedLink(true);
+        showSuccessToast("¡Enlace Copiado!", "El enlace de invitación se copió al portapapeles.");
+        setTimeout(() => {
+            setCopiedLink(false);
+        }, 2200);
     };
 
     const handleShareWhatsApp = () => {
@@ -238,48 +272,47 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
     const pendingCount = ministry.pendingRequests?.length || 0;
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8 w-full max-w-full min-w-0">
             {/* Header Card */}
-            <div className="bg-[#171717] border border-white/10 rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl relative overflow-hidden">
+            <div className="bg-[#171717] border border-white/10 rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl relative overflow-hidden w-full max-w-full min-w-0">
                 <div className="absolute top-0 right-0 w-80 h-80 bg-accent-main/5 rounded-full blur-3xl -z-10 pointer-events-none"></div>
 
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-5 sm:gap-6">
-                    <div className="flex items-start gap-3.5 sm:gap-5">
+                    <div className="flex items-start gap-3.5 sm:gap-5 min-w-0 flex-1">
                         <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-tr from-accent-main/20 to-amber-500/10 border border-accent-main/30 text-accent-main flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-lg">
                             <i className="fa-solid fa-church"></i>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2.5">
-                                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight truncate">
                                     {ministry.name}
                                 </h1>
-                                <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${
-                                    isGroupAdmin
+                                <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full shrink-0 ${isGroupAdmin
                                         ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
                                         : 'bg-zinc-800 text-zinc-300 border border-white/10'
-                                }`}>
+                                    }`}>
                                     {isGroupAdmin ? '👑 Administrador' : '🎵 Miembro'}
                                 </span>
                             </div>
 
-                            <p className="text-zinc-300 text-sm max-w-2xl">
+                            <p className="text-zinc-300 text-sm max-w-2xl break-words">
                                 {ministry.description || 'Sin descripción detallada.'}
                             </p>
 
-                            <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-400 pt-1">
-                                <span className="flex items-center gap-1.5">
+                            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-zinc-400 pt-1">
+                                <span className="flex items-center gap-1.5 shrink-0">
                                     <i className="fa-solid fa-user-group text-accent-main"></i>
                                     {ministry.activeMembers?.length || 0} integrantes
                                 </span>
                                 {ministry.foundedAt && (
-                                    <span className="flex items-center gap-1.5">
+                                    <span className="flex items-center gap-1.5 shrink-0">
                                         <i className="fa-regular fa-calendar text-accent-main"></i>
                                         Fundado en {new Date(ministry.foundedAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
                                     </span>
                                 )}
                                 {ministry.requireApproval && (
-                                    <span className="flex items-center gap-1 text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                                    <span className="flex items-center gap-1 text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
                                         <i className="fa-solid fa-shield-halved"></i>
                                         Requiere aprobación
                                     </span>
@@ -289,7 +322,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     </div>
 
                     {/* WhatsApp & Invite Actions */}
-                    <div className="flex flex-row md:flex-col items-center md:items-end gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10">
+                    <div className="flex flex-row md:flex-col items-center md:items-end gap-2.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-white/10 w-full md:w-auto">
                         <button
                             onClick={handleShareWhatsApp}
                             className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md active:scale-95 whitespace-nowrap"
@@ -298,24 +331,40 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                             <span><span className="hidden sm:inline">Compartir en </span>WhatsApp</span>
                         </button>
                         <button
+                            type="button"
                             onClick={handleCopyInviteLink}
-                            className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#262626] hover:bg-[#333333] border border-white/10 rounded-xl text-xs font-semibold text-zinc-300 hover:text-white transition-all active:scale-95 whitespace-nowrap"
+                            className={`flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 active:scale-95 whitespace-nowrap cursor-pointer ${
+                                copiedLink
+                                    ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-950/40 scale-[1.03]'
+                                    : 'bg-[#262626] hover:bg-[#333333] border border-white/10 text-zinc-300 hover:text-white'
+                            }`}
+                            title={copiedLink ? "¡Enlace copiado al portapapeles!" : "Copiar enlace de invitación"}
                         >
-                            <i className="fa-regular fa-copy"></i>
-                            <span>Copiar Enlace</span>
+                            <span className="inline-flex items-center gap-1.5 transition-transform duration-200">
+                                {copiedLink ? (
+                                    <>
+                                        <i className="fa-solid fa-check text-emerald-400 text-sm transition-transform duration-300 scale-125"></i>
+                                        <span className="font-bold text-emerald-300">¡Copiado!</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fa-regular fa-copy text-sm"></i>
+                                        <span>Copiar Enlace</span>
+                                    </>
+                                )}
+                            </span>
                         </button>
                     </div>
                 </div>
 
                 {/* Navigation Tabs */}
-                <div className="flex items-center gap-2 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/10 overflow-x-auto no-scrollbar pb-1">
+                <div className="flex items-center gap-2 pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-white/10 overflow-x-auto no-scrollbar pb-1 w-full max-w-full min-w-0">
                     <button
                         onClick={() => setActiveTab('miembros')}
-                        className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                            activeTab === 'miembros'
+                        className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${activeTab === 'miembros'
                                 ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                 : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
-                        }`}
+                            }`}
                     >
                         <i className="fa-solid fa-users"></i>
                         <span>Integrantes ({ministry.activeMembers?.length || 0})</span>
@@ -324,11 +373,10 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     {canManageInvites && (
                         <button
                             onClick={() => setActiveTab('solicitudes')}
-                            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                                activeTab === 'solicitudes'
+                            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${activeTab === 'solicitudes'
                                     ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                     : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
-                            }`}
+                                }`}
                         >
                             <i className="fa-solid fa-user-clock"></i>
                             <span>Solicitudes</span>
@@ -342,24 +390,22 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
 
                     <button
                         onClick={() => setActiveTab('misas')}
-                        className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                            activeTab === 'misas'
+                        className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${activeTab === 'misas'
                                 ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                 : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
-                        }`}
+                            }`}
                     >
                         <i className="fa-solid fa-book-bible"></i>
-                        <span>Repertorio & Misas ({ministry.misas?.length || 0})</span>
+                        <span><span className="hidden sm:inline">Repertorio & </span>Misas ({ministry.misas?.length || 0})</span>
                     </button>
 
                     {isGroupAdmin && (
                         <button
                             onClick={() => setActiveTab('ajustes')}
-                            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
-                                activeTab === 'ajustes'
+                            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${activeTab === 'ajustes'
                                     ? 'bg-accent-main text-black shadow-md shadow-accent-main/20'
                                     : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
-                            }`}
+                                }`}
                         >
                             <i className="fa-solid fa-gear"></i>
                             <span>Ajustes</span>
@@ -413,11 +459,10 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                                 <span className="font-semibold text-white text-sm truncate">
                                                     {m.name} {isMe && '(Tú)'}
                                                 </span>
-                                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full shrink-0 ${
-                                                    isMemberAdmin
+                                                <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full shrink-0 ${isMemberAdmin
                                                         ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                                                         : 'bg-zinc-800 text-zinc-400 border border-white/10'
-                                                }`}>
+                                                    }`}>
                                                     {isMemberAdmin ? '👑 Admin' : 'Miembro'}
                                                 </span>
                                             </div>
@@ -711,12 +756,36 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                 value={getInviteUrl()}
                                 className="w-full px-4 py-2 bg-black/40 border border-white/10 rounded-xl text-xs text-zinc-300 font-mono"
                             />
-                            <button
-                                onClick={handleRegenerateCode}
-                                className="w-full sm:w-auto px-4 py-2 border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs font-semibold rounded-xl shrink-0 transition-colors"
-                            >
-                                Regenerar Enlace
-                            </button>
+                            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={handleCopyInviteLink}
+                                    className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 active:scale-95 whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer ${
+                                        copiedLink
+                                            ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 ring-2 ring-emerald-500/30'
+                                            : 'bg-[#262626] hover:bg-[#333333] border border-white/10 text-zinc-300 hover:text-white'
+                                    }`}
+                                >
+                                    {copiedLink ? (
+                                        <>
+                                            <i className="fa-solid fa-check text-emerald-400"></i>
+                                            <span>¡Copiado!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa-regular fa-copy"></i>
+                                            <span>Copiar</span>
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleRegenerateCode}
+                                    className="flex-1 sm:flex-initial px-4 py-2 border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                                >
+                                    Regenerar Enlace
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -786,24 +855,13 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                             />
                                             <div>
                                                 <span className="font-semibold text-white text-sm block">{userItem.name}</span>
-                                                <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-400">
-                                                    <span>{userItem.email}</span>
-                                                    {userItem.phoneNumber && (
-                                                        <>
-                                                            <span className="text-zinc-600">•</span>
-                                                            <span className="flex items-center gap-1 text-zinc-400">
-                                                                <i className="fa-solid fa-phone text-[10px] text-zinc-500"></i>
-                                                                <span>{userItem.phoneNumber}</span>
-                                                            </span>
-                                                        </>
-                                                    )}
-                                                </div>
+                                                <span className="text-xs text-zinc-400 block">{userItem.email}</span>
                                             </div>
                                         </div>
                                         <button
                                             onClick={() => handleAddDirect(userItem)}
                                             disabled={addingUserId === userItem.id}
-                                            className="px-3.5 py-1.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 shrink-0"
+                                            className="px-3.5 py-1.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50"
                                         >
                                             {addingUserId === userItem.id ? 'Agregando...' : '+ Agregar'}
                                         </button>

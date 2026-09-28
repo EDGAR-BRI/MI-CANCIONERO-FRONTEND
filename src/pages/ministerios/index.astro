@@ -1,0 +1,38 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { getUserFromToken } from "@/utils/auth";
+import { getMyMinistries } from "@/services/ministries";
+import MinistriesViewReact from "@/components/MinistriesViewReact";
+
+const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
+
+if (!user || !token) {
+    return Astro.redirect(`/login?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
+
+// Consultar ministerios del usuario en el servidor (SSR)
+const res = await getMyMinistries(token);
+const ministries = res.success && res.data?.ministries ? res.data.ministries : [];
+const pendingRequests = res.success && res.data?.pendingRequests ? res.data.pendingRequests : [];
+
+// Regla de negocio solicitada:
+// Si solo tiene un ministerio (y no viene forzado a ver todos con ?all=true),
+// abrir automáticamente el detalle de ese ministerio.
+const showAll = Astro.url.searchParams.get("all") === "true";
+if (!showAll && ministries.length === 1) {
+    return Astro.redirect(`/ministerios/${ministries[0].id}`);
+}
+---
+
+<Layout title="Mis Ministerios de Música | Cancionero">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28 md:pb-12">
+        <MinistriesViewReact
+            client:load
+            user={user}
+            token={token}
+            initialMinistries={ministries}
+            initialPendingRequests={pendingRequests}
+        />
+    </main>
+</Layout>
