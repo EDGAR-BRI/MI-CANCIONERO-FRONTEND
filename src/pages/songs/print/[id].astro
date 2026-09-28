@@ -52,7 +52,14 @@ if (id) {
                 <div class="meta" style="margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
                     <span><strong>Tono:</strong> <span class="badge" style="border: 1px solid #ccc; padding: 2px 8px; border-radius: 4px;">{displayTone}</span></span>
                     {displayTone !== song.key && <span>(Original: {song.key})</span>}
-                    <span style="margin-left: 20px;"><strong>Categoría:</strong> {song.category?.name || "General"}</span>
+                    <span style="margin-left: 20px;">
+                        <strong>Categorías:</strong>{" "}
+                        {
+                            song.categories && song.categories.length > 0
+                                ? song.categories.map((c: any) => c.name).join(", ")
+                                : (song.category?.name || "General")
+                        }
+                    </span>
                 </div>
 
                 <div class="song-content">

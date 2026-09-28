@@ -15,6 +15,7 @@ import {
 } from "@/utils/alerts";
 import { API_URL } from "@/services/songs";
 import AiAutocompleteButton from "@/components/Ui/AiAutocompleteButton.astro";
+import CategoryMultiSelectReact from "@/components/CategoryMultiSelectReact";
 
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
@@ -54,6 +55,11 @@ try {
 } catch (e) {
     console.error("Error fetching song:", e);
     return Astro.redirect("/");
+}
+
+const songCategoryIds = (song?.categories || []).map((c: any) => c.id);
+if (songCategoryIds.length === 0 && song?.categoryId) {
+    songCategoryIds.push(song.categoryId);
 }
 
 let errorMessage = "";
@@ -146,29 +152,12 @@ if (Astro.request.method === "POST") {
                         />
                     </div>
 
-                    <div class="space-y-2">
-                        <label
-                            for="categoryId"
-                            class="block text-sm font-medium text-text-secondary"
-                            >Categoría</label
-                        >
-                        <select
-                            id="categoryId"
-                            name="categoryId"
-                            class="w-full bg-bg-secondary border border-white/10 rounded-lg p-3 text-text-main focus:outline-none focus:border-accent-main transition-colors appearance-none cursor-pointer"
-                        >
-                            {
-                                categories.map((cat) => (
-                                    <option
-                                        value={cat.id}
-                                        selected={song.categoryId === cat.id}
-                                    >
-                                        {cat.name}
-                                    </option>
-                                ))
-                            }
-                        </select>
-                    </div>
+                    <CategoryMultiSelectReact
+                        client:load
+                        categories={categories}
+                        selectedIds={songCategoryIds}
+                        token={token}
+                    />
 
                     <div class="space-y-2">
                         <label

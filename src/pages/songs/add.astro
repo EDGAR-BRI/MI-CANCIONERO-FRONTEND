@@ -5,8 +5,11 @@ import Header from "@/components/Header.astro";
 import ChordEditor from "@/components/ChordEditor.jsx";
 import "@/styles/global.css";
 import type { Category } from "@/types/category";
+import type { Author } from "@/types/author";
 import { createSong, API_URL } from "@/services/songs";
 import AiAutocompleteButton from "@/components/Ui/AiAutocompleteButton.astro";
+import CategoryMultiSelectReact from "@/components/CategoryMultiSelectReact";
+import AuthorSelectReact from "@/components/AuthorSelectReact";
 
 import { getUserFromToken, hasPermission } from "@/utils/auth";
 
@@ -29,6 +32,16 @@ try {
     }
 } catch (e) {
     console.error("Error fetching categories:", e);
+}
+
+let authors: Author[] = [];
+try {
+    const resAuthors = await fetch(`${API_URL}/authors`);
+    if (resAuthors.ok) {
+        authors = await resAuthors.json();
+    }
+} catch (e) {
+    console.error("Error fetching authors:", e);
 }
 
 let errorMessage = "";
@@ -59,16 +72,13 @@ if (Astro.request.method === "POST") {
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="space-y-2">
                         <label
-                            for="artist"
                             class="block text-sm font-medium text-text-secondary"
-                            >Artista / Banda</label
+                            >Autor / Compositor</label
                         >
-                        <input
-                            type="text"
-                            id="artist"
-                            name="artist"
-                            class="w-full bg-bg-secondary border border-white/10 rounded-lg p-3 text-text-main focus:outline-none focus:border-accent-main transition-colors placeholder-white/20"
-                            placeholder="Ej. Cindy Barrera"
+                        <AuthorSelectReact
+                            client:load
+                            authors={authors}
+                            token={token}
                         />
                     </div>
 
@@ -147,33 +157,11 @@ if (Astro.request.method === "POST") {
                         />
                     </div>
 
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <label
-                                for="categoryId"
-                                class="block text-sm font-medium text-text-secondary"
-                                >Categoría</label
-                            >
-                            <button
-                                type="button"
-                                id="btn-new-category"
-                                class="text-xs text-accent-main hover:text-white underline transition-colors"
-                            >
-                                + Nueva Categoría
-                            </button>
-                        </div>
-                        <select
-                            id="categoryId"
-                            name="categoryId"
-                            class="w-full bg-bg-secondary border border-white/10 rounded-lg p-3 text-text-main focus:outline-none focus:border-accent-main transition-colors appearance-none cursor-pointer"
-                        >
-                            {
-                                categories.map((cat) => (
-                                    <option value={cat.id}>{cat.name}</option>
-                                ))
-                            }
-                        </select>
-                    </div>
+                    <CategoryMultiSelectReact
+                        client:load
+                        categories={categories}
+                        token={token}
+                    />
                 </div>
 
                 <div class="border-t border-white/10 pt-6">

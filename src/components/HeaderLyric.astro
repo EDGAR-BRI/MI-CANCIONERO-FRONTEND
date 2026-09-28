@@ -5,10 +5,15 @@ const {
     artist = "Artista Desconocido",
     tone = "C",
     category,
+    categories: categoriesProp,
     url_song = "",
     user,
     id,
 } = Astro.props;
+
+const categories = categoriesProp && categoriesProp.length > 0
+    ? categoriesProp
+    : (category ? [category] : []);
 ---
 
 <header class="mb-8">
@@ -25,7 +30,7 @@ const {
     <div
         class="flex flex-col sm:flex-row sm:justify-start justify-between gap-4 mt-4 text-sm text-text-secondary"
     >
-        <div class="flex items-center justify-start gap-2">
+        <div class="flex flex-wrap items-center justify-start gap-2">
             <span
                 transition:name={`song tone ${id}`}
                 class="bg-bg-secondary px-3 py-1 rounded-full border border-white/10"
@@ -34,14 +39,15 @@ const {
                     >{tone}</span
                 >
             </span>
-            <a href={`/search/all?categoryId=${category?.id}`} target="_blank">
-                <span
-                    transition:name={`song category ${id}`}
-                    class="cursor-pointer hover:underline bg-bg-secondary px-3 py-1 rounded-full border border-white/10 text-accent-main/90 font-bold"
-                >
-                    category?.name
-                </span>
-            </a>
+            {categories.map((cat: any) => (
+                <a href={`/songs/search/all?categoryId=${cat.id}`} target="_blank">
+                    <span
+                        class="cursor-pointer hover:underline bg-bg-secondary hover:bg-white/10 px-3 py-1 rounded-full border border-white/10 text-accent-main/90 font-bold transition-colors"
+                    >
+                        {cat.name}
+                    </span>
+                </a>
+            ))}
         </div>
         {
             user && (

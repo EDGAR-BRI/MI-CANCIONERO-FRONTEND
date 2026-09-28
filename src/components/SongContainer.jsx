@@ -120,6 +120,7 @@ export default function SongContainer({ id, token, initialSong }) {
                     artist={song.artist}
                     tone={currentKey}
                     category={song.category}
+                    categories={song.categories}
                     user={song.user}
                 />
 
