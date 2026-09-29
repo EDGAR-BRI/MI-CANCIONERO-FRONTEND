@@ -1,0 +1,36 @@
+name: CI Frontend Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    name: Run Frontend Tests & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.22.0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Ejecutar pruebas unitarias
+        run: pnpm test
+
+      - name: Validar build de producción
+        run: pnpm run build
