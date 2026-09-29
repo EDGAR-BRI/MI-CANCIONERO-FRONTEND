@@ -53,6 +53,11 @@ export default defineConfig({
     },
   }), sitemap()],
   vite: {
+    server: {
+      fs: {
+        allow: ['..']
+      }
+    },
     plugins: [
       tailwindcss(),
     ],
