@@ -8,7 +8,7 @@ const SongCardReact = ({ song }) => {
 
     return (
         <a href={`/songs/${song.id}`} className="block group">
-            <article className="bg-bg-secondary border border-white/5 rounded-xl p-5 hover:border-accent-main/50 transition-colors h-full flex flex-col justify-between">
+            <article className="bg-bg-secondary border border-white/5 rounded-xl p-4 sm:p-5 hover:border-accent-main/50 transition-colors h-full flex flex-col justify-between">
                 <div>
                     <h2
                         style={{ viewTransitionName: `song-title-${song.id}` }}
