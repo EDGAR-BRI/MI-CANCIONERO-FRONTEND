@@ -12,33 +12,38 @@ const canViewAdmin = hasPermission(user, "view.admin");
 ---
 
 <header
-    class="w-full max-w-full flex items-center justify-between px-2 sm:px-4 md:px-8 py-2 sm:py-2.5 bg-bg-secondary/95 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 min-w-0 shadow-sm transition-all duration-300"
+    class="w-full max-w-full flex items-center justify-between px-3 sm:px-4 md:px-8 py-2 sm:py-2.5 bg-bg-secondary/95 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 min-w-0 shadow-sm transition-all duration-300"
 >
     <div class="max-w-6xl w-full mx-auto flex items-center justify-between gap-2 sm:gap-3 min-w-0">
         <!-- Logo -->
-        <div id="header-logo" class="flex items-center gap-2 sm:gap-4 shrink-0 transition-all duration-300">
+        <div id="header-logo" class="relative z-20 flex items-center shrink-0 transition-all duration-300">
             <a
                 href="/"
-                class="text-2xl font-bold text-accent-main tracking-tighter flex items-center shrink-0"
+                id="header-logo-link"
+                class="relative z-20 flex items-center justify-center p-2 -m-2 min-w-[44px] min-h-[44px] rounded-xl text-2xl font-bold text-accent-main tracking-tighter shrink-0 select-none active:scale-95 transition-transform touch-manipulation cursor-pointer"
                 data-astro-prefetch
+                aria-label="Ir al inicio"
             >
                 <!-- Small Icon (Mobile: solo isologo) -->
                 <img
                     src="/icono.svg"
                     alt="Cancionero"
-                    class="h-8 w-auto block sm:hidden"
+                    class="h-8 w-auto block sm:hidden pointer-events-none select-none"
+                    draggable="false"
                 />
                 <!-- Medium Logo (Tablet) -->
                 <img
                     src="/medium-logo.svg"
                     alt="Cancionero"
-                    class="h-9 w-auto hidden sm:block lg:hidden"
+                    class="h-9 w-auto hidden sm:block lg:hidden pointer-events-none select-none"
+                    draggable="false"
                 />
                 <!-- Large Logo (Desktop) -->
                 <img
                     src="/large-logo.svg"
                     alt="Cancionero"
-                    class="h-10 w-auto hidden lg:block"
+                    class="h-10 w-auto hidden lg:block pointer-events-none select-none"
+                    draggable="false"
                 />
             </a>
         </div>
@@ -164,3 +169,21 @@ const canViewAdmin = hasPermission(user, "view.admin");
         border-bottom-color: transparent !important;
     }
 </style>
+
+<script>
+    const setupLogoNavigation = () => {
+        const logo = document.getElementById('header-logo-link');
+        if (!logo) return;
+
+        logo.addEventListener('click', (e) => {
+            // Si ya estamos en el inicio, hacer scroll suave al tope superior
+            if (window.location.pathname === '/') {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    };
+
+    setupLogoNavigation();
+    document.addEventListener('astro:page-load', setupLogoNavigation);
+</script>
