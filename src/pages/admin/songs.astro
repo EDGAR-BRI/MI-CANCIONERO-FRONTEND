@@ -1,6 +1,5 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
-import type { Song } from "../../types/song";
 import { API_URL } from "@/services/songs";
 
 const token = Astro.cookies.get("token")?.value;
@@ -16,189 +15,373 @@ try {
     const res = await fetch(`${API_URL}/songs?active=all`, {
         headers: {
             Authorization: `Bearer ${token}`,
+            Cookie: `token=${token}`,
         },
     });
     if (res.ok) {
         songs = await res.json();
     } else {
+        if (res.status === 403 || res.status === 401) {
+            return Astro.redirect("/");
+        }
         throw new Error("Error cargando canciones");
     }
 } catch (e) {
     console.error(e);
-    error = "No se pudieron cargar las canciones";
+    error = "No se pudieron cargar las canciones.";
 }
 ---
 
 <AdminLayout title="Gestión de Canciones">
     <div
         id="songs-page"
-        class="w-full"
+        class="space-y-6"
         data-api-url={API_URL}
         data-token={token}
     >
-        <div
-            class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
-        >
-            <h1 class="text-3xl font-bold text-accent-main">
-                Gestión de Canciones
-            </h1>
-
-            <div class="flex gap-4 items-center">
-                <select
-                    id="statusFilter"
-                    class="bg-bg-secondary border border-white/10 rounded-lg px-4 py-2 text-text-main focus:outline-none focus:border-accent-main cursor-pointer"
-                >
-                    <option value="all">Todas</option>
-                    <option value="true">Activas</option>
-                    <option value="false">Inactivas</option>
-                </select>
-
-                <a
-                    href="/add-song"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center gap-2"
-                >
-                    <i class="fa-solid fa-plus-circle"></i>
-                    Nueva Canción
-                </a>
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Gestión de Canciones
+                </h1>
+                <p class="text-xs sm:text-sm text-text-secondary mt-1">
+                    Controla la visibilidad de los cantos litúrgicos y accede a la edición de letras y acordes.
+                </p>
             </div>
+
+            <a
+                href="/songs/add"
+                class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Nueva Canción</span>
+            </a>
         </div>
 
         {
             error && (
-                <div class="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded mb-6">
-                    {error}
+                <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-4 rounded-xl flex items-center gap-2.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <span>{error}</span>
                 </div>
             )
         }
 
-        <div
-            class="overflow-x-auto bg-bg-secondary rounded-lg border border-white/10"
-        >
-            <table class="w-full text-left text-sm text-text-main">
-                <thead class="bg-bg-main text-text-secondary uppercase">
-                    <tr>
-                        <th class="px-6 py-3 border-b border-white/10">ID</th>
-                        <th class="px-6 py-3 border-b border-white/10"
-                            >Título</th
+        <!-- Filter Toolbar -->
+        <div class="bg-bg-secondary border border-white/5 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
+                <input
+                    id="songSearchInput"
+                    type="text"
+                    placeholder="Buscar canción por título o autor..."
+                    class="w-full bg-bg-main border border-white/10 focus:border-accent-main rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-white placeholder-text-secondary/50 outline-none transition-colors"
+                />
+                <button
+                    id="clearSongSearchBtn"
+                    type="button"
+                    class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white p-1 text-xs"
+                    title="Limpiar búsqueda"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <div class="relative min-w-[140px] flex-1 sm:flex-none">
+                    <select
+                        id="statusFilterSelect"
+                        class="w-full bg-bg-main border border-white/10 focus:border-accent-main rounded-xl px-3 py-2 text-xs sm:text-sm text-white appearance-none cursor-pointer outline-none"
+                    >
+                        <option value="all">Todas las canciones</option>
+                        <option value="true">Solo Activas</option>
+                        <option value="false">Solo Inactivas</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-[10px]"></i>
+                </div>
+
+                <div class="px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-xs text-text-secondary font-mono shrink-0 whitespace-nowrap">
+                    <span id="songCount">{songs.length}</span> cantos
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Card List View (< md) -->
+        <div id="mobileSongList" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 md:hidden">
+            {
+                songs.map((song: any) => {
+                    const searchData = `${song.title || ""} ${song.author?.name || ""}`.toLowerCase();
+                    const isActive = song.active;
+
+                    return (
+                        <div
+                            class="song-item bg-bg-secondary border border-white/5 rounded-xl p-4 flex flex-col justify-between hover:border-accent-main/40 transition-colors space-y-3"
+                            data-search={searchData}
+                            data-active={isActive.toString()}
+                            data-id={song.id}
                         >
-                        <th class="px-6 py-3 border-b border-white/10"
-                            >Autor</th
-                        >
-                        <th
-                            class="px-6 py-3 border-b border-white/10 text-center"
-                            >Estado</th
-                        >
-                        <th
-                            class="px-6 py-3 border-b border-white/10 text-center"
-                            >Acciones</th
-                        >
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-white/10">
-                    {
-                        songs.map((song: any) => (
-                            <tr
-                                class="hover:bg-white/5 transition-colors song-row"
-                                data-active={song.active.toString()}
-                            >
-                                <td class="px-6 py-4">{song.id}</td>
-                                <td class="px-6 py-4 font-medium">
-                                    {song.title}
-                                </td>
-                                <td class="px-6 py-4 text-text-secondary">
-                                    {song.author?.name || "Desconocido"}
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            class="sr-only peer toggle-active"
-                                            value=""
-                                            checked={song.active}
-                                            data-id={song.id}
-                                        />
-                                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-main/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-main" />
-                                        <span class="ml-3 text-sm font-medium text-gray-300">
-                                            {song.active
-                                                ? "Activo"
-                                                : "Inactivo"}
-                                        </span>
-                                    </label>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-3">
-                                        <a
-                                            href={`/edit-song/${song.id}`}
-                                            class="text-blue-400 hover:text-blue-300 transition-colors"
-                                            title="Editar"
-                                        >
-                                            <i class="fa-solid fa-pen-to-square h-5 w-5" />
+                            <!-- Card Header -->
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <span class="text-[10px] font-mono text-text-secondary opacity-70">
+                                        #{song.id}
+                                    </span>
+                                    <h3 class="text-sm font-semibold text-white truncate leading-snug">
+                                        <a href={`/songs/${song.id}`} class="hover:text-accent-main transition-colors">
+                                            {song.title}
                                         </a>
-                                        <button
-                                            class="text-red-400 hover:text-red-300 transition-colors delete-song-btn"
-                                            data-id={song.id}
-                                            title="Eliminar permanentemente"
-                                        >
-                                            <i class="fa-solid fa-trash h-5 w-5" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))
-                    }
-                </tbody>
-            </table>
+                                    </h3>
+                                    <p class="text-xs text-text-secondary truncate mt-0.5">
+                                        <i class="fa-solid fa-feather-pointed text-[10px] mr-1 opacity-60"></i>
+                                        {song.author?.name || "Autor desconocido"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Status Toggle Row -->
+                            <div class="pt-2 border-t border-white/5 flex items-center justify-between">
+                                <span class="text-xs text-text-secondary font-medium">
+                                    Estado en catálogo:
+                                </span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        class="sr-only peer toggle-active"
+                                        checked={isActive}
+                                        data-id={song.id}
+                                    />
+                                    <div class="w-10 h-5.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-main"></div>
+                                    <span class="ml-2 text-xs font-mono font-medium text-text-secondary peer-checked:text-accent-main">
+                                        {isActive ? "Activo" : "Inactivo"}
+                                    </span>
+                                </label>
+                            </div>
+
+                            <!-- Action Toolbar -->
+                            <div class="pt-2 border-t border-white/5 grid grid-cols-3 gap-2 text-xs">
+                                <a
+                                    href={`/songs/${song.id}`}
+                                    class="py-2 px-2.5 rounded-lg font-medium text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-colors flex items-center justify-center gap-1.5"
+                                    title="Ver canto"
+                                >
+                                    <i class="fa-solid fa-eye text-xs"></i>
+                                    <span>Ver</span>
+                                </a>
+                                <a
+                                    href={`/songs/edit/${song.id}`}
+                                    class="py-2 px-2.5 rounded-lg font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors flex items-center justify-center gap-1.5"
+                                    title="Editar canto"
+                                >
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                    <span>Editar</span>
+                                </a>
+                                <button
+                                    type="button"
+                                    class="delete-song-btn py-2 px-2.5 rounded-lg font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors flex items-center justify-center gap-1.5"
+                                    data-id={song.id}
+                                    data-title={song.title}
+                                    title="Eliminar canto"
+                                >
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                    <span>Borrar</span>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })
+            }
+        </div>
+
+        <!-- Desktop Table View (>= md) -->
+        <div class="hidden md:block bg-bg-secondary rounded-xl border border-white/5 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-text-main">
+                    <thead class="bg-bg-main text-text-secondary uppercase text-[11px] font-mono tracking-wider border-b border-white/5">
+                        <tr>
+                            <th class="px-5 py-3.5 font-semibold">ID</th>
+                            <th class="px-5 py-3.5 font-semibold">Título</th>
+                            <th class="px-5 py-3.5 font-semibold">Autor</th>
+                            <th class="px-5 py-3.5 font-semibold text-center">Estado</th>
+                            <th class="px-5 py-3.5 font-semibold text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="desktopSongTbody" class="divide-y divide-white/5">
+                        {
+                            songs.map((song: any) => {
+                                const searchData = `${song.title || ""} ${song.author?.name || ""}`.toLowerCase();
+                                const isActive = song.active;
+
+                                return (
+                                    <tr
+                                        class="song-item hover:bg-white/5 transition-colors"
+                                        data-search={searchData}
+                                        data-active={isActive.toString()}
+                                        data-id={song.id}
+                                    >
+                                        <td class="px-5 py-3.5 font-mono text-xs opacity-60">
+                                            #{song.id}
+                                        </td>
+                                        <td class="px-5 py-3.5 font-medium text-white">
+                                            <a
+                                                href={`/songs/${song.id}`}
+                                                class="hover:text-accent-main transition-colors"
+                                                title="Ver letra y acordes"
+                                            >
+                                                {song.title}
+                                            </a>
+                                        </td>
+                                        <td class="px-5 py-3.5 text-text-secondary text-xs">
+                                            {song.author?.name || "Desconocido"}
+                                        </td>
+                                        <td class="px-5 py-3.5 text-center">
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    class="sr-only peer toggle-active"
+                                                    checked={isActive}
+                                                    data-id={song.id}
+                                                />
+                                                <div class="w-10 h-5.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-main"></div>
+                                                <span class="ml-2.5 text-xs font-mono font-medium text-text-secondary peer-checked:text-accent-main min-w-[50px] text-left">
+                                                    {isActive ? "Activo" : "Inactivo"}
+                                                </span>
+                                            </label>
+                                        </td>
+                                        <td class="px-5 py-3.5 text-right">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                <a
+                                                    href={`/songs/${song.id}`}
+                                                    class="p-2 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
+                                                    title="Ver canto"
+                                                >
+                                                    <i class="fa-solid fa-eye text-sm" />
+                                                </a>
+                                                <a
+                                                    href={`/songs/edit/${song.id}`}
+                                                    class="p-2 rounded-lg text-text-secondary hover:text-blue-400 hover:bg-white/5 transition-colors"
+                                                    title="Editar canto y acordes"
+                                                >
+                                                    <i class="fa-solid fa-pen-to-square text-sm" />
+                                                </a>
+                                                <button
+                                                    type="button"
+                                                    class="delete-song-btn p-2 rounded-lg text-text-secondary hover:text-red-400 hover:bg-white/5 transition-colors"
+                                                    data-id={song.id}
+                                                    data-title={song.title}
+                                                    title="Eliminar permanentemente"
+                                                >
+                                                    <i class="fa-solid fa-trash text-sm" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- No Results Fallback -->
+        <div id="noSongResults" class="hidden bg-bg-secondary border border-white/5 rounded-xl p-8 text-center space-y-2">
+            <i class="fa-solid fa-music-slash text-2xl text-text-secondary/50"></i>
+            <p class="text-sm font-medium text-white">No se encontraron canciones</p>
+            <p class="text-xs text-text-secondary">Intenta con otros términos o cambia el filtro de estado.</p>
         </div>
     </div>
 </AdminLayout>
 
 <script>
-    import Swal from "sweetalert2";
+    import { showError, showSuccessToast, showConfirm } from "@/utils/alerts";
 
     const pageContainer = document.getElementById("songs-page");
-    const API_URL = pageContainer?.dataset.apiUrl;
+    const API_URL = pageContainer?.dataset.apiUrl || "http://localhost:3000/api";
     const token = pageContainer?.dataset.token;
 
-    const toggles = document.querySelectorAll(".toggle-active");
-    const deleteBtns = document.querySelectorAll(".delete-song-btn");
-    const filterSelect = document.getElementById("statusFilter");
-    const songRows = document.querySelectorAll(".song-row");
+    const searchInput = document.getElementById("songSearchInput") as HTMLInputElement;
+    const clearSearchBtn = document.getElementById("clearSongSearchBtn");
+    const statusFilterSelect = document.getElementById("statusFilterSelect") as HTMLSelectElement;
+    const songCountEl = document.getElementById("songCount");
+    const noResultsEl = document.getElementById("noSongResults");
+    const songItems = document.querySelectorAll(".song-item") as NodeListOf<HTMLElement>;
 
     // Filter Logic
-    filterSelect?.addEventListener("change", (e) => {
-        if (!(e.target instanceof HTMLSelectElement)) return;
-        const filter = e.target.value;
-        songRows.forEach((row) => {
-            if (!(row instanceof HTMLElement)) return;
-            const rowActive = row.dataset.active;
-            if (filter === "all" || rowActive === filter) {
-                row.style.display = "";
+    function applySongFilters() {
+        const query = searchInput?.value.trim().toLowerCase() || "";
+        const selectedStatus = statusFilterSelect?.value || "all";
+
+        let visibleCount = 0;
+
+        songItems.forEach((item) => {
+            const itemSearch = item.dataset.search || "";
+            const itemActive = item.dataset.active || "";
+
+            const matchesQuery = !query || itemSearch.includes(query);
+            const matchesStatus = selectedStatus === "all" || itemActive === selectedStatus;
+
+            if (matchesQuery && matchesStatus) {
+                item.style.display = "";
+                visibleCount++;
             } else {
-                row.style.display = "none";
+                item.style.display = "none";
             }
         });
+
+        if (clearSearchBtn) {
+            clearSearchBtn.classList.toggle("hidden", query.length === 0);
+        }
+
+        const visibleMobile = document.querySelectorAll("#mobileSongList .song-item:not([style*='display: none'])").length;
+        const visibleDesktop = document.querySelectorAll("#desktopSongTbody .song-item:not([style*='display: none'])").length;
+        const finalCount = window.innerWidth >= 768 ? visibleDesktop : visibleMobile;
+
+        if (songCountEl) {
+            songCountEl.textContent = String(finalCount);
+        }
+
+        if (noResultsEl) {
+            noResultsEl.classList.toggle("hidden", finalCount > 0);
+        }
+    }
+
+    searchInput?.addEventListener("input", applySongFilters);
+    statusFilterSelect?.addEventListener("change", applySongFilters);
+
+    clearSearchBtn?.addEventListener("click", () => {
+        if (searchInput) {
+            searchInput.value = "";
+            applySongFilters();
+            searchInput.focus();
+        }
     });
 
-    const swalDark = {
-        background: "#1f2937",
-        color: "#fff",
-        confirmButtonColor: "#f97316",
-        cancelButtonColor: "#4b5563",
-    };
-
-    // Toggle Active Status
+    // Toggle Active Status (Synchronizes both mobile and desktop toggles for the same song ID)
+    const toggles = document.querySelectorAll(".toggle-active") as NodeListOf<HTMLInputElement>;
     toggles.forEach((toggle) => {
         toggle.addEventListener("change", async (e) => {
-            if (!(e.target instanceof HTMLInputElement)) return;
-            const id = e.target.dataset.id;
-            const isActive = e.target.checked;
-            const labelSpan = e.target.parentElement?.querySelector("span");
+            const target = e.target as HTMLInputElement;
+            const id = target.dataset.id;
+            if (!id) return;
+
+            const isActive = target.checked;
+
+            // Sync paired toggle (mobile vs desktop)
+            const pairedToggles = document.querySelectorAll(`.toggle-active[data-id="${id}"]`) as NodeListOf<HTMLInputElement>;
+            pairedToggles.forEach((t) => {
+                t.checked = isActive;
+                const label = t.parentElement?.querySelector("span");
+                if (label) label.textContent = isActive ? "Activo" : "Inactivo";
+            });
+
+            // Update item dataset.active
+            const pairedItems = document.querySelectorAll(`.song-item[data-id="${id}"]`) as NodeListOf<HTMLElement>;
+            pairedItems.forEach((item) => {
+                item.dataset.active = isActive.toString();
+            });
 
             try {
-                // Optimistic UI update
-                if (labelSpan)
-                    labelSpan.textContent = isActive ? "Activo" : "Inactivo";
-
                 const res = await fetch(`${API_URL}/songs/${id}`, {
                     method: "PUT",
                     headers: {
@@ -208,78 +391,65 @@ try {
                     body: JSON.stringify({ active: isActive }),
                 });
 
-                if (!res.ok) throw new Error("Error updating status");
+                if (!res.ok) {
+                    throw new Error("Error al actualizar estado");
+                }
 
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: "top-end",
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                    ...swalDark,
-                });
-                Toast.fire({
-                    icon: "success",
-                    title: `Canción ${isActive ? "activada" : "desactivada"}`,
-                });
+                await showSuccessToast(
+                    isActive ? "Canción activada en catálogo" : "Canción desactivada",
+                );
             } catch (error) {
                 console.error(error);
-                e.target.checked = !isActive; // Revert
-                if (labelSpan)
-                    labelSpan.textContent = !isActive ? "Activo" : "Inactivo";
-                Swal.fire({
-                    ...swalDark,
-                    icon: "error",
-                    title: "Error",
-                    text: "No se pudo actualizar el estado",
+                // Revert
+                pairedToggles.forEach((t) => {
+                    t.checked = !isActive;
+                    const label = t.parentElement?.querySelector("span");
+                    if (label) label.textContent = !isActive ? "Activo" : "Inactivo";
                 });
+                pairedItems.forEach((item) => {
+                    item.dataset.active = (!isActive).toString();
+                });
+                showError("Error", "No se pudo actualizar el estado de la canción");
             }
         });
     });
 
     // Delete Song
+    const deleteBtns = document.querySelectorAll(".delete-song-btn");
     deleteBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-            if (!(btn instanceof HTMLElement)) return;
-            const id = btn.dataset.id;
-            Swal.fire({
-                ...swalDark,
-                title: "¿Estás seguro?",
-                text: "Esta acción eliminará la canción permanentemente.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: "Sí, eliminar",
-                cancelButtonText: "Cancelar",
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        const res = await fetch(`${API_URL}/songs/${id}`, {
-                            method: "DELETE",
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                            },
-                        });
+        btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-id");
+            const title = btn.getAttribute("data-title") || "esta canción";
+            if (!id) return;
 
-                        if (res.ok) {
-                            Swal.fire({
-                                ...swalDark,
-                                icon: "success",
-                                title: "Eliminado",
-                                text: "La canción ha sido eliminada.",
-                            }).then(() => window.location.reload());
-                        } else {
-                            throw new Error("Error deleting song");
-                        }
-                    } catch (e) {
-                        Swal.fire({
-                            ...swalDark,
-                            icon: "error",
-                            title: "Error",
-                            text: "No se pudo eliminar la canción",
-                        });
-                    }
+            const confirmed = await showConfirm(
+                `¿Eliminar "${title}"?`,
+                "Esta acción eliminará la canción y sus acordes permanentemente.",
+                "Sí, eliminar",
+                "Cancelar",
+            );
+
+            if (!confirmed.isConfirmed) return;
+
+            try {
+                const res = await fetch(`${API_URL}/songs/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (res.ok) {
+                    await showSuccessToast("Canción eliminada correctamente");
+                    window.location.reload();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    showError("Error al Eliminar", err.error || "No se pudo eliminar la canción");
                 }
-            });
+            } catch (e) {
+                console.error(e);
+                showError("Error de Conexión", "No se pudo conectar con el servidor.");
+            }
         });
     });
 </script>

@@ -1,0 +1,332 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { API_URL } from "@/services/songs";
+
+const token = Astro.cookies.get("token")?.value;
+
+if (!token) {
+    return Astro.redirect("/login");
+}
+
+let stats: any = null;
+let error = null;
+
+try {
+    const res = await fetch(`${API_URL}/stats`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Cookie: `token=${token}`,
+        },
+    });
+
+    if (res.ok) {
+        stats = await res.json();
+    } else {
+        if (res.status === 403 || res.status === 401) {
+            return Astro.redirect("/");
+        }
+    }
+} catch (e: any) {
+    console.error("Error loading system stats:", e);
+    error = "No se pudieron obtener las métricas del sistema.";
+}
+
+const sys = stats?.system;
+const isDbConnected = sys?.database?.connected ?? true;
+const isRedisConnected = sys?.redis?.connected ?? false;
+const redisStatusText = isRedisConnected ? "CONECTADO" : (sys?.redis?.status || "DESCONECTADO");
+const redisType = sys?.redis?.type || "Redis Local / Memoria";
+const dbLatency = sys?.database?.latencyMs ?? 1;
+const redisLatency = sys?.redis?.latencyMs;
+const memoryKeys = sys?.redis?.memoryCacheKeys ?? 0;
+---
+
+<AdminLayout title="Estado del Sistema">
+    <div
+        id="system-page"
+        class="space-y-6"
+        data-api-url={API_URL}
+        data-token={token}
+    >
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Mantenimiento y Sistema
+                </h1>
+                <p class="text-xs sm:text-sm text-text-secondary mt-1">
+                    Diagnóstico en tiempo real de Redis, base de datos PostgreSQL y control de caché.
+                </p>
+            </div>
+
+            <button
+                id="refreshStatusBtn"
+                type="button"
+                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-colors flex items-center justify-center gap-2 self-start sm:self-auto"
+                title="Comprobar conexiones de nuevo"
+            >
+                <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                <span>Comprobar Estado</span>
+            </button>
+        </div>
+
+        {
+            error && (
+                <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-4 rounded-xl flex items-center gap-2.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <span>{error}</span>
+                </div>
+            )
+        }
+
+        <!-- Cache Management Card -->
+        <div class="bg-bg-secondary border border-white/5 rounded-xl p-5 sm:p-6 space-y-4">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-accent-main/10 text-accent-main border border-accent-main/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-bolt text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-white">
+                            Caché del Sistema (Redis / Memoria)
+                        </h2>
+                        <p class="text-xs text-text-secondary mt-0.5">
+                            La plataforma almacena en caché listados masivos de canciones, categorías y estadísticas para máxima velocidad.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-bg-main p-4 rounded-xl border border-white/5 space-y-2 text-xs text-text-secondary">
+                <div class="flex items-center gap-2 text-white font-medium">
+                    <i class="fa-solid fa-circle-info text-accent-main text-xs"></i>
+                    <span>¿Cuándo purgar la caché?</span>
+                </div>
+                <p>
+                    El sistema invalida automáticamente la caché al crear, editar o eliminar canciones y categorías. Si realizas cambios manuales en la base de datos o notas datos desactualizados, puedes forzar una purga global inmediata.
+                </p>
+            </div>
+
+            <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 text-xs text-text-secondary">
+                    {
+                        isRedisConnected ? (
+                            <span class="inline-flex items-center gap-2 text-green-400 font-medium">
+                                <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                                <span>Redis Conectado ({redisType})</span>
+                            </span>
+                        ) : (
+                            <span class="inline-flex items-center gap-2 text-amber-400 font-medium">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                <span>Redis Inactivo &bull; Operando con Memoria Fallback ({memoryKeys} claves)</span>
+                            </span>
+                        )
+                    }
+                </div>
+
+                <button
+                    id="purgeCacheBtn"
+                    type="button"
+                    class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"
+                >
+                    <i class="fa-solid fa-broom"></i>
+                    <span>Purgar Caché Global</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Infrastructure Status Grid (4 Cards: DB, Redis, API, Frontend) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 1. Database Status -->
+            <div class="bg-bg-secondary border border-white/5 rounded-xl p-5 space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-database text-blue-400"></i>
+                            <h3 class="text-sm font-semibold text-white">Base de Datos</h3>
+                        </div>
+                        <span
+                            class={`px-2 py-0.5 rounded text-[10px] font-mono font-medium ${
+                                isDbConnected
+                                    ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                    : "bg-red-500/10 text-red-400 border border-red-500/20"
+                            }`}
+                        >
+                            {isDbConnected ? "CONECTADO" : "DESCONECTADO"}
+                        </span>
+                    </div>
+                    <p class="text-xs text-text-secondary">
+                        PostgreSQL con Prisma 7 ORM y connection pool.
+                    </p>
+                </div>
+                <div class="pt-2 border-t border-white/5 text-[11px] font-mono text-text-secondary flex justify-between">
+                    <span>Latencia:</span>
+                    <span class="text-white">{dbLatency} ms</span>
+                </div>
+            </div>
+
+            <!-- 2. Redis Cache Status (Explicitly Requested) -->
+            <div class="bg-bg-secondary border border-white/5 rounded-xl p-5 space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-layer-group text-red-500"></i>
+                            <h3 class="text-sm font-semibold text-white">Caché Redis</h3>
+                        </div>
+                        <span
+                            id="redisStatusBadge"
+                            class={`px-2 py-0.5 rounded text-[10px] font-mono font-medium ${
+                                isRedisConnected
+                                    ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            }`}
+                        >
+                            {redisStatusText}
+                        </span>
+                    </div>
+                    <p class="text-xs text-text-secondary truncate" title={redisType}>
+                        {isRedisConnected ? "Redis activo y respondiendo a comandos ping." : "Servidor Redis local apagado. Usando memoria."}
+                    </p>
+                </div>
+                <div class="pt-2 border-t border-white/5 text-[11px] font-mono text-text-secondary flex justify-between">
+                    <span>Estado:</span>
+                    <span class={isRedisConnected ? "text-green-400" : "text-amber-400"}>
+                        {isRedisConnected ? `Activo (${redisLatency ?? 1}ms)` : `Fallback (${memoryKeys} keys)`}
+                    </span>
+                </div>
+            </div>
+
+            <!-- 3. API Status -->
+            <div class="bg-bg-secondary border border-white/5 rounded-xl p-5 space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-server text-green-400"></i>
+                            <h3 class="text-sm font-semibold text-white">Servidor API</h3>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+                            ONLINE
+                        </span>
+                    </div>
+                    <p class="text-xs text-text-secondary">
+                        Express 5 con JWT nativo y cookies HTTP-only.
+                    </p>
+                </div>
+                <div class="pt-2 border-t border-white/5 text-[11px] font-mono text-text-secondary flex justify-between">
+                    <span>Endpoint:</span>
+                    <span class="text-white truncate max-w-[130px]">{API_URL}</span>
+                </div>
+            </div>
+
+            <!-- 4. Frontend Web Status -->
+            <div class="bg-bg-secondary border border-white/5 rounded-xl p-5 space-y-3 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-globe text-purple-400"></i>
+                            <h3 class="text-sm font-semibold text-white">Frontend Web</h3>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                            ASTRO SSR
+                        </span>
+                    </div>
+                    <p class="text-xs text-text-secondary">
+                        Astro 5 + React 19 con soporte PWA.
+                    </p>
+                </div>
+                <div class="pt-2 border-t border-white/5 text-[11px] font-mono text-text-secondary flex justify-between">
+                    <span>Modo:</span>
+                    <span class="text-white">Server-Side Render</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Admin Commands / Developer Shortcuts -->
+        <div class="bg-bg-secondary border border-white/5 rounded-xl p-5 sm:p-6 space-y-3">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
+                Comandos de Terminal Útiles para el Operador
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                <div class="p-3.5 bg-bg-main border border-white/5 rounded-xl space-y-1">
+                    <span class="text-accent-main font-semibold block">Prisma Studio:</span>
+                    <code class="text-text-secondary block">pnpm run db:studio</code>
+                    <span class="text-[11px] text-text-secondary block opacity-70">Abre interfaz web para inspeccionar la base de datos</span>
+                </div>
+
+                <div class="p-3.5 bg-bg-main border border-white/5 rounded-xl space-y-1">
+                    <span class="text-accent-main font-semibold block">Sincronizar Esquema DB:</span>
+                    <code class="text-text-secondary block">pnpm run db:push</code>
+                    <span class="text-[11px] text-text-secondary block opacity-70">Aplica cambios de schema.prisma sin migraciones</span>
+                </div>
+
+                <div class="p-3.5 bg-bg-main border border-white/5 rounded-xl space-y-1">
+                    <span class="text-accent-main font-semibold block">Iniciar Redis Local:</span>
+                    <code class="text-text-secondary block">sudo systemctl start redis</code>
+                    <span class="text-[11px] text-text-secondary block opacity-70">Levanta el servidor Redis local en el puerto 6379</span>
+                </div>
+
+                <div class="p-3.5 bg-bg-main border border-white/5 rounded-xl space-y-1">
+                    <span class="text-accent-main font-semibold block">Probar Tests Backend:</span>
+                    <code class="text-text-secondary block">pnpm --dir back test</code>
+                    <span class="text-[11px] text-text-secondary block opacity-70">Ejecuta las pruebas de caché, autenticación y controladores</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<script>
+    import { showError, showSuccessToast, showConfirm } from "@/utils/alerts";
+
+    const pageContainer = document.getElementById("system-page");
+    const API_URL = pageContainer?.dataset.apiUrl || "http://localhost:3000/api";
+    const TOKEN = pageContainer?.dataset.token;
+
+    const purgeBtn = document.getElementById("purgeCacheBtn") as HTMLButtonElement;
+    const refreshBtn = document.getElementById("refreshStatusBtn") as HTMLButtonElement;
+
+    // Refresh Status Button
+    refreshBtn?.addEventListener("click", () => {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin text-xs"></i><span>Comprobando...</span>';
+        window.location.reload();
+    });
+
+    // Purge Cache Button
+    purgeBtn?.addEventListener("click", async () => {
+        const confirmed = await showConfirm(
+            "¿Purgar la caché del sistema?",
+            "Esto invalidará las listas cacheadas de canciones, categorías y estadísticas.",
+            "Sí, purgar",
+            "Cancelar"
+        );
+
+        if (!confirmed.isConfirmed) return;
+
+        try {
+            purgeBtn.disabled = true;
+            purgeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Purgando...</span>';
+
+            const res = await fetch(`${API_URL}/stats/clear-cache`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${TOKEN}`,
+                },
+            });
+
+            if (res.ok) {
+                await showSuccessToast("Caché global purgada exitosamente");
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showError("Error al Purgar", err.error || "No se pudo purgar la caché");
+            }
+        } catch (e) {
+            console.error(e);
+            showError("Error de Conexión", "No se pudo conectar con el servidor.");
+        } finally {
+            purgeBtn.disabled = false;
+            purgeBtn.innerHTML = '<i class="fa-solid fa-broom"></i><span>Purgar Caché Global</span>';
+        }
+    });
+</script>

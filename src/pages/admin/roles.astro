@@ -16,6 +16,7 @@ let error: string | null = null;
 try {
     const headers: HeadersInit = {
         Authorization: `Bearer ${token}`,
+        Cookie: `token=${token}`,
     };
 
     const rolesReq = fetch(`${API_URL}/roles`, { headers });
@@ -24,6 +25,9 @@ try {
     const [rRes, pRes] = await Promise.all([rolesReq, permsReq]);
 
     if (!rRes.ok) {
+        if (rRes.status === 403 || rRes.status === 401) {
+            return Astro.redirect("/");
+        }
         throw new Error("Error cargando roles");
     }
     roles = await rRes.json();
@@ -42,147 +46,392 @@ try {
 <AdminLayout title="Gestión de Roles">
     <div
         id="roles-page"
-        class="w-full"
+        class="space-y-6 pb-20"
         data-api-url={API_URL}
         data-token={token}
     >
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-accent-main">
-                Gestión de Roles y Permisos
-            </h1>
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Gestión de Roles y Permisos
+                </h1>
+                <p class="text-xs sm:text-sm text-text-secondary mt-1">
+                    Define qué acciones puede realizar cada rol litúrgico y musical en la plataforma.
+                </p>
+            </div>
+
             <button
                 id="createRoleBtn"
-                class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors flex items-center gap-2"
+                type="button"
+                class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-                <i
-                    class="fa-solid fa-plus-circle h-5 w-5 flex items-center justify-center"
-                ></i>
-                Crear Rol
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Nuevo Rol</span>
             </button>
         </div>
 
         {
             error && (
-                <div class="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded mb-6">
-                    {error}
+                <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-4 rounded-xl flex items-center gap-2.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <span>{error}</span>
                 </div>
             )
         }
 
-        <div
-            class="overflow-x-auto bg-bg-secondary rounded-lg border border-white/10"
-        >
-            <table class="w-full text-left text-sm text-text-main">
-                <thead class="bg-bg-main text-text-secondary uppercase">
-                    <tr>
-                        <th class="px-6 py-3 border-b border-white/10"
-                            >Permiso</th
-                        >
-                        {
-                            roles.map((role) => (
-                                <th class="px-6 py-3 border-b border-white/10 text-center min-w-[120px]">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <span>{role.name}</span>
-                                        {role.name !== "ADMIN" && (
-                                            <button
-                                                class="text-gray-400 hover:text-accent-main transition-colors edit-role-btn"
-                                                data-role-id={role.id}
-                                                data-role-name={role.name}
-                                                title="Editar nombre del rol"
-                                            >
-                                                <i class="fa-solid fa-pen-to-square h-4 w-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </th>
-                            ))
-                        }
-                        <th
-                            class="px-6 py-3 border-b border-white/10 text-center"
-                        >
-                            Acciones
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-white/10">
+        <!-- Mobile Interface (< md) -->
+        <div class="block md:hidden space-y-4">
+            <!-- Mobile Role Tabs -->
+            <div>
+                <p class="text-[11px] font-mono uppercase tracking-wider text-text-secondary mb-2">
+                    Selecciona un rol para configurar:
+                </p>
+                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
                     {
-                        permissions.map((perm) => (
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="px-6 py-4 font-medium">
-                                    {perm.name}
-                                </td>
-                                {roles.map((role) => {
-                                    const hasPerm = role.permissions?.some(
-                                        (p) => p.id === perm.id,
-                                    );
-                                    return (
-                                        <td class="px-6 py-4 text-center">
-                                            <input
-                                                type="checkbox"
-                                                class="form-checkbox h-5 w-5 text-accent-main rounded border-gray-600 bg-gray-700 focus:ring-offset-gray-900"
-                                                checked={hasPerm}
-                                                data-role-id={role.id}
-                                                data-perm-name={perm.name}
-                                                disabled={role.name === "ADMIN"}
-                                            />
-                                        </td>
-                                    );
-                                })}
-                                <td class="px-6 py-4 text-center text-text-secondary italic">
-                                    Toggle to Change
-                                </td>
-                            </tr>
+                        roles.map((role, idx) => (
+                            <button
+                                type="button"
+                                class={`mobile-role-tab shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                                    idx === 0
+                                        ? "bg-accent-main text-white border-accent-main shadow-xs"
+                                        : "bg-bg-secondary text-text-secondary border-white/5 hover:text-white"
+                                }`}
+                                data-role-id={role.id}
+                                data-role-name={role.name}
+                            >
+                                <i class="fa-solid fa-user-tag text-[10px] mr-1.5 opacity-70"></i>
+                                {role.name}
+                            </button>
                         ))
                     }
-                </tbody>
-            </table>
+                </div>
+            </div>
+
+            <!-- Active Role Details Card (Mobile) -->
+            <div class="bg-bg-secondary border border-white/5 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-mono text-text-secondary uppercase">
+                        Rol activo
+                    </span>
+                    <h2 id="mobileActiveRoleTitle" class="text-base font-bold text-white tracking-tight">
+                        {roles[0]?.name || "Sin roles"}
+                    </h2>
+                    <p id="mobilePermsCount" class="text-xs text-text-secondary mt-0.5">
+                        Calculando permisos...
+                    </p>
+                </div>
+
+                {roles.length > 0 && (
+                    <button
+                        id="mobileEditRoleBtn"
+                        type="button"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-colors flex items-center gap-1.5"
+                    >
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Renombrar</span>
+                    </button>
+                )}
+            </div>
+
+            <!-- Mobile Search Permissions Input -->
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
+                <input
+                    id="mobilePermSearch"
+                    type="text"
+                    placeholder="Filtrar permisos..."
+                    class="w-full bg-bg-secondary border border-white/10 focus:border-accent-main rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-text-secondary/50 outline-none transition-colors"
+                />
+            </div>
+
+            <!-- Mobile Permissions Toggle List -->
+            <div id="mobilePermsList" class="space-y-2">
+                {
+                    permissions.map((perm) => (
+                        <div
+                            class="mobile-perm-item bg-bg-secondary border border-white/5 rounded-xl p-3.5 flex items-center justify-between gap-3 hover:border-white/10 transition-colors"
+                            data-perm-id={perm.id}
+                            data-perm-name={perm.name}
+                        >
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-semibold text-white font-mono truncate">
+                                    {perm.name}
+                                </p>
+                                <p class="text-[11px] text-text-secondary truncate mt-0.5">
+                                    {perm.description || "Permiso de sistema"}
+                                </p>
+                            </div>
+
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input
+                                    type="checkbox"
+                                    class="sr-only peer mobile-perm-toggle"
+                                    data-perm-name={perm.name}
+                                />
+                                <div class="w-10 h-5.5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-main"></div>
+                            </label>
+                        </div>
+                    ))
+                }
+            </div>
         </div>
 
-        <div class="mt-6 flex justify-end">
+        <!-- Desktop Matrix Table (>= md) -->
+        <div class="hidden md:block bg-bg-secondary rounded-xl border border-white/5 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-text-main border-collapse">
+                    <thead class="bg-bg-main text-text-secondary uppercase text-[11px] font-mono tracking-wider border-b border-white/5">
+                        <tr>
+                            <th class="sticky left-0 bg-bg-main z-10 px-5 py-3.5 font-semibold border-r border-white/5 min-w-[240px]">
+                                Permiso Litúrgico
+                            </th>
+                            {
+                                roles.map((role) => (
+                                    <th class="px-5 py-3.5 text-center min-w-[140px]">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <span class="text-white font-bold">{role.name}</span>
+                                            <button
+                                                type="button"
+                                                class="text-text-secondary hover:text-accent-main transition-colors p-1 edit-role-btn"
+                                                data-role-id={role.id}
+                                                data-role-name={role.name}
+                                                title={`Editar nombre del rol ${role.name}`}
+                                            >
+                                                <i class="fa-solid fa-pen-to-square text-xs" />
+                                            </button>
+                                        </div>
+                                    </th>
+                                ))
+                            }
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {
+                            permissions.map((perm) => (
+                                <tr class="hover:bg-white/5 transition-colors">
+                                    <td class="sticky left-0 bg-bg-secondary z-10 px-5 py-3.5 border-r border-white/5">
+                                        <div class="font-mono text-xs text-white font-medium">
+                                            {perm.name}
+                                        </div>
+                                        <div class="text-[11px] text-text-secondary truncate max-w-xs mt-0.5">
+                                            {perm.description || "Permiso de sistema"}
+                                        </div>
+                                    </td>
+                                    {
+                                        roles.map((role) => {
+                                            const hasPerm = role.permissions?.some(
+                                                (p) => p.id === perm.id,
+                                            );
+                                            return (
+                                                <td class="px-5 py-3.5 text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        class="matrix-checkbox h-4.5 w-4.5 accent-accent-main rounded cursor-pointer transition-colors"
+                                                        checked={hasPerm}
+                                                        data-role-id={role.id}
+                                                        data-perm-name={perm.name}
+                                                    />
+                                                </td>
+                                            );
+                                        })
+                                    }
+                                </tr>
+                            ))
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sticky Floating Save Bar -->
+        <div class="fixed bottom-0 left-0 md:left-64 right-0 p-3 sm:p-4 bg-bg-secondary/95 backdrop-blur-md border-t border-white/10 z-40 flex items-center justify-between gap-3 shadow-2xl">
+            <div class="flex items-center gap-2 text-xs">
+                <span id="unsavedBadge" class="hidden px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 font-medium">
+                    <i class="fa-solid fa-circle-exclamation text-[10px] mr-1"></i>
+                    Cambios sin guardar
+                </span>
+                <span id="savedBadge" class="px-2.5 py-1 rounded-full bg-white/5 border border-white/5 text-text-secondary font-mono">
+                    Todos los permisos sincronizados
+                </span>
+            </div>
+
             <button
                 id="saveBtn"
-                class="bg-accent-main hover:bg-accent-secondary text-white font-bold py-2 px-6 rounded transition-colors"
+                type="button"
+                class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2"
             >
-                Guardar Cambios
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Guardar Cambios</span>
             </button>
         </div>
     </div>
 </AdminLayout>
 
 <script>
-    import Swal from "sweetalert2";
+    import { showAlert, showError, showSuccessToast, showConfirm } from "@/utils/alerts";
 
     const pageContainer = document.getElementById("roles-page");
-    const API_URL = pageContainer?.dataset.apiUrl;
+    const API_URL = pageContainer?.dataset.apiUrl || "http://localhost:3000/api";
     const token = pageContainer?.dataset.token;
 
     const saveBtn = document.getElementById("saveBtn") as HTMLButtonElement;
     const createRoleBtn = document.getElementById("createRoleBtn");
     const editRoleBtns = document.querySelectorAll(".edit-role-btn");
-    const checkboxes = document.querySelectorAll(
-        'input[type="checkbox"][data-role-id]',
-    ) as NodeListOf<HTMLInputElement>;
+    const matrixCheckboxes = document.querySelectorAll(".matrix-checkbox") as NodeListOf<HTMLInputElement>;
+    const mobilePermToggles = document.querySelectorAll(".mobile-perm-toggle") as NodeListOf<HTMLInputElement>;
+    const mobileRoleTabs = document.querySelectorAll(".mobile-role-tab") as NodeListOf<HTMLButtonElement>;
 
-    // Configuración común de Swal
-    const swalDark = {
-        background: "#1f2937",
-        color: "#fff",
-        confirmButtonColor: "#f97316",
-        cancelButtonColor: "#4b5563",
-    };
+    const mobileActiveRoleTitle = document.getElementById("mobileActiveRoleTitle");
+    const mobilePermsCount = document.getElementById("mobilePermsCount");
+    const mobileEditRoleBtn = document.getElementById("mobileEditRoleBtn");
+    const mobilePermSearch = document.getElementById("mobilePermSearch") as HTMLInputElement;
+    const mobilePermItems = document.querySelectorAll(".mobile-perm-item") as NodeListOf<HTMLElement>;
 
-    // Crear Nuevo Rol
+    const unsavedBadge = document.getElementById("unsavedBadge");
+    const savedBadge = document.getElementById("savedBadge");
+
+    let isDirty = false;
+    let currentSelectedRoleId: string | null = mobileRoleTabs[0]?.dataset.roleId || null;
+    let currentSelectedRoleName: string | null = mobileRoleTabs[0]?.dataset.roleName || null;
+
+    function markDirty() {
+        isDirty = true;
+        unsavedBadge?.classList.remove("hidden");
+        savedBadge?.classList.add("hidden");
+    }
+
+    function markSaved() {
+        isDirty = false;
+        unsavedBadge?.classList.add("hidden");
+        savedBadge?.classList.remove("hidden");
+    }
+
+    // Sync Mobile View with Active Selected Role
+    function updateMobileViewForRole(roleId: string, roleName: string) {
+        currentSelectedRoleId = roleId;
+        currentSelectedRoleName = roleName;
+
+        if (mobileActiveRoleTitle) {
+            mobileActiveRoleTitle.textContent = roleName;
+        }
+
+        // Highlight active tab
+        mobileRoleTabs.forEach((tab) => {
+            const active = tab.dataset.roleId === roleId;
+            tab.className = `mobile-role-tab shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                active
+                    ? "bg-accent-main text-white border-accent-main shadow-xs"
+                    : "bg-bg-secondary text-text-secondary border-white/5 hover:text-white"
+            }`;
+        });
+
+        // Update toggles based on matrix checkboxes for this role
+        let enabledCount = 0;
+        mobilePermToggles.forEach((toggle) => {
+            const permName = toggle.dataset.permName;
+            const matrixCheckbox = document.querySelector(
+                `.matrix-checkbox[data-role-id="${roleId}"][data-perm-name="${permName}"]`
+            ) as HTMLInputElement | null;
+
+            if (matrixCheckbox) {
+                toggle.checked = matrixCheckbox.checked;
+                if (matrixCheckbox.checked) enabledCount++;
+            }
+        });
+
+        if (mobilePermsCount) {
+            mobilePermsCount.textContent = `${enabledCount} permisos activos`;
+        }
+    }
+
+    // Initialize mobile view
+    if (currentSelectedRoleId && currentSelectedRoleName) {
+        updateMobileViewForRole(currentSelectedRoleId, currentSelectedRoleName);
+    }
+
+    // Mobile Role Tabs Click
+    mobileRoleTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            const roleId = tab.dataset.roleId;
+            const roleName = tab.dataset.roleName;
+            if (roleId && roleName) {
+                updateMobileViewForRole(roleId, roleName);
+            }
+        });
+    });
+
+    // Mobile Perm Toggle Change -> Sync to Desktop Matrix
+    mobilePermToggles.forEach((toggle) => {
+        toggle.addEventListener("change", () => {
+            if (!currentSelectedRoleId) return;
+            const permName = toggle.dataset.permName;
+            const matrixCheckbox = document.querySelector(
+                `.matrix-checkbox[data-role-id="${currentSelectedRoleId}"][data-perm-name="${permName}"]`
+            ) as HTMLInputElement | null;
+
+            if (matrixCheckbox) {
+                matrixCheckbox.checked = toggle.checked;
+            }
+
+            markDirty();
+
+            // Recalculate count
+            let enabledCount = 0;
+            mobilePermToggles.forEach((t) => {
+                if (t.checked) enabledCount++;
+            });
+            if (mobilePermsCount) {
+                mobilePermsCount.textContent = `${enabledCount} permisos activos`;
+            }
+        });
+    });
+
+    // Desktop Matrix Checkbox Change -> Sync to Mobile Toggles if current role
+    matrixCheckboxes.forEach((cb) => {
+        cb.addEventListener("change", () => {
+            const roleId = cb.dataset.roleId;
+            const permName = cb.dataset.permName;
+
+            if (roleId === currentSelectedRoleId) {
+                const mobileToggle = document.querySelector(
+                    `.mobile-perm-toggle[data-perm-name="${permName}"]`
+                ) as HTMLInputElement | null;
+                if (mobileToggle) {
+                    mobileToggle.checked = cb.checked;
+                }
+            }
+
+            markDirty();
+        });
+    });
+
+    // Mobile Permission Search Filter
+    mobilePermSearch?.addEventListener("input", (e) => {
+        const query = (e.target as HTMLInputElement).value.trim().toLowerCase();
+        mobilePermItems.forEach((item) => {
+            const name = item.dataset.permName?.toLowerCase() || "";
+            if (!query || name.includes(query)) {
+                item.style.display = "";
+            } else {
+                item.style.display = "none";
+            }
+        });
+    });
+
+    // Create New Role
     createRoleBtn?.addEventListener("click", async () => {
-        const { value: roleName } = await Swal.fire({
-            ...swalDark,
+        const { value: roleName } = await showAlert({
             title: "Crear Nuevo Rol",
+            text: "Ingresa el nombre para el nuevo rol de usuario",
             input: "text",
-            inputLabel: "Nombre del Rol",
-            inputPlaceholder: "Ej: MUSICO",
+            inputPlaceholder: "Ej: MUSICO, LECTOR, COORDINADOR",
             showCancelButton: true,
-            inputValidator: (value) => {
-                if (!value) {
-                    return "¡Debes escribir un nombre!";
+            confirmButtonText: "Crear Rol",
+            cancelButtonText: "Cancelar",
+            inputValidator: (val) => {
+                if (!val || !val.trim()) {
+                    return "El nombre del rol es requerido.";
                 }
             },
         });
@@ -196,99 +445,94 @@ try {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        name: roleName.toUpperCase(),
+                        name: roleName.trim().toUpperCase(),
                         permissions: [],
                     }),
                 });
 
                 if (res.ok) {
-                    Swal.fire({
-                        ...swalDark,
-                        icon: "success",
-                        title: "¡Éxito!",
-                        text: "Rol creado correctamente",
-                    }).then(() => window.location.reload());
+                    await showSuccessToast("Rol creado correctamente");
+                    window.location.reload();
                 } else {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || "Error al crear rol");
+                    const err = await res.json().catch(() => ({}));
+                    showError("Error al Crear", err.error || "No se pudo crear el rol");
                 }
             } catch (e) {
                 console.error(e);
-                Swal.fire({
-                    ...swalDark,
-                    icon: "error",
-                    title: "Error",
-                    text:
-                        e instanceof Error
-                            ? e.message
-                            : "No se pudo crear el rol",
-                });
+                showError("Error de Conexión", "No se pudo conectar con el servidor.");
             }
         }
     });
 
-    // Editar Nombre del Rol
-    editRoleBtns.forEach((btn) => {
-        btn.addEventListener("click", async () => {
-            if (!(btn instanceof HTMLElement)) return;
-            const roleId = btn.dataset.roleId;
-            const currentName = btn.dataset.roleName;
-
-            const { value: newName } = await Swal.fire({
-                ...swalDark,
-                title: "Editar Nombre del Rol",
-                input: "text",
-                inputValue: currentName,
-                showCancelButton: true,
-                inputValidator: (value) => {
-                    if (!value) return "¡El nombre no puede estar vacío!";
-                },
-            });
-
-            if (newName && newName !== currentName) {
-                try {
-                    const res = await fetch(`${API_URL}/roles/${roleId}`, {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ name: newName.toUpperCase() }),
-                    });
-
-                    if (res.ok) {
-                        Swal.fire({
-                            ...swalDark,
-                            icon: "success",
-                            title: "Actualizado",
-                            text: "Nombre del rol actualizado",
-                        }).then(() => window.location.reload());
-                    } else {
-                        throw new Error("Error al actualizar");
-                    }
-                } catch (e) {
-                    console.error(e);
-                    Swal.fire({
-                        ...swalDark,
-                        icon: "error",
-                        title: "Error",
-                        text: "No se pudo actualizar el rol",
-                    });
+    // Edit Role Name (Shared function)
+    async function handleEditRole(roleId: string, currentName: string) {
+        const { value: newName } = await showAlert({
+            title: "Renombrar Rol",
+            input: "text",
+            inputValue: currentName,
+            showCancelButton: true,
+            confirmButtonText: "Actualizar",
+            cancelButtonText: "Cancelar",
+            inputValidator: (val) => {
+                if (!val || !val.trim()) {
+                    return "El nombre no puede estar vacío.";
                 }
+            },
+        });
+
+        if (newName && newName.trim().toUpperCase() !== currentName) {
+            try {
+                const res = await fetch(`${API_URL}/roles/${roleId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ name: newName.trim().toUpperCase() }),
+                });
+
+                if (res.ok) {
+                    await showSuccessToast("Nombre del rol actualizado");
+                    window.location.reload();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    showError("Error al Actualizar", err.error || "No se pudo actualizar el nombre");
+                }
+            } catch (e) {
+                console.error(e);
+                showError("Error de Conexión", "No se pudo conectar con el servidor.");
+            }
+        }
+    }
+
+    // Attach to Desktop Edit Role Buttons
+    editRoleBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const roleId = btn.getAttribute("data-role-id");
+            const roleName = btn.getAttribute("data-role-name");
+            if (roleId && roleName) {
+                handleEditRole(roleId, roleName);
             }
         });
     });
 
+    // Attach to Mobile Edit Role Button
+    mobileEditRoleBtn?.addEventListener("click", () => {
+        if (currentSelectedRoleId && currentSelectedRoleName) {
+            handleEditRole(currentSelectedRoleId, currentSelectedRoleName);
+        }
+    });
+
+    // Save All Changes
     saveBtn?.addEventListener("click", async () => {
         saveBtn.disabled = true;
-        saveBtn.innerText = "Guardando...";
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Guardando...</span>';
 
         try {
-            // Group permissions by role
+            // Group permissions by role from matrix checkboxes (the single source of truth)
             const rolePermissions: Record<string, string[]> = {};
 
-            // Initialize with current state from DOM
-            checkboxes.forEach((cb) => {
+            matrixCheckboxes.forEach((cb) => {
                 const roleId = cb.dataset.roleId;
                 const permName = cb.dataset.permName;
 
@@ -304,46 +548,31 @@ try {
             });
 
             // Send updates for each role
-            const promises = Object.keys(rolePermissions).map(
-                async (roleId) => {
-                    const res = await fetch(
-                        `${API_URL}/roles/${roleId}/permissions`,
-                        {
-                            method: "PUT",
-                            headers: {
-                                "Content-Type": "application/json",
-                                Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                                permissionNames: rolePermissions[roleId],
-                            }),
-                        },
-                    );
-                    if (!res.ok)
-                        throw new Error(`Error updating role ${roleId}`);
-                },
-            );
-
-            await Promise.all(promises);
-
-            Swal.fire({
-                ...swalDark,
-                icon: "success",
-                title: "Permisos Actualizados",
-                text: "Los cambios se guardaron correctamente.",
-            }).then(() => {
-                window.location.reload();
+            const updatePromises = Object.keys(rolePermissions).map(async (roleId) => {
+                const res = await fetch(`${API_URL}/roles/${roleId}/permissions`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        permissionNames: rolePermissions[roleId],
+                    }),
+                });
+                if (!res.ok) {
+                    throw new Error(`Error actualizando rol ${roleId}`);
+                }
             });
+
+            await Promise.all(updatePromises);
+            markSaved();
+            await showSuccessToast("Permisos actualizados correctamente");
         } catch (error) {
             console.error(error);
-            Swal.fire({
-                ...swalDark,
-                icon: "error",
-                title: "Error",
-                text: "Hubo un problema al guardar los permisos.",
-            });
+            showError("Error al Guardar", "Hubo un problema al guardar los permisos.");
+        } finally {
             saveBtn.disabled = false;
-            saveBtn.innerText = "Guardar Cambios";
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Guardar Cambios</span>';
         }
     });
 </script>

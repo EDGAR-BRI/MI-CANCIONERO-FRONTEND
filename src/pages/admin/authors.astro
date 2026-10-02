@@ -1,0 +1,523 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { API_URL } from "@/services/songs";
+
+const token = Astro.cookies.get("token")?.value;
+
+if (!token) {
+    return Astro.redirect("/login");
+}
+
+let authors = [];
+let error = null;
+
+try {
+    const res = await fetch(`${API_URL}/authors`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Cookie: `token=${token}`,
+        },
+    });
+
+    if (res.ok) {
+        authors = await res.json();
+    } else {
+        if (res.status === 403 || res.status === 401) {
+            return Astro.redirect("/");
+        }
+        throw new Error("Error cargando autores");
+    }
+} catch (e: any) {
+    console.error("Error loading authors:", e);
+    error = "No se pudieron cargar los autores y compositores.";
+}
+---
+
+<AdminLayout title="Autores y Compositores">
+    <div
+        id="authors-page"
+        class="space-y-6"
+        data-api-url={API_URL}
+        data-token={token}
+    >
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Autores y Compositores
+                </h1>
+                <p class="text-xs sm:text-sm text-text-secondary mt-1">
+                    Gestiona los créditos de los cantautores, comunidades y compositores litúrgicos.
+                </p>
+            </div>
+
+            <button
+                id="openAuthorModalBtn"
+                type="button"
+                class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Nuevo Autor</span>
+            </button>
+        </div>
+
+        {
+            error && (
+                <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-4 rounded-xl flex items-center gap-2.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <span>{error}</span>
+                </div>
+            )
+        }
+
+        <!-- Filter Toolbar -->
+        <div class="bg-bg-secondary border border-white/5 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
+                <input
+                    id="authorSearchInput"
+                    type="text"
+                    placeholder="Buscar autor o compositor..."
+                    class="w-full bg-bg-main border border-white/10 focus:border-accent-main rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-white placeholder-text-secondary/50 outline-none transition-colors"
+                />
+                <button
+                    id="clearAuthorSearchBtn"
+                    type="button"
+                    class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white p-1 text-xs"
+                    title="Limpiar búsqueda"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-xs text-text-secondary font-mono shrink-0 whitespace-nowrap self-start sm:self-auto">
+                <span id="authorCount">{authors.length}</span> autores registrados
+            </div>
+        </div>
+
+        <!-- Mobile Cards View (< md) -->
+        <div id="mobileAuthorList" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
+            {
+                authors.map((author: any) => {
+                    const songCount = author._count?.songs ?? 0;
+                    const searchData = `${author.name || ""}`.toLowerCase();
+                    const isDefault = author.name.toLowerCase() === "desconocido";
+
+                    return (
+                        <div
+                            class="author-item bg-bg-secondary border border-white/5 rounded-xl p-4 flex flex-col justify-between hover:border-accent-main/40 transition-colors space-y-3"
+                            data-search={searchData}
+                            data-id={author.id}
+                        >
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0 flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-accent-main/10 text-accent-main flex items-center justify-center font-bold text-xs shrink-0">
+                                        <i class="fa-solid fa-feather-pointed text-[11px]"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <span class="text-[10px] font-mono text-text-secondary opacity-70">
+                                            ID #{author.id}
+                                        </span>
+                                        <h3 class="text-sm font-semibold text-white truncate">
+                                            {author.name}
+                                        </h3>
+                                    </div>
+                                </div>
+
+                                <span class="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-white/5 text-text-secondary border border-white/10 shrink-0">
+                                    {songCount} {songCount === 1 ? "canto" : "cantos"}
+                                </span>
+                            </div>
+
+                            <div class="pt-2 border-t border-white/5 grid grid-cols-2 gap-2 text-xs">
+                                <button
+                                    type="button"
+                                    class="edit-author-btn py-2 px-3 rounded-lg font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors flex items-center justify-center gap-1.5"
+                                    data-author={JSON.stringify(author)}
+                                >
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <span>Editar</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    class={`delete-author-btn py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                                        isDefault
+                                            ? "opacity-30 cursor-not-allowed bg-white/5 text-text-secondary border border-white/5"
+                                            : "text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20"
+                                    }`}
+                                    data-id={author.id}
+                                    data-name={author.name}
+                                    data-count={songCount}
+                                    disabled={isDefault}
+                                >
+                                    <i class="fa-solid fa-trash"></i>
+                                    <span>Eliminar</span>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })
+            }
+        </div>
+
+        <!-- Desktop Table View (>= md) -->
+        <div class="hidden md:block bg-bg-secondary rounded-xl border border-white/5 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-text-main">
+                    <thead class="bg-bg-main text-text-secondary uppercase text-[11px] font-mono tracking-wider border-b border-white/5">
+                        <tr>
+                            <th class="px-5 py-3.5 font-semibold">ID</th>
+                            <th class="px-5 py-3.5 font-semibold">Autor / Compositor</th>
+                            <th class="px-5 py-3.5 font-semibold text-center">Cantos en Catálogo</th>
+                            <th class="px-5 py-3.5 font-semibold text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="desktopAuthorTbody" class="divide-y divide-white/5">
+                        {
+                            authors.map((author: any) => {
+                                const songCount = author._count?.songs ?? 0;
+                                const searchData = `${author.name || ""}`.toLowerCase();
+                                const isDefault = author.name.toLowerCase() === "desconocido";
+
+                                return (
+                                    <tr
+                                        class="author-item hover:bg-white/5 transition-colors"
+                                        data-search={searchData}
+                                        data-id={author.id}
+                                    >
+                                        <td class="px-5 py-3.5 font-mono text-xs opacity-60">
+                                            #{author.id}
+                                        </td>
+                                        <td class="px-5 py-3.5 font-medium text-white">
+                                            <div class="flex items-center gap-2.5">
+                                                <i class="fa-solid fa-feather-pointed text-xs text-text-secondary/60"></i>
+                                                <span>{author.name}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3.5 text-center">
+                                            <span class="inline-block px-2.5 py-0.5 rounded-full bg-accent-main/10 text-accent-main font-mono text-xs font-semibold">
+                                                {songCount} {songCount === 1 ? "canto" : "cantos"}
+                                            </span>
+                                        </td>
+                                        <td class="px-5 py-3.5 text-right">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    class="edit-author-btn p-2 rounded-lg text-text-secondary hover:text-blue-400 hover:bg-white/5 transition-colors"
+                                                    data-author={JSON.stringify(author)}
+                                                    title="Editar autor"
+                                                >
+                                                    <i class="fa-solid fa-pen-to-square text-sm" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class={`delete-author-btn p-2 rounded-lg transition-colors ${
+                                                        isDefault
+                                                            ? "opacity-30 cursor-not-allowed text-text-secondary"
+                                                            : "text-text-secondary hover:text-red-400 hover:bg-white/5"
+                                                    }`}
+                                                    data-id={author.id}
+                                                    data-name={author.name}
+                                                    data-count={songCount}
+                                                    disabled={isDefault}
+                                                    title={isDefault ? "No se puede eliminar el autor por defecto" : "Eliminar autor"}
+                                                >
+                                                    <i class="fa-solid fa-trash text-sm" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- No Results Fallback -->
+        <div id="noAuthorResults" class="hidden bg-bg-secondary border border-white/5 rounded-xl p-8 text-center space-y-2">
+            <i class="fa-solid fa-feather-pointed text-2xl text-text-secondary/50"></i>
+            <p class="text-sm font-medium text-white">No se encontraron autores</p>
+            <p class="text-xs text-text-secondary">Intenta con otro término de búsqueda.</p>
+        </div>
+
+        <!-- Responsive Modal for Create / Edit -->
+        <div
+            id="authorModal"
+            class="hidden fixed inset-0 bg-black/75 z-50 items-center justify-center p-3 sm:p-4 backdrop-blur-xs transition-opacity"
+            aria-modal="true"
+            role="dialog"
+        >
+            <div
+                class="bg-bg-secondary w-full max-w-md max-h-[90dvh] flex flex-col rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+            >
+                <div class="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-bg-main shrink-0">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-accent-main/15 text-accent-main flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-feather-pointed"></i>
+                        </div>
+                        <h3 id="authorModalTitle" class="text-base font-bold text-white">
+                            Nuevo Autor
+                        </h3>
+                    </div>
+                    <button
+                        id="closeAuthorModal"
+                        type="button"
+                        class="text-text-secondary hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                        aria-label="Cerrar modal"
+                    >
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form id="authorForm" class="flex flex-col flex-1 overflow-hidden">
+                    <div class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                        <input type="hidden" name="id" id="authorId" />
+
+                        <div>
+                            <label class="block text-xs font-medium mb-1.5 text-text-secondary">
+                                Nombre del Autor o Compositor
+                            </label>
+                            <input
+                                type="text"
+                                name="name"
+                                required
+                                placeholder="Ej: Cesáreo Gabaráin, Kiko Argüello, Taizé..."
+                                class="w-full bg-bg-main border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-text-secondary/40 outline-none focus:border-accent-main transition-colors"
+                            />
+                            <p class="text-[11px] text-text-secondary mt-1">
+                                Aparecerá como crédito en el visor de cantos y en las opciones de filtro.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="p-4 sm:p-5 border-t border-white/5 flex items-center justify-end gap-2.5 bg-bg-main/60 shrink-0">
+                        <button
+                            type="button"
+                            id="cancelAuthorModalBtn"
+                            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 border border-white/5 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            id="submitAuthorBtn"
+                            class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-colors"
+                        >
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<script>
+    import { showError, showSuccessToast, showConfirm } from "@/utils/alerts";
+
+    const pageContainer = document.getElementById("authors-page");
+    const API_URL = pageContainer?.dataset.apiUrl || "http://localhost:3000/api";
+    const TOKEN = pageContainer?.dataset.token;
+
+    const modal = document.getElementById("authorModal");
+    const form = document.getElementById("authorForm") as HTMLFormElement;
+    const modalTitle = document.getElementById("authorModalTitle");
+    const openBtn = document.getElementById("openAuthorModalBtn");
+    const closeBtn = document.getElementById("closeAuthorModal");
+    const cancelBtn = document.getElementById("cancelAuthorModalBtn");
+
+    const searchInput = document.getElementById("authorSearchInput") as HTMLInputElement;
+    const clearSearchBtn = document.getElementById("clearAuthorSearchBtn");
+    const authorCountEl = document.getElementById("authorCount");
+    const noResultsEl = document.getElementById("noAuthorResults");
+    const authorItems = document.querySelectorAll(".author-item") as NodeListOf<HTMLElement>;
+
+    // Filter Logic
+    function applyAuthorFilters() {
+        const query = searchInput?.value.trim().toLowerCase() || "";
+        let visibleCount = 0;
+
+        authorItems.forEach((item) => {
+            const itemSearch = item.dataset.search || "";
+            const matchesQuery = !query || itemSearch.includes(query);
+
+            if (matchesQuery) {
+                item.style.display = "";
+                visibleCount++;
+            } else {
+                item.style.display = "none";
+            }
+        });
+
+        if (clearSearchBtn) {
+            clearSearchBtn.classList.toggle("hidden", query.length === 0);
+        }
+
+        const visibleMobile = document.querySelectorAll("#mobileAuthorList .author-item:not([style*='display: none'])").length;
+        const visibleDesktop = document.querySelectorAll("#desktopAuthorTbody .author-item:not([style*='display: none'])").length;
+        const finalCount = window.innerWidth >= 768 ? visibleDesktop : visibleMobile;
+
+        if (authorCountEl) authorCountEl.textContent = String(finalCount);
+        if (noResultsEl) noResultsEl.classList.toggle("hidden", finalCount > 0);
+    }
+
+    searchInput?.addEventListener("input", applyAuthorFilters);
+
+    clearSearchBtn?.addEventListener("click", () => {
+        if (searchInput) {
+            searchInput.value = "";
+            applyAuthorFilters();
+            searchInput.focus();
+        }
+    });
+
+    // Modal Helpers
+    const toggleModal = (show: boolean) => {
+        if (show) {
+            modal?.classList.remove("hidden");
+            modal?.classList.add("flex");
+            document.body.classList.add("overflow-hidden");
+        } else {
+            modal?.classList.add("hidden");
+            modal?.classList.remove("flex");
+            document.body.classList.remove("overflow-hidden");
+        }
+    };
+
+    openBtn?.addEventListener("click", () => {
+        form.reset();
+        document.getElementById("authorId")?.setAttribute("value", "");
+        if (modalTitle) modalTitle.textContent = "Nuevo Autor";
+        toggleModal(true);
+    });
+
+    closeBtn?.addEventListener("click", () => toggleModal(false));
+    cancelBtn?.addEventListener("click", () => toggleModal(false));
+
+    modal?.addEventListener("click", (e) => {
+        if (e.target === modal) toggleModal(false);
+    });
+
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal?.classList.contains("hidden")) {
+            toggleModal(false);
+        }
+    });
+
+    // Edit Author
+    document.querySelectorAll(".edit-author-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const raw = btn.getAttribute("data-author");
+            if (!raw) return;
+            const author = JSON.parse(raw);
+
+            if (modalTitle) modalTitle.textContent = "Editar Autor";
+
+            const nameInput = document.querySelector('[name="name"]') as HTMLInputElement;
+            const idInput = document.getElementById("authorId") as HTMLInputElement;
+
+            if (nameInput) nameInput.value = author.name || "";
+            if (idInput) idInput.value = String(author.id);
+
+            toggleModal(true);
+        });
+    });
+
+    // Delete Author
+    document.querySelectorAll(".delete-author-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-id");
+            const name = btn.getAttribute("data-name") || "este autor";
+            const count = parseInt(btn.getAttribute("data-count") || "0");
+
+            if (!id) return;
+
+            const extraMsg = count > 0 
+                ? ` Sus ${count} canción(es) se reasignarán automáticamente al autor "Desconocido".`
+                : "";
+
+            const confirmed = await showConfirm(
+                `¿Eliminar autor "${name}"?`,
+                `Esta acción es permanente.${extraMsg}`,
+                "Sí, eliminar",
+                "Cancelar"
+            );
+
+            if (!confirmed.isConfirmed) return;
+
+            try {
+                const res = await fetch(`${API_URL}/authors/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${TOKEN}`,
+                    },
+                });
+
+                if (res.ok) {
+                    await showSuccessToast("Autor eliminado correctamente");
+                    window.location.reload();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    showError("Error al Eliminar", err.error || "No se pudo eliminar el autor");
+                }
+            } catch (e) {
+                console.error(e);
+                showError("Error de Conexión", "No se pudo conectar con el servidor.");
+            }
+        });
+    });
+
+    // Form Submit
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById("submitAuthorBtn") as HTMLButtonElement;
+        const originalText = submitBtn ? submitBtn.innerText : "Guardar";
+
+        const formData = new FormData(form);
+        const id = formData.get("id");
+        const isEdit = !!id;
+
+        const data = {
+            name: String(formData.get("name") || "").trim(),
+        };
+
+        const endpoint = isEdit ? `${API_URL}/authors/${id}` : `${API_URL}/authors`;
+        const method = isEdit ? "PUT" : "POST";
+
+        try {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Guardando...";
+            }
+
+            const res = await fetch(endpoint, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${TOKEN}`,
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+                await showSuccessToast(
+                    isEdit ? "Autor actualizado correctamente" : "Autor creado con éxito"
+                );
+                window.location.reload();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showError("Error al Guardar", err.error || "Verifica los datos ingresados");
+            }
+        } catch (e) {
+            console.error(e);
+            showError("Error de Conexión", "No se pudo conectar con el servidor.");
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+            }
+        }
+    });
+</script>

@@ -1,0 +1,366 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { API_URL } from "@/services/songs";
+import { getUserFromToken } from "@/utils/auth";
+
+const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
+
+if (!token || !user || user.role !== "ADMIN") {
+    return Astro.redirect("/");
+}
+
+let totalUsers = 0;
+let totalSongs = 0;
+let activeSongs = 0;
+let totalRoles = 0;
+let totalCategories = 0;
+let totalAuthors = 0;
+let error = null;
+
+try {
+    const headers = {
+        Authorization: `Bearer ${token}`,
+        Cookie: `token=${token}`,
+    };
+
+    const [usersRes, songsRes, rolesRes, catsRes, authorsRes] = await Promise.all([
+        fetch(`${API_URL}/users`, { headers }).catch(() => null),
+        fetch(`${API_URL}/songs?active=all`, { headers }).catch(() => null),
+        fetch(`${API_URL}/roles`, { headers }).catch(() => null),
+        fetch(`${API_URL}/categories`, { headers }).catch(() => null),
+        fetch(`${API_URL}/authors`, { headers }).catch(() => null),
+    ]);
+
+    if (usersRes && usersRes.ok) {
+        const usersData = await usersRes.json();
+        totalUsers = Array.isArray(usersData) ? usersData.length : 0;
+    }
+
+    if (songsRes && songsRes.ok) {
+        const songsData = await songsRes.json();
+        if (Array.isArray(songsData)) {
+            totalSongs = songsData.length;
+            activeSongs = songsData.filter((s: any) => s.active).length;
+        }
+    }
+
+    if (rolesRes && rolesRes.ok) {
+        const rolesData = await rolesRes.json();
+        totalRoles = Array.isArray(rolesData) ? rolesData.length : 0;
+    }
+
+    if (catsRes && catsRes.ok) {
+        const catsData = await catsRes.json();
+        totalCategories = Array.isArray(catsData) ? catsData.length : 0;
+    }
+
+    if (authorsRes && authorsRes.ok) {
+        const authorsData = await authorsRes.json();
+        totalAuthors = Array.isArray(authorsData) ? authorsData.length : 0;
+    }
+} catch (e: any) {
+    console.error("Error loading admin stats:", e);
+    error = "No se pudieron cargar algunas métricas.";
+}
+---
+
+<AdminLayout title="Panel de Control">
+    <div class="space-y-6">
+        <!-- Welcome Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Panel de Control
+                </h1>
+                <p class="text-sm text-text-secondary mt-1">
+                    Bienvenido, <span class="text-accent-main font-medium">{user.name || "Administrador"}</span>. Estado global del cancionero litúrgico.
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a
+                    href="/songs/add"
+                    class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
+                >
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Nueva Canción</span>
+                </a>
+            </div>
+        </div>
+
+        {
+            error && (
+                <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-3.5 rounded-xl flex items-center gap-2.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <span>{error}</span>
+                </div>
+            )
+        }
+
+        <!-- Metric Stat Cards (2 cols mobile, 3 tablet, 6 desktop) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            <!-- Total Canciones -->
+            <a
+                href="/admin/songs"
+                class="bg-bg-secondary border border-white/5 rounded-xl p-3.5 sm:p-4 hover:border-accent-main/50 transition-colors group flex flex-col justify-between"
+            >
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-text-secondary">
+                        Canciones
+                    </span>
+                    <div class="w-7 h-7 rounded-lg bg-accent-main/10 text-accent-main border border-accent-main/20 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                </div>
+                <div class="mt-2.5">
+                    <span class="text-2xl sm:text-3xl font-bold text-white group-hover:text-accent-main transition-colors font-mono">
+                        {totalSongs}
+                    </span>
+                    <p class="text-[11px] text-text-secondary mt-0.5 truncate">
+                        {activeSongs} activas
+                    </p>
+                </div>
+            </a>
+
+            <!-- Total Categorías -->
+            <a
+                href="/admin/categories"
+                class="bg-bg-secondary border border-white/5 rounded-xl p-3.5 sm:p-4 hover:border-accent-main/50 transition-colors group flex flex-col justify-between"
+            >
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-text-secondary">
+                        Categorías
+                    </span>
+                    <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
+                </div>
+                <div class="mt-2.5">
+                    <span class="text-2xl sm:text-3xl font-bold text-white group-hover:text-accent-main transition-colors font-mono">
+                        {totalCategories}
+                    </span>
+                    <p class="text-[11px] text-text-secondary mt-0.5 truncate">
+                        Momentos litúrgicos
+                    </p>
+                </div>
+            </a>
+
+            <!-- Total Autores -->
+            <a
+                href="/admin/authors"
+                class="bg-bg-secondary border border-white/5 rounded-xl p-3.5 sm:p-4 hover:border-accent-main/50 transition-colors group flex flex-col justify-between"
+            >
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-text-secondary">
+                        Autores
+                    </span>
+                    <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-feather-pointed"></i>
+                    </div>
+                </div>
+                <div class="mt-2.5">
+                    <span class="text-2xl sm:text-3xl font-bold text-white group-hover:text-accent-main transition-colors font-mono">
+                        {totalAuthors}
+                    </span>
+                    <p class="text-[11px] text-text-secondary mt-0.5 truncate">
+                        Compositores
+                    </p>
+                </div>
+            </a>
+
+            <!-- Total Usuarios -->
+            <a
+                href="/admin/users"
+                class="bg-bg-secondary border border-white/5 rounded-xl p-3.5 sm:p-4 hover:border-accent-main/50 transition-colors group flex flex-col justify-between"
+            >
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-text-secondary">
+                        Usuarios
+                    </span>
+                    <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
+                <div class="mt-2.5">
+                    <span class="text-2xl sm:text-3xl font-bold text-white group-hover:text-accent-main transition-colors font-mono">
+                        {totalUsers}
+                    </span>
+                    <p class="text-[11px] text-text-secondary mt-0.5 truncate">
+                        Cuentas registradas
+                    </p>
+                </div>
+            </a>
+
+            <!-- Roles y Permisos -->
+            <a
+                href="/admin/roles"
+                class="bg-bg-secondary border border-white/5 rounded-xl p-3.5 sm:p-4 hover:border-accent-main/50 transition-colors group flex flex-col justify-between"
+            >
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-text-secondary">
+                        Roles
+                    </span>
+                    <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                </div>
+                <div class="mt-2.5">
+                    <span class="text-2xl sm:text-3xl font-bold text-white group-hover:text-accent-main transition-colors font-mono">
+                        {totalRoles}
+                    </span>
+                    <p class="text-[11px] text-text-secondary mt-0.5 truncate">
+                        Niveles de acceso
+                    </p>
+                </div>
+            </a>
+
+            <!-- Sistema y Salud -->
+            <a
+                href="/admin/system"
+                class="bg-bg-secondary border border-white/5 rounded-xl p-3.5 sm:p-4 hover:border-accent-main/50 transition-colors group flex flex-col justify-between"
+            >
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-text-secondary">
+                        Caché & Servidor
+                    </span>
+                    <div class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+                </div>
+                <div class="mt-2.5">
+                    <span class="text-sm font-semibold text-green-400 flex items-center gap-1.5 mt-1 font-mono">
+                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        ONLINE
+                    </span>
+                    <p class="text-[11px] text-text-secondary mt-0.5 truncate">
+                        Redis & DB activa
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Section: Module Shortcuts Grid -->
+        <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-text-secondary mb-3">
+                Módulos de Gestión
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                <!-- Manage Users -->
+                <a
+                    href="/admin/users"
+                    class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
+                >
+                    <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-users text-base"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
+                            <span>Gestión de Usuarios</span>
+                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                        </h3>
+                        <p class="text-xs text-text-secondary mt-1">
+                            Crear, editar teléfonos, cambiar roles y moderar cuentas.
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Manage Songs -->
+                <a
+                    href="/admin/songs"
+                    class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
+                >
+                    <div class="w-10 h-10 rounded-xl bg-accent-main/10 text-accent-main border border-accent-main/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-music text-base"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
+                            <span>Gestión de Canciones</span>
+                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                        </h3>
+                        <p class="text-xs text-text-secondary mt-1">
+                            Activar o desactivar cantos, buscar por título o autor y editar letras.
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Categories -->
+                <a
+                    href="/admin/categories"
+                    class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
+                >
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-tags text-base"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
+                            <span>Categorías Litúrgicas</span>
+                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                        </h3>
+                        <p class="text-xs text-text-secondary mt-1">
+                            Administrar momentos de la misa, tiempos litúrgicos y cantos asociados.
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Authors -->
+                <a
+                    href="/admin/authors"
+                    class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
+                >
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-feather-pointed text-base"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
+                            <span>Autores y Compositores</span>
+                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                        </h3>
+                        <p class="text-xs text-text-secondary mt-1">
+                            Controlar nombres de cantautores, comunidades y créditos musicales.
+                        </p>
+                    </div>
+                </a>
+
+                <!-- Manage Roles -->
+                <a
+                    href="/admin/roles"
+                    class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
+                >
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-shield-halved text-base"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
+                            <span>Roles y Permisos</span>
+                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                        </h3>
+                        <p class="text-xs text-text-secondary mt-1">
+                            Crear roles y asignar permisos litúrgicos de forma granular.
+                        </p>
+                    </div>
+                </a>
+
+                <!-- System & Cache -->
+                <a
+                    href="/admin/system"
+                    class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
+                >
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-server text-base"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
+                            <span>Mantenimiento y Caché</span>
+                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                        </h3>
+                        <p class="text-xs text-text-secondary mt-1">
+                            Purgar caché de Redis, verificar infraestructura y estado del servidor.
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</AdminLayout>

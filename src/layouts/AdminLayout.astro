@@ -1,4 +1,9 @@
 ---
+import "../styles/global.css";
+import "@fontsource/outfit";
+import "@fontsource/jetbrains-mono";
+import { getUserFromToken } from "@/utils/auth";
+
 interface Props {
     title: string;
 }
@@ -7,26 +12,42 @@ const { title } = Astro.props;
 
 // Check authorization
 const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
 
-if (!token) {
+if (!token || !user) {
     return Astro.redirect("/login");
 }
-import "../styles/global.css";
-// Fonts
-import "@fontsource/outfit";
-import "@fontsource/jetbrains-mono";
 
-// In a real app we would verify the JWT and check admin role here
-// For now relying on API to block data
+if (user.role !== "ADMIN") {
+    return Astro.redirect("/");
+}
+
+const currentPath = Astro.url.pathname;
+const isCurrent = (path: string) => {
+    if (path === "/admin") {
+        return currentPath === "/admin" || currentPath === "/admin/";
+    }
+    return currentPath.startsWith(path);
+};
+
+const navItems = [
+    { label: "Resumen", href: "/admin", icon: "fa-gauge" },
+    { label: "Usuarios", href: "/admin/users", icon: "fa-users" },
+    { label: "Canciones", href: "/admin/songs", icon: "fa-music" },
+    { label: "Categorías", href: "/admin/categories", icon: "fa-tags" },
+    { label: "Autores", href: "/admin/authors", icon: "fa-feather-pointed" },
+    { label: "Roles", href: "/admin/roles", icon: "fa-shield-halved" },
+    { label: "Sistema", href: "/admin/system", icon: "fa-server" },
+];
 ---
 
 <!doctype html>
 <html lang="es">
     <head>
         <meta charset="UTF-8" />
-        <meta name="description" content="Admin Panel" />
-        <meta name="viewport" content="width=device-width" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <meta name="description" content="Panel de Administración - Cancionero" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/svg+xml" href="/icono.svg" />
         <meta name="generator" content={Astro.generator} />
         <title>{title} | Panel de Administración</title>
         <link
@@ -35,141 +56,213 @@ import "@fontsource/jetbrains-mono";
         />
     </head>
     <body
-        class="bg-bg-main min-h-screen text-text-main flex font-sans overflow-x-hidden"
+        class="bg-bg-main min-h-screen text-text-main flex flex-col md:flex-row font-sans overflow-x-hidden"
     >
-        <!-- Mobile Header -->
-        <div
-            class="fixed top-0 left-0 w-full h-16 bg-bg-secondary border-b border-white/10 flex items-center justify-between px-4 z-40 md:hidden"
+        <!-- Mobile Header Bar -->
+        <header
+            class="fixed top-0 left-0 right-0 z-40 bg-bg-secondary/95 backdrop-blur-md border-b border-white/5 md:hidden"
         >
-            <h1 class="text-xl font-bold text-accent-main">AdminPanel</h1>
-            <button
-                id="mobile-menu-btn"
-                class="text-text-main p-2 hover:bg-white/5 rounded-lg"
-            >
-                <i class="fa-solid fa-bars text-xl"></i>
-            </button>
-        </div>
-
-        <!-- Sidebar Overlay -->
-        <div
-            id="sidebar-overlay"
-            class="fixed inset-0 bg-black/50 z-40 hidden md:hidden glass-dark"
-        >
-        </div>
-
-        <!-- Sidebar -->
-        <aside
-            id="sidebar"
-            class="fixed top-0 left-0 h-full w-64 bg-bg-secondary border-r border-white/10 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-50 flex flex-col pt-16 md:pt-0"
-        >
-            <div
-                class="h-16 hidden md:flex items-center justify-center border-b border-white/10"
-            >
-                <h1
-                    class="text-xl font-bold bg-linear-to-r from-accent-main to-accent-secondary bg-clip-text text-transparent"
-                >
-                    AdminPanel
-                </h1>
-            </div>
-
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <a
-                    href="/admin/users"
-                    class={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        Astro.url.pathname.includes("/admin/users")
-                            ? "bg-accent-main/10 text-accent-main border border-accent-main/20"
-                            : "text-text-secondary hover:bg-white/5 hover:text-white"
-                    }`}
-                >
-                    <i
-                        class="fa-solid fa-users h-5 w-5 flex items-center justify-center"
-                    ></i>
-                    Usuarios
-                </a>
-                <a
-                    href="/admin/songs"
-                    class={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        Astro.url.pathname.includes("/admin/songs")
-                            ? "bg-accent-main/10 text-accent-main border border-accent-main/20"
-                            : "text-text-secondary hover:bg-white/5 hover:text-white"
-                    }`}
-                >
-                    <i
-                        class="fa-solid fa-music h-5 w-5 flex items-center justify-center"
-                    ></i>
-                    Canciones
-                </a>
-                <a
-                    href="/admin/roles"
-                    class={`flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        Astro.url.pathname.includes("/admin/roles")
-                            ? "bg-accent-main/10 text-accent-main border border-accent-main/20"
-                            : "text-text-secondary hover:bg-white/5 hover:text-white"
-                    }`}
-                >
-                    <i
-                        class="fa-solid fa-shield-halved h-5 w-5 flex items-center justify-center"
-                    ></i>
-                    Gestión de Roles
-                </a>
-
-                <div class="pt-4 mt-4 border-t border-white/10">
-                    <a
-                        href="/"
-                        class="flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg text-text-secondary hover:bg-white/5 hover:text-white transition-colors"
+            <div class="h-14 px-3 sm:px-4 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                    <button
+                        id="mobile-menu-btn"
+                        type="button"
+                        class="text-text-secondary hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors focus:outline-none"
+                        aria-label="Abrir menú de administración"
                     >
-                        <i
-                            class="fa-solid fa-arrow-left h-5 w-5 flex items-center justify-center"
-                        ></i>
-                        Volver a la App
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                    <a href="/admin" class="flex items-center gap-2 text-white font-bold tracking-tight">
+                        <i class="fa-solid fa-shield-halved text-accent-main text-base"></i>
+                        <span>AdminPanel</span>
                     </a>
                 </div>
-            </nav>
 
-            <div class="p-4 border-t border-white/10">
+                <div class="flex items-center gap-2">
+                    <a
+                        href="/"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-colors"
+                        title="Volver al Cancionero"
+                    >
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                        <span>App</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mobile Navigation Quick Pills -->
+            <nav class="flex items-center gap-1.5 px-3 pb-2.5 overflow-x-auto no-scrollbar text-xs font-medium">
+                {
+                    navItems.map((item) => {
+                        const active = isCurrent(item.href);
+                        return (
+                            <a
+                                href={item.href}
+                                class={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors border ${
+                                    active
+                                        ? "bg-accent-main text-white border-accent-main shadow-xs"
+                                        : "bg-bg-secondary text-text-secondary hover:text-white hover:bg-white/5 border-white/5"
+                                }`}
+                            >
+                                <i class={`fa-solid ${item.icon} text-[11px]`}></i>
+                                <span>{item.label}</span>
+                            </a>
+                        );
+                    })
+                }
+            </nav>
+        </header>
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div
+            id="sidebar-overlay"
+            class="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 hidden md:hidden transition-opacity"
+            aria-hidden="true"
+        ></div>
+
+        <!-- Sidebar (Desktop & Mobile Drawer) -->
+        <aside
+            id="sidebar"
+            class="fixed top-0 left-0 h-full w-64 max-w-[85vw] bg-bg-secondary border-r border-white/5 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-50 flex flex-col justify-between"
+            aria-label="Barra lateral de administración"
+        >
+            <!-- Drawer / Sidebar Header -->
+            <div>
+                <div
+                    class="h-16 flex items-center justify-between px-5 border-b border-white/5"
+                >
+                    <a href="/admin" class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-accent-main/10 border border-accent-main/30 flex items-center justify-center text-accent-main">
+                            <i class="fa-solid fa-shield-halved text-sm"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-base font-bold text-white tracking-tight leading-none">
+                                AdminPanel
+                            </h1>
+                            <p class="text-[10px] text-text-secondary font-mono mt-0.5">
+                                Cancionero Litúrgico
+                            </p>
+                        </div>
+                    </a>
+
+                    <button
+                        id="sidebar-close-btn"
+                        type="button"
+                        class="md:hidden text-text-secondary hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                        aria-label="Cerrar menú"
+                    >
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Admin User Info -->
+                <div class="p-4 mx-3 my-3 rounded-xl bg-white/5 border border-white/5 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-accent-main/20 text-accent-main flex items-center justify-center font-bold text-sm">
+                        {user.name ? user.name.charAt(0).toUpperCase() : "A"}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold text-white truncate">
+                            {user.name || "Administrador"}
+                        </p>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="bg-accent-main/20 text-accent-main px-1.5 py-0.2 rounded text-[10px] font-mono font-medium">
+                                ADMIN
+                            </span>
+                            <span class="text-[11px] text-text-secondary truncate">
+                                {user.email}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nav Links -->
+                <nav class="px-3 space-y-1">
+                    {
+                        navItems.map((item) => {
+                            const active = isCurrent(item.href);
+                            return (
+                                <a
+                                    href={item.href}
+                                    class={`flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium rounded-xl transition-colors border ${
+                                        active
+                                            ? "bg-accent-main/15 text-accent-main border-accent-main/30 font-semibold"
+                                            : "text-text-secondary hover:bg-white/5 hover:text-white border-transparent"
+                                    }`}
+                                >
+                                    <i
+                                        class={`fa-solid ${item.icon} w-5 text-center text-sm ${active ? "text-accent-main" : "text-text-secondary"}`}
+                                    ></i>
+                                    <span>{item.label}</span>
+                                </a>
+                            );
+                        })
+                    }
+
+                    <div class="pt-3 mt-3 border-t border-white/5">
+                        <a
+                            href="/"
+                            class="flex items-center gap-3 px-3.5 py-2 text-sm font-medium rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-colors"
+                        >
+                            <i class="fa-solid fa-arrow-left w-5 text-center text-sm"></i>
+                            <span>Volver a la App</span>
+                        </a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- Footer / Logout -->
+            <div class="p-3 border-t border-white/5">
                 <a
                     href="/logout"
-                    class="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-colors"
+                    class="flex items-center justify-center gap-2 w-full px-3.5 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl border border-red-500/20 transition-colors"
                 >
                     <i class="fa-solid fa-right-from-bracket"></i>
-                    Logout
+                    <span>Cerrar Sesión</span>
                 </a>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="flex-1 md:ml-64 p-4 md:p-8 pt-20 md:pt-8 min-w-0">
+        <!-- Main Content Area -->
+        <main class="flex-1 md:ml-64 px-2 py-3.5 sm:p-6 lg:p-8 pt-20 md:pt-8 min-w-0 max-w-7xl mx-auto w-full pb-20 md:pb-12">
             <slot />
         </main>
 
         <script>
             // Mobile Menu Logic
             const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+            const closeBtn = document.getElementById("sidebar-close-btn");
             const sidebar = document.getElementById("sidebar");
             const overlay = document.getElementById("sidebar-overlay");
 
-            function toggleMenu() {
-                const isClosed =
-                    sidebar?.classList.contains("-translate-x-full");
-
-                if (isClosed) {
-                    sidebar?.classList.remove("-translate-x-full");
-                    overlay?.classList.remove("hidden");
-                } else {
-                    sidebar?.classList.add("-translate-x-full");
-                    overlay?.classList.add("hidden");
-                }
+            function openMenu() {
+                sidebar?.classList.remove("-translate-x-full");
+                overlay?.classList.remove("hidden");
+                document.body.classList.add("overflow-hidden");
             }
 
-            mobileMenuBtn?.addEventListener("click", toggleMenu);
-            overlay?.addEventListener("click", toggleMenu);
+            function closeMenu() {
+                sidebar?.classList.add("-translate-x-full");
+                overlay?.classList.add("hidden");
+                document.body.classList.remove("overflow-hidden");
+            }
 
-            // Close menu on route change (not strictly needed with standard nav but good to have)
+            mobileMenuBtn?.addEventListener("click", openMenu);
+            closeBtn?.addEventListener("click", closeMenu);
+            overlay?.addEventListener("click", closeMenu);
+
+            // Close on escape key
+            window.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    closeMenu();
+                }
+            });
+
+            // Close on nav link click for mobile
             const navLinks = sidebar?.querySelectorAll("a");
             navLinks?.forEach((link) => {
                 link.addEventListener("click", () => {
                     if (window.innerWidth < 768) {
-                        toggleMenu();
+                        closeMenu();
                     }
                 });
             });

@@ -1,0 +1,578 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import { API_URL } from "@/services/songs";
+
+const token = Astro.cookies.get("token")?.value;
+
+if (!token) {
+    return Astro.redirect("/login");
+}
+
+let categories = [];
+let error = null;
+
+try {
+    const res = await fetch(`${API_URL}/categories`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Cookie: `token=${token}`,
+        },
+    });
+
+    if (res.ok) {
+        categories = await res.json();
+    } else {
+        if (res.status === 403 || res.status === 401) {
+            return Astro.redirect("/");
+        }
+        throw new Error("Error cargando categorías");
+    }
+} catch (e: any) {
+    console.error("Error loading categories:", e);
+    error = "No se pudieron cargar las categorías litúrgicas.";
+}
+---
+
+<AdminLayout title="Categorías Litúrgicas">
+    <div
+        id="categories-page"
+        class="space-y-6"
+        data-api-url={API_URL}
+        data-token={token}
+    >
+        <!-- Page Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Categorías Litúrgicas
+                </h1>
+                <p class="text-xs sm:text-sm text-text-secondary mt-1">
+                    Administra los momentos de la misa, tiempos del año litúrgico y etiquetas de cantos.
+                </p>
+            </div>
+
+            <button
+                id="openCategoryModalBtn"
+                type="button"
+                class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
+            >
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Nueva Categoría</span>
+            </button>
+        </div>
+
+        {
+            error && (
+                <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-4 rounded-xl flex items-center gap-2.5">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <span>{error}</span>
+                </div>
+            )
+        }
+
+        <!-- Filter Toolbar -->
+        <div class="bg-bg-secondary border border-white/5 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
+                <input
+                    id="categorySearchInput"
+                    type="text"
+                    placeholder="Buscar por nombre de categoría..."
+                    class="w-full bg-bg-main border border-white/10 focus:border-accent-main rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-white placeholder-text-secondary/50 outline-none transition-colors"
+                />
+                <button
+                    id="clearCatSearchBtn"
+                    type="button"
+                    class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white p-1 text-xs"
+                    title="Limpiar búsqueda"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <div class="relative min-w-[150px] flex-1 sm:flex-none">
+                    <select
+                        id="visibilityFilterSelect"
+                        class="w-full bg-bg-main border border-white/10 focus:border-accent-main rounded-xl px-3 py-2 text-xs sm:text-sm text-white appearance-none cursor-pointer outline-none"
+                    >
+                        <option value="ALL">Todas las categorías</option>
+                        <option value="PUBLIC">Solo Públicas</option>
+                        <option value="SECRET">Solo Ocultas / Especiales</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-[10px]"></i>
+                </div>
+
+                <div class="px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-xs text-text-secondary font-mono shrink-0 whitespace-nowrap">
+                    <span id="catCount">{categories.length}</span> categorías
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Cards View (< md) -->
+        <div id="mobileCatList" class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
+            {
+                categories.map((cat: any) => {
+                    const songCount = cat._count?.songs ?? 0;
+                    const isSecret = Boolean(cat.isSecret);
+                    const searchData = `${cat.name || ""}`.toLowerCase();
+
+                    return (
+                        <div
+                            class="cat-item bg-bg-secondary border border-white/5 rounded-xl p-4 flex flex-col justify-between hover:border-accent-main/40 transition-colors space-y-3"
+                            data-search={searchData}
+                            data-secret={isSecret.toString()}
+                            data-id={cat.id}
+                        >
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <span class="text-[10px] font-mono text-text-secondary opacity-70">
+                                        ID #{cat.id}
+                                    </span>
+                                    <h3 class="text-sm font-semibold text-white truncate">
+                                        {cat.name}
+                                    </h3>
+                                </div>
+
+                                <span
+                                    class={`px-2 py-0.5 rounded text-[10px] font-mono font-medium ${
+                                        isSecret
+                                            ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                            : "bg-white/5 text-text-secondary border border-white/10"
+                                    }`}
+                                >
+                                    {isSecret ? "Oculta" : "Pública"}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center justify-between text-xs text-text-secondary pt-1 border-t border-white/5">
+                                <span>Cantos asociados:</span>
+                                <span class="font-mono font-semibold text-accent-main bg-accent-main/10 px-2 py-0.5 rounded-md">
+                                    {songCount}
+                                </span>
+                            </div>
+
+                            <div class="pt-2 border-t border-white/5 grid grid-cols-2 gap-2 text-xs">
+                                <button
+                                    type="button"
+                                    class="edit-cat-btn py-2 px-3 rounded-lg font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors flex items-center justify-center gap-1.5"
+                                    data-cat={JSON.stringify(cat)}
+                                >
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <span>Editar</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="delete-cat-btn py-2 px-3 rounded-lg font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 transition-colors flex items-center justify-center gap-1.5"
+                                    data-id={cat.id}
+                                    data-name={cat.name}
+                                    data-count={songCount}
+                                >
+                                    <i class="fa-solid fa-trash"></i>
+                                    <span>Eliminar</span>
+                                </button>
+                            </div>
+                        </div>
+                    );
+                })
+            }
+        </div>
+
+        <!-- Desktop Table View (>= md) -->
+        <div class="hidden md:block bg-bg-secondary rounded-xl border border-white/5 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-text-main">
+                    <thead class="bg-bg-main text-text-secondary uppercase text-[11px] font-mono tracking-wider border-b border-white/5">
+                        <tr>
+                            <th class="px-5 py-3.5 font-semibold">ID</th>
+                            <th class="px-5 py-3.5 font-semibold">Categoría Litúrgica</th>
+                            <th class="px-5 py-3.5 font-semibold text-center">Cantos Asociados</th>
+                            <th class="px-5 py-3.5 font-semibold text-center">Visibilidad</th>
+                            <th class="px-5 py-3.5 font-semibold text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="desktopCatTbody" class="divide-y divide-white/5">
+                        {
+                            categories.map((cat: any) => {
+                                const songCount = cat._count?.songs ?? 0;
+                                const isSecret = Boolean(cat.isSecret);
+                                const searchData = `${cat.name || ""}`.toLowerCase();
+
+                                return (
+                                    <tr
+                                        class="cat-item hover:bg-white/5 transition-colors"
+                                        data-search={searchData}
+                                        data-secret={isSecret.toString()}
+                                        data-id={cat.id}
+                                    >
+                                        <td class="px-5 py-3.5 font-mono text-xs opacity-60">
+                                            #{cat.id}
+                                        </td>
+                                        <td class="px-5 py-3.5 font-medium text-white">
+                                            {cat.name}
+                                        </td>
+                                        <td class="px-5 py-3.5 text-center">
+                                            <span class="inline-block px-2.5 py-0.5 rounded-full bg-accent-main/10 text-accent-main font-mono text-xs font-semibold">
+                                                {songCount} {songCount === 1 ? "canto" : "cantos"}
+                                            </span>
+                                        </td>
+                                        <td class="px-5 py-3.5 text-center">
+                                            <span
+                                                class={`px-2.5 py-1 rounded text-xs font-mono font-medium ${
+                                                    isSecret
+                                                        ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                                                        : "bg-white/5 text-text-secondary border border-white/10"
+                                                }`}
+                                            >
+                                                {isSecret ? "Oculta / Privada" : "Pública"}
+                                            </span>
+                                        </td>
+                                        <td class="px-5 py-3.5 text-right">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    class="edit-cat-btn p-2 rounded-lg text-text-secondary hover:text-blue-400 hover:bg-white/5 transition-colors"
+                                                    data-cat={JSON.stringify(cat)}
+                                                    title="Editar categoría"
+                                                >
+                                                    <i class="fa-solid fa-pen-to-square text-sm" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="delete-cat-btn p-2 rounded-lg text-text-secondary hover:text-red-400 hover:bg-white/5 transition-colors"
+                                                    data-id={cat.id}
+                                                    data-name={cat.name}
+                                                    data-count={songCount}
+                                                    title="Eliminar categoría"
+                                                >
+                                                    <i class="fa-solid fa-trash text-sm" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- No Results Fallback -->
+        <div id="noCatResults" class="hidden bg-bg-secondary border border-white/5 rounded-xl p-8 text-center space-y-2">
+            <i class="fa-solid fa-tags text-2xl text-text-secondary/50"></i>
+            <p class="text-sm font-medium text-white">No se encontraron categorías</p>
+            <p class="text-xs text-text-secondary">Intenta con otros términos o cambia el filtro de visibilidad.</p>
+        </div>
+
+        <!-- Responsive Modal for Create / Edit -->
+        <div
+            id="categoryModal"
+            class="hidden fixed inset-0 bg-black/75 z-50 items-center justify-center p-3 sm:p-4 backdrop-blur-xs transition-opacity"
+            aria-modal="true"
+            role="dialog"
+        >
+            <div
+                class="bg-bg-secondary w-full max-w-md max-h-[90dvh] flex flex-col rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+            >
+                <div class="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-bg-main shrink-0">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-lg bg-accent-main/15 text-accent-main flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                        <h3 id="catModalTitle" class="text-base font-bold text-white">
+                            Nueva Categoría
+                        </h3>
+                    </div>
+                    <button
+                        id="closeCatModal"
+                        type="button"
+                        class="text-text-secondary hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+                        aria-label="Cerrar modal"
+                    >
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <form id="categoryForm" class="flex flex-col flex-1 overflow-hidden">
+                    <div class="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
+                        <input type="hidden" name="id" id="catId" />
+
+                        <div>
+                            <label class="block text-xs font-medium mb-1.5 text-text-secondary">
+                                Nombre de la Categoría
+                            </label>
+                            <input
+                                type="text"
+                                name="name"
+                                required
+                                placeholder="Ej: Entrada, Comunión, Adviento..."
+                                class="w-full bg-bg-main border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-text-secondary/40 outline-none focus:border-accent-main transition-colors"
+                            />
+                        </div>
+
+                        <div class="pt-2">
+                            <label class="flex items-start gap-3 cursor-pointer select-none">
+                                <input
+                                    type="checkbox"
+                                    name="isSecret"
+                                    id="catIsSecret"
+                                    class="mt-0.5 h-4.5 w-4.5 accent-accent-main rounded cursor-pointer"
+                                />
+                                <div>
+                                    <span class="text-xs font-medium text-white block">
+                                        Categoría Oculta / Especial
+                                    </span>
+                                    <span class="text-[11px] text-text-secondary block mt-0.5 leading-tight">
+                                        Solo será visible para administradores y para celebraciones que requieran momentos litúrgicos específicos.
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="p-4 sm:p-5 border-t border-white/5 flex items-center justify-end gap-2.5 bg-bg-main/60 shrink-0">
+                        <button
+                            type="button"
+                            id="cancelCatModalBtn"
+                            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 border border-white/5 transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            id="submitCatBtn"
+                            class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-colors"
+                        >
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</AdminLayout>
+
+<script>
+    import { showError, showSuccessToast, showConfirm } from "@/utils/alerts";
+
+    const pageContainer = document.getElementById("categories-page");
+    const API_URL = pageContainer?.dataset.apiUrl || "http://localhost:3000/api";
+    const TOKEN = pageContainer?.dataset.token;
+
+    const modal = document.getElementById("categoryModal");
+    const form = document.getElementById("categoryForm") as HTMLFormElement;
+    const modalTitle = document.getElementById("catModalTitle");
+    const openBtn = document.getElementById("openCategoryModalBtn");
+    const closeBtn = document.getElementById("closeCatModal");
+    const cancelBtn = document.getElementById("cancelCatModalBtn");
+
+    const searchInput = document.getElementById("categorySearchInput") as HTMLInputElement;
+    const clearSearchBtn = document.getElementById("clearCatSearchBtn");
+    const visibilityFilter = document.getElementById("visibilityFilterSelect") as HTMLSelectElement;
+    const catCountEl = document.getElementById("catCount");
+    const noResultsEl = document.getElementById("noCatResults");
+    const catItems = document.querySelectorAll(".cat-item") as NodeListOf<HTMLElement>;
+
+    // Filter Logic
+    function applyCatFilters() {
+        const query = searchInput?.value.trim().toLowerCase() || "";
+        const selectedVis = visibilityFilter?.value || "ALL";
+
+        let visibleCount = 0;
+
+        catItems.forEach((item) => {
+            const itemSearch = item.dataset.search || "";
+            const isSecret = item.dataset.secret === "true";
+
+            const matchesQuery = !query || itemSearch.includes(query);
+            let matchesVis = true;
+            if (selectedVis === "PUBLIC") matchesVis = !isSecret;
+            if (selectedVis === "SECRET") matchesVis = isSecret;
+
+            if (matchesQuery && matchesVis) {
+                item.style.display = "";
+                visibleCount++;
+            } else {
+                item.style.display = "none";
+            }
+        });
+
+        if (clearSearchBtn) {
+            clearSearchBtn.classList.toggle("hidden", query.length === 0);
+        }
+
+        const visibleMobile = document.querySelectorAll("#mobileCatList .cat-item:not([style*='display: none'])").length;
+        const visibleDesktop = document.querySelectorAll("#desktopCatTbody .cat-item:not([style*='display: none'])").length;
+        const finalCount = window.innerWidth >= 768 ? visibleDesktop : visibleMobile;
+
+        if (catCountEl) catCountEl.textContent = String(finalCount);
+        if (noResultsEl) noResultsEl.classList.toggle("hidden", finalCount > 0);
+    }
+
+    searchInput?.addEventListener("input", applyCatFilters);
+    visibilityFilter?.addEventListener("change", applyCatFilters);
+
+    clearSearchBtn?.addEventListener("click", () => {
+        if (searchInput) {
+            searchInput.value = "";
+            applyCatFilters();
+            searchInput.focus();
+        }
+    });
+
+    // Modal Helpers
+    const toggleModal = (show: boolean) => {
+        if (show) {
+            modal?.classList.remove("hidden");
+            modal?.classList.add("flex");
+            document.body.classList.add("overflow-hidden");
+        } else {
+            modal?.classList.add("hidden");
+            modal?.classList.remove("flex");
+            document.body.classList.remove("overflow-hidden");
+        }
+    };
+
+    openBtn?.addEventListener("click", () => {
+        form.reset();
+        document.getElementById("catId")?.setAttribute("value", "");
+        if (modalTitle) modalTitle.textContent = "Nueva Categoría";
+        toggleModal(true);
+    });
+
+    closeBtn?.addEventListener("click", () => toggleModal(false));
+    cancelBtn?.addEventListener("click", () => toggleModal(false));
+
+    modal?.addEventListener("click", (e) => {
+        if (e.target === modal) toggleModal(false);
+    });
+
+    window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !modal?.classList.contains("hidden")) {
+            toggleModal(false);
+        }
+    });
+
+    // Edit Category
+    document.querySelectorAll(".edit-cat-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const raw = btn.getAttribute("data-cat");
+            if (!raw) return;
+            const cat = JSON.parse(raw);
+
+            if (modalTitle) modalTitle.textContent = "Editar Categoría";
+
+            const nameInput = document.querySelector('[name="name"]') as HTMLInputElement;
+            const secretCheckbox = document.getElementById("catIsSecret") as HTMLInputElement;
+            const idInput = document.getElementById("catId") as HTMLInputElement;
+
+            if (nameInput) nameInput.value = cat.name || "";
+            if (secretCheckbox) secretCheckbox.checked = Boolean(cat.isSecret);
+            if (idInput) idInput.value = String(cat.id);
+
+            toggleModal(true);
+        });
+    });
+
+    // Delete Category
+    document.querySelectorAll(".delete-cat-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-id");
+            const name = btn.getAttribute("data-name") || "esta categoría";
+            const count = parseInt(btn.getAttribute("data-count") || "0");
+
+            if (!id) return;
+
+            if (count > 0) {
+                showError(
+                    "No se puede eliminar",
+                    `La categoría "${name}" tiene ${count} canción(es) asignadas. Reasigna o elimina los cantos antes de borrarla.`
+                );
+                return;
+            }
+
+            const confirmed = await showConfirm(
+                `¿Eliminar categoría "${name}"?`,
+                "Esta acción no se puede deshacer.",
+                "Sí, eliminar",
+                "Cancelar"
+            );
+
+            if (!confirmed.isConfirmed) return;
+
+            try {
+                const res = await fetch(`${API_URL}/categories/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${TOKEN}`,
+                    },
+                });
+
+                if (res.ok) {
+                    await showSuccessToast("Categoría eliminada correctamente");
+                    window.location.reload();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    showError("Error al Eliminar", err.error || "No se pudo eliminar la categoría");
+                }
+            } catch (e) {
+                console.error(e);
+                showError("Error de Conexión", "No se pudo conectar con el servidor.");
+            }
+        });
+    });
+
+    // Form Submit
+    form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById("submitCatBtn") as HTMLButtonElement;
+        const originalText = submitBtn ? submitBtn.innerText : "Guardar";
+
+        const formData = new FormData(form);
+        const id = formData.get("id");
+        const isEdit = !!id;
+
+        const data = {
+            name: String(formData.get("name") || "").trim(),
+            isSecret: formData.get("isSecret") === "on",
+        };
+
+        const endpoint = isEdit ? `${API_URL}/categories/${id}` : `${API_URL}/categories`;
+        const method = isEdit ? "PUT" : "POST";
+
+        try {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Guardando...";
+            }
+
+            const res = await fetch(endpoint, {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${TOKEN}`,
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (res.ok) {
+                await showSuccessToast(
+                    isEdit ? "Categoría actualizada correctamente" : "Categoría creada con éxito"
+                );
+                window.location.reload();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showError("Error al Guardar", err.error || "Verifica los datos ingresados");
+            }
+        } catch (e) {
+            console.error(e);
+            showError("Error de Conexión", "No se pudo conectar con el servidor.");
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalText;
+            }
+        }
+    });
+</script>
