@@ -108,6 +108,8 @@ export default function ProfileReact({ user, token }) {
             setAvatarTab('url');
         } else {
             // Por defecto: el nombre del usuario
+            const defaultBlobatar = buildBlobatarUrl(defaultName, undefined, 'idle');
+            setSelectedAvatar(defaultBlobatar);
             setAvatarTab('blobatar');
             setCustomSeed(defaultName);
             setCustomHue(undefined);
@@ -117,22 +119,77 @@ export default function ProfileReact({ user, token }) {
         setShowAvatarModal(true);
     };
 
+    // Edit profile (name, phone) state
+    const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+    const [profileForm, setProfileForm] = useState({ name: '', phoneNumber: '' });
+    const [savingProfile, setSavingProfile] = useState(false);
+
+    const openEditProfileModal = () => {
+        setProfileForm({
+            name: currentUser?.name || '',
+            phoneNumber: currentUser?.phoneNumber || ''
+        });
+        setShowEditProfileModal(true);
+    };
+
+    const handleSaveProfile = async (e) => {
+        e.preventDefault();
+        if (!profileForm.name.trim()) {
+            showError("Campo requerido", "El nombre no puede estar vacío.");
+            return;
+        }
+        setSavingProfile(true);
+        const res = await updateProfile({
+            name: profileForm.name.trim(),
+            phoneNumber: profileForm.phoneNumber.trim() || null
+        }, token);
+        setSavingProfile(false);
+
+        if (res.success) {
+            showSuccessToast("¡Perfil actualizado!", "Tus datos se han guardado exitosamente.");
+            const updatedUser = res.data?.user || res.data?.data?.user;
+            if (updatedUser) {
+                setCurrentUser(updatedUser);
+            } else {
+                setCurrentUser(prev => ({
+                    ...prev,
+                    name: profileForm.name.trim(),
+                    phoneNumber: profileForm.phoneNumber.trim() || null
+                }));
+            }
+            setShowEditProfileModal(false);
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
+        } else {
+            showError("Error al guardar", res.error || "No se pudo actualizar el perfil.");
+        }
+    };
+
     const handleSaveAvatar = async () => {
         setSavingAvatar(true);
-        const res = await updateProfile({ avatarUrl: selectedAvatar }, token);
+        let avatarToSave = selectedAvatar;
+        if (avatarTab === 'blobatar' && !avatarToSave) {
+            avatarToSave = buildBlobatarUrl(customSeed, customHue, customExpr);
+        } else if (avatarTab === 'url') {
+            avatarToSave = customUrl.trim() || null;
+        }
+
+        const res = await updateProfile({ avatarUrl: avatarToSave }, token);
         setSavingAvatar(false);
 
         if (res.success) {
             showSuccessToast("¡Avatar actualizado!", "Tu nuevo avatar se ha guardado exitosamente.");
-            if (res.data?.user) {
-                setCurrentUser(res.data.user);
+            const updatedUser = res.data?.user || res.data?.data?.user;
+            if (updatedUser) {
+                setCurrentUser(updatedUser);
             } else {
-                setCurrentUser(prev => ({ ...prev, avatarUrl: selectedAvatar }));
-            }
-            if (res.data?.token) {
-                document.cookie = `token=${res.data.token}; path=/; max-age=2592000; SameSite=Lax`;
+                setCurrentUser(prev => ({ ...prev, avatarUrl: avatarToSave }));
             }
             setShowAvatarModal(false);
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
         } else {
             showError("Error al guardar", res.error || "No se pudo actualizar el avatar.");
         }
@@ -288,14 +345,22 @@ export default function ProfileReact({ user, token }) {
                                 {currentUser.phoneNumber}
                             </p>
                         )}
-                        <div className="pt-1">
+                        <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
                             <button
                                 type="button"
                                 onClick={openAvatarModal}
-                                className="inline-flex items-center gap-1.5 text-xs text-accent-main hover:text-amber-400 font-medium transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-accent-main hover:text-amber-400 font-medium transition-colors cursor-pointer"
                             >
                                 <i className="fa-solid fa-paintbrush"></i>
                                 <span>Personalizar mi avatar</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={openEditProfileModal}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-zinc-300 hover:text-white font-medium transition-colors cursor-pointer"
+                            >
+                                <i className="fa-solid fa-user-pen"></i>
+                                <span>Editar mis datos</span>
                             </button>
                         </div>
                     </div>
@@ -709,7 +774,10 @@ export default function ProfileReact({ user, token }) {
                         <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-[#0a0a0a] border border-white/10 gap-1.5">
                             <button
                                 type="button"
-                                onClick={() => setAvatarTab('blobatar')}
+                                onClick={() => {
+                                    setAvatarTab('blobatar');
+                                    setSelectedAvatar(buildBlobatarUrl(customSeed, customHue, customExpr));
+                                }}
                                 className={`py-2 px-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer min-h-[40px] text-center ${
                                     avatarTab === 'blobatar'
                                         ? 'bg-accent-main text-black shadow-md font-extrabold'
@@ -723,7 +791,10 @@ export default function ProfileReact({ user, token }) {
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setAvatarTab('url')}
+                                onClick={() => {
+                                    setAvatarTab('url');
+                                    setSelectedAvatar(customUrl.trim() || null);
+                                }}
                                 className={`py-2 px-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer min-h-[40px] text-center ${
                                     avatarTab === 'url'
                                         ? 'bg-accent-main text-black shadow-md font-extrabold'
@@ -997,6 +1068,93 @@ export default function ProfileReact({ user, token }) {
                                 )}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Editar Datos de Perfil */}
+            {showEditProfileModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-[#171717] border border-white/15 rounded-3xl w-full max-w-md shadow-2xl relative overflow-hidden">
+                        {/* Header */}
+                        <div className="bg-[#171717] border-b border-white/10 px-5 py-4 sm:px-6 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-accent-main/10 text-accent-main flex items-center justify-center text-sm">
+                                    <i className="fa-solid fa-user-pen"></i>
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-white leading-tight">Editar Mis Datos</h3>
+                                    <p className="text-[11px] text-zinc-400 leading-tight">Actualiza tu nombre visible y teléfono de contacto</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowEditProfileModal(false)}
+                                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                            >
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleSaveProfile} className="p-5 sm:p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                                    Nombre completo o visible:
+                                </label>
+                                <input
+                                    type="text"
+                                    value={profileForm.name}
+                                    onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Ej: Edgar Músico"
+                                    required
+                                    className="w-full px-4 py-2.5 bg-[#0a0a0a] border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                                    Teléfono / WhatsApp (opcional):
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={profileForm.phoneNumber}
+                                    onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                                    placeholder="Ej: +584121234567"
+                                    className="w-full px-4 py-2.5 bg-[#0a0a0a] border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
+                                />
+                                <p className="text-[11px] text-zinc-500 mt-1">
+                                    Formato internacional con código de país (ej. +58 para Venezuela, +52 México, etc.).
+                                </p>
+                            </div>
+
+                            <div className="pt-2 flex items-center justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditProfileModal(false)}
+                                    className="px-4 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={savingProfile}
+                                    className="px-6 py-2.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-sm rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                                >
+                                    {savingProfile ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                                            <span>Guardando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fa-solid fa-check"></i>
+                                            <span>Guardar Cambios</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

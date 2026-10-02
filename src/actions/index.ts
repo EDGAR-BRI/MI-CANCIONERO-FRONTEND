@@ -203,4 +203,66 @@ export const server = {
             }
         },
     }),
+    updateProfile: defineAction({
+        accept: "json",
+        input: z.object({
+            name: z.string().optional(),
+            avatarUrl: z.string().nullable().optional(),
+            phoneNumber: z.string().nullable().optional(),
+        }),
+        handler: async (inputData, context) => {
+            const token = context.cookies.get("token")?.value;
+
+            if (!token) {
+                throw new ActionError({
+                    code: "UNAUTHORIZED",
+                    message: "No autorizado. Inicia sesión para continuar.",
+                });
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Cookie": `token=${token}`,
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(inputData),
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new ActionError({
+                        code: "INTERNAL_SERVER_ERROR",
+                        message: errData.error || "Error al actualizar el perfil",
+                    });
+                }
+
+                const responseData = await response.json();
+
+                if (responseData.token) {
+                    context.cookies.set("token", responseData.token, {
+                        path: "/",
+                        httpOnly: true,
+                        secure: import.meta.env.PROD,
+                        sameSite: "lax",
+                        maxAge: 60 * 60 * 24 * 7,
+                    });
+                }
+
+                return {
+                    success: true,
+                    data: responseData,
+                };
+            } catch (e) {
+                if (e instanceof ActionError) throw e;
+                console.error("Exception updating profile:", e);
+                throw new ActionError({
+                    code: "INTERNAL_SERVER_ERROR",
+                    message: "Error interno del servidor al actualizar perfil",
+                });
+            }
+        },
+    }),
 };

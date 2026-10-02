@@ -41,6 +41,30 @@ export interface UpdateProfileData {
 }
 
 export const updateProfile = async (data: UpdateProfileData, token?: string) => {
+    // Si estamos en el navegador, intentar usar Astro Action para actualizar la cookie HttpOnly en el dominio frontend
+    if (typeof window !== "undefined") {
+        try {
+            const { actions } = await import("astro:actions");
+            if (actions && typeof actions.updateProfile === "function") {
+                const actionResult = await actions.updateProfile(data);
+                if (actionResult && !actionResult.error && actionResult.data) {
+                    return {
+                        success: true,
+                        data: (actionResult.data as any).data || actionResult.data
+                    };
+                }
+                if (actionResult?.error) {
+                    return {
+                        success: false,
+                        error: actionResult.error.message || "Error al actualizar el perfil."
+                    };
+                }
+            }
+        } catch {
+            // Continuar con fetch directo si astro:actions no está disponible (ej. entornos de test o SSR puro)
+        }
+    }
+
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
     };
