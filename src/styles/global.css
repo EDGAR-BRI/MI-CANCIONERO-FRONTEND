@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "blobatar/motion.css";
+@import "sweetalert2/dist/sweetalert2.min.css";
 
 @theme {
     --color-bg-main: #050505;
@@ -352,4 +353,159 @@ html {
 .scrollbar-none {
     -ms-overflow-style: none !important;
     scrollbar-width: none !important;
+}
+
+/* 8. SweetAlert2 Theme and Modal Alignment (AGENTS.md) */
+.swal2-container {
+    z-index: 100000 !important;
+}
+
+.swal2-popup.swal2-dark-popup,
+.swal2-popup {
+    background: #1A1A1A !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 1.25rem !important;
+    color: #F2F0E6 !important;
+    font-family: "Outfit", sans-serif !important;
+    padding: 1.5rem !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+}
+
+.swal2-title {
+    color: #FFFFFF !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    padding: 0.5rem 0 0 0 !important;
+}
+
+.swal2-html-container {
+    color: #9E9E9E !important;
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    margin: 0.75rem 0 0 0 !important;
+}
+
+.swal2-actions {
+    margin-top: 1.5rem !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+}
+
+.swal2-styled.swal2-confirm,
+.swal2-dark-confirm {
+    background-color: #FF5722 !important;
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    font-size: 0.8125rem !important;
+    border-radius: 0.75rem !important;
+    padding: 0.625rem 1.25rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+    transition: background-color 0.2s !important;
+    cursor: pointer !important;
+}
+
+.swal2-styled.swal2-confirm:hover,
+.swal2-dark-confirm:hover {
+    background-color: #f4511e !important;
+}
+
+.swal2-styled.swal2-cancel,
+.swal2-dark-cancel {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #9E9E9E !important;
+    font-weight: 600 !important;
+    font-size: 0.8125rem !important;
+    border-radius: 0.75rem !important;
+    padding: 0.625rem 1.25rem !important;
+    transition: all 0.2s !important;
+    cursor: pointer !important;
+}
+
+.swal2-styled.swal2-cancel:hover,
+.swal2-dark-cancel:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #FFFFFF !important;
+}
+
+.swal2-icon {
+    border-color: #FF5722 !important;
+    color: #FF5722 !important;
+    margin: 0.5rem auto 0.75rem !important;
+}
+
+.swal2-icon.swal2-warning {
+    border-color: #FF5722 !important;
+    color: #FF5722 !important;
+}
+
+/* ==========================================================================
+   VIEW TRANSITIONS - SWITCH DE VISTAS DE MISA (EDICIÓN / LECTURA)
+   ========================================================================== */
+::view-transition-group(misa-switch-pill) {
+    animation-duration: 0.3s;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1);
+    z-index: 50;
+}
+
+::view-transition-old(misa-switch-pill),
+::view-transition-new(misa-switch-pill) {
+    animation-duration: 0.18s;
+    mix-blend-mode: normal;
+}
+
+::view-transition-group(misa-view-switch),
+::view-transition-group(misa-privacy-badge),
+::view-transition-group(misa-back-btn) {
+    animation-duration: 0.01s;
+}
+
+::view-transition-old(misa-view-switch),
+::view-transition-new(misa-view-switch),
+::view-transition-old(misa-privacy-badge),
+::view-transition-new(misa-privacy-badge),
+::view-transition-old(misa-back-btn),
+::view-transition-new(misa-back-btn) {
+    animation-duration: 0.01s;
+    mix-blend-mode: normal;
+}
+
+::view-transition-group(misa-header-card) {
+    animation-duration: 0.22s;
+    animation-timing-function: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+::view-transition-old(misa-header-card),
+::view-transition-new(misa-header-card) {
+    animation-duration: 0.18s;
+    mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(misa-switch-pill),
+    ::view-transition-old(misa-switch-pill),
+    ::view-transition-new(misa-switch-pill),
+    ::view-transition-group(misa-header-card) {
+        animation-duration: 0.01s !important;
+    }
+}
+
+/* ==========================================================================
+   MOMENT ACCORDIONS (MODO LECTURA)
+   ========================================================================== */
+details.moment-details summary::-webkit-details-marker,
+details.moment-details summary::marker {
+    display: none !important;
+    content: "";
+}
+
+@media print {
+    details.moment-details {
+        display: block !important;
+        break-inside: avoid;
+    }
+    details.moment-details > summary {
+        pointer-events: none;
+    }
 }

@@ -1,10 +1,16 @@
 import Swal, { type SweetAlertOptions } from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const swalDark: SweetAlertOptions = {
-    background: "#1f2937",
-    color: "#fff",
-    confirmButtonColor: "#f97316",
-    cancelButtonColor: "#4b5563",
+    background: "#1A1A1A",
+    color: "#F2F0E6",
+    confirmButtonColor: "#FF5722",
+    cancelButtonColor: "rgba(255, 255, 255, 0.1)",
+    customClass: {
+        popup: 'swal2-dark-popup',
+        confirmButton: 'swal2-dark-confirm',
+        cancelButton: 'swal2-dark-cancel',
+    }
 };
 
 export const showAlert = (options: SweetAlertOptions) => {
@@ -27,7 +33,6 @@ export const showSuccessToast = (title: string, text?: string, timer: number = 3
     });
 };
 
-
 export const showError = (title: string, text?: string) => {
     return Swal.fire({
         ...swalDark,
@@ -37,7 +42,12 @@ export const showError = (title: string, text?: string) => {
     });
 };
 
-export const showConfirm = (title: string, text: string, confirmText: string = "Sí", cancelText: string = "Cancelar") => {
+export const showConfirm = (
+    title: string,
+    text: string,
+    confirmText: string = "Sí",
+    cancelText: string = "Cancelar"
+) => {
     return Swal.fire({
         ...swalDark,
         title,
@@ -46,7 +56,8 @@ export const showConfirm = (title: string, text: string, confirmText: string = "
         showCancelButton: true,
         confirmButtonText: confirmText,
         cancelButtonText: cancelText,
-        reverseButtons: true
+        reverseButtons: false,
+        focusCancel: true,
     });
 };
 

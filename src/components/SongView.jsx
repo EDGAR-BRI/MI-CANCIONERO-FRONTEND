@@ -2,13 +2,25 @@ import React, { useState, useEffect } from 'react';
 import SongLine from './SongLine';
 import { transposeText } from '../utils/music';
 
-export default function SongView({ initialContent, initialKey = 'C', originalKey = 'C', initialShowChords = true }) {
+export default function SongView({
+    initialContent,
+    initialKey = 'C',
+    originalKey = 'C',
+    initialShowChords = true,
+    className = "pb-20"
+}) {
     const [content, setContent] = useState(() => {
+        const safeContent = initialContent || "";
         // If initialKey (target) is different from originalKey (source), transpose immediately
         if (initialKey && originalKey && initialKey !== originalKey) {
-            return transposeText(initialContent, originalKey, initialKey);
+            try {
+                return transposeText(safeContent, originalKey, initialKey);
+            } catch (e) {
+                console.error("Error initial transposing:", e);
+                return safeContent;
+            }
         }
-        return initialContent;
+        return safeContent;
     });
     const [currentKey, setCurrentKey] = useState(initialKey || originalKey);
     const [showChords, setShowChords] = useState(initialShowChords);
@@ -47,8 +59,12 @@ export default function SongView({ initialContent, initialKey = 'C', originalKey
             });
         };
 
-        const handleToggleChordsEvent = () => {
-            setShowChords(prev => !prev);
+        const handleToggleChordsEvent = (e) => {
+            if (e && e.detail && typeof e.detail.show === 'boolean') {
+                setShowChords(e.detail.show);
+            } else {
+                setShowChords(prev => !prev);
+            }
         };
 
         window.addEventListener('song-transpose', handleTransposeEvent);
@@ -61,8 +77,8 @@ export default function SongView({ initialContent, initialKey = 'C', originalKey
     }, []);
 
     return (
-        <div className="pb-20">
-            {content.split('\n').map((line, i) => (
+        <div className={className}>
+            {(content || "").split('\n').map((line, i) => (
                 <SongLine key={i} line={line} showChords={showChords} />
             ))}
         </div>

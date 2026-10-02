@@ -1,6 +1,19 @@
 ---
 import type { Category } from "@/types/category";
 import type { Author } from "@/types/author";
+interface Props {
+    title?: string;
+    author?: any;
+    artist?: string;
+    tone?: string;
+    category?: any;
+    categories?: any[];
+    url_song?: string;
+    user?: any;
+    id?: string | number;
+    showAuthor?: boolean;
+}
+
 const {
     title = "Título Desconocido",
     author,
@@ -11,68 +24,54 @@ const {
     url_song = "",
     user,
     id,
+    showAuthor = false,
 } = Astro.props;
 
 const categories = categoriesProp && categoriesProp.length > 0
     ? categoriesProp
     : (category ? [category] : []);
 
-const authorDisplay = author?.name || (typeof author === "string" ? author : (artist || "Desconocido"));
+const authorDisplay = author?.name || (typeof author === "string" ? author : (artist || ""));
 ---
 
-<header class="mb-8">
-    <h1
-        class="text-4xl font-extrabold text-text-main mb-1"
-        transition:name={`song title ${id}`}
-    >
-        {title}
-    </h1>
-    <h2 class="text-xl text-accent-main font-medium">
-        <span class="text-text-secondary">Autor:</span>
-        <span transition:name={`song-artist-${id}`}>{authorDisplay}</span>
-    </h2>
-    <div
-        class="flex flex-col sm:flex-row sm:justify-start justify-between gap-4 mt-4 text-sm text-text-secondary"
-    >
-        <div class="flex flex-wrap items-center justify-start gap-2">
-            <span
-                transition:name={`song tone ${id}`}
-                class="bg-bg-secondary px-3 py-1 rounded-full border border-white/10"
+<header class="mb-3">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+        <div class="space-y-0.5">
+            <h1
+                class="text-xl sm:text-2xl font-bold text-white tracking-tight border-l-4 border-accent-main pl-3 leading-tight"
+                transition:name={id ? `song-title-${id}` : undefined}
             >
-                Ton: <span id="header-tone" class="text-accent-main font-bold"
-                    >{tone}</span
-                >
+                {title}
+            </h1>
+            {
+                showAuthor && authorDisplay && (
+                    <h2 class="text-xs sm:text-sm text-accent-main font-medium pl-3">
+                        <span class="text-text-secondary">Autor:</span>
+                        <span transition:name={id ? `song-artist-${id}` : undefined}>{authorDisplay}</span>
+                    </h2>
+                )
+            }
+        </div>
+        <div class="flex items-center gap-2">
+            <span
+                transition:name={id ? `song-tone-${id}` : undefined}
+                class="bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 text-xs font-medium text-text-secondary flex items-center gap-1.5"
+            >
+                <span>Ton:</span>
+                <span class="header-tone text-accent-main font-bold font-mono text-sm">{tone}</span>
             </span>
             {categories.map((cat: any) => (
-                <a href={`/songs/search/all?categoryId=${cat.id}`} target="_blank">
-                    <span
-                        class="cursor-pointer hover:underline bg-bg-secondary hover:bg-white/10 px-3 py-1 rounded-full border border-white/10 text-accent-main/90 font-bold transition-colors"
-                    >
-                        {cat.name}
-                    </span>
-                </a>
-            ))}
-        </div>
-        {
-            user && (
-                <span class="text-sm text-text-secondary/80 sm:ml-auto ml-0">
-                    Creado por: {user.name}
+                <span class="bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 text-[11px] font-medium text-accent-main/90">
+                    {cat.name}
                 </span>
-            )
-        }
+            ))}
+            {
+                user && (
+                    <span class="text-xs text-text-secondary/70 hidden sm:inline ml-1">
+                        por {user.name}
+                    </span>
+                )
+            }
+        </div>
     </div>
 </header>
-
-<script>
-    import { transposeChord } from "../utils/music";
-
-    const headerTone = document.getElementById("header-tone");
-
-    window.addEventListener("song-transpose", (e: any) => {
-        if (!headerTone) return;
-        const semitones = e.detail.semitones;
-        const currentTone = headerTone.innerText.trim();
-        const newTone = transposeChord(currentTone, semitones);
-        headerTone.innerText = newTone;
-    });
-</script>

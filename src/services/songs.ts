@@ -225,3 +225,67 @@ export const createAuthor = async (name: string, token?: string): Promise<Servic
         return { success: false, error: "Error de conexión." };
     }
 };
+
+export interface DownloadSongPdfOptions {
+    withChords?: boolean;
+    tone?: string;
+}
+
+export const downloadSongPdf = async (
+    songId: number | string,
+    options: DownloadSongPdfOptions = {}
+): Promise<{ success: boolean; isRateLimited?: boolean; retryAfter?: number; error?: string }> => {
+    try {
+        const { withChords = true, tone } = options;
+        const params = new URLSearchParams();
+        params.set('withChords', withChords ? 'true' : 'false');
+        if (tone) params.set('tone', tone);
+
+        const res = await fetch(`${API_URL}/songs/${songId}/pdf?${params.toString()}`, {
+            credentials: 'include'
+        });
+
+        if (res.status === 429) {
+            const retryHeader = res.headers.get('Retry-After');
+            const retryAfter = retryHeader ? parseInt(retryHeader, 10) : 300;
+            const data = await res.json().catch(() => ({}));
+            return {
+                success: false,
+                isRateLimited: true,
+                retryAfter,
+                error: data.error || 'Has superado el límite de descargas de PDF. Por favor espera unos minutos.'
+            };
+        }
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            return {
+                success: false,
+                error: errData.error || 'Error al descargar el PDF de la canción.'
+            };
+        }
+
+        const blob = await res.blob();
+        const contentDisposition = res.headers.get('Content-Disposition');
+        let filename = `cancion-${songId}.pdf`;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (match && match[1]) filename = match[1];
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        return { success: true };
+    } catch (e: any) {
+        console.error('downloadSongPdf error:', e);
+        return { success: false, error: e?.message || 'Error de conexión al descargar el PDF.' };
+    }
+};
+

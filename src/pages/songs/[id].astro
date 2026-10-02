@@ -64,12 +64,13 @@ const canEdit =
             client:load
             id={id}
             canEdit={!!canEdit}
+            initialKey={song?.key}
             onTranspose={undefined}
             onToggleChords={undefined}
             onPrint={undefined}
         />
 
-        <main class="flex-1 p-6 md:p-10 min-w-0 print:px-8 print:py-0">
+        <main class="flex-1 px-2 py-4 sm:p-6 md:p-10 min-w-0 print:px-8 print:py-0">
             <HeaderLyricReact
                 id={id}
                 title={song?.title}

@@ -60,6 +60,7 @@ export const transposeChord = (chord, semitones) => {
 };
 
 export const transposeText = (text, fromKey, toKey) => {
+    if (!text || typeof text !== 'string') return text || "";
     const semitones = getSemidistance(fromKey, toKey);
     if (semitones === 0) return text;
 
