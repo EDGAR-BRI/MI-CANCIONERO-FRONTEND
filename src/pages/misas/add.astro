@@ -1,5 +1,6 @@
 ---
 import Layout from "@/layouts/Layout.astro";
+import CreateMisaModal from "@/components/CreateMisaModal";
 import { getUserFromToken } from "@/utils/auth";
 
 const token = Astro.cookies.get("token")?.value;
@@ -8,223 +9,22 @@ const user = getUserFromToken(token);
 if (!user || !token) {
     return Astro.redirect("/login?redirect=/misas/add");
 }
+
+const defaultMinistryId = Astro.url.searchParams.get("ministryId") || "";
 ---
 
 <Layout title="Crear Nueva Misa - CancioneroDigital">
-    <main class="w-full max-w-2xl mx-auto px-4 py-6 sm:py-10 flex-1 flex flex-col justify-center">
-        <!-- Breadcrumb / Header -->
-        <div class="mb-6">
-            <a
-                href="/misas"
-                class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-accent-main transition-colors mb-3 group"
-            >
-                <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
-                <span>Volver a Misas</span>
-            </a>
-            <div class="flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-2xl bg-accent-main/10 border border-accent-main/20 flex items-center justify-center text-accent-main shadow-inner shrink-0">
-                    <i class="fa-solid fa-book-bible text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                        Crear Nueva Misa
-                    </h1>
-                    <p class="text-xs sm:text-sm text-zinc-400 mt-0.5">
-                        Organiza el repertorio litúrgico para tu celebración
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Form Card -->
-        <form
-            id="addMisaForm"
-            class="bg-[#121212] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6"
-            data-token={token}
-        >
-            <!-- Title -->
-            <div class="space-y-2">
-                <label
-                    for="title"
-                    class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
-                >
-                    Título / Ocasión <span class="text-accent-main">*</span>
-                </label>
-                <div class="relative">
-                    <i class="fa-solid fa-heading absolute left-3.5 top-3.5 text-zinc-500 text-sm"></i>
-                    <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        required
-                        placeholder="Ej. Misa de Domingo, Jueves Santo, Confirmaciones..."
-                        class="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-white/10 focus:border-accent-main focus:ring-1 focus:ring-accent-main rounded-xl text-white placeholder-zinc-600 text-sm outline-none transition-all"
-                    />
-                </div>
-            </div>
-
-            <!-- Date -->
-            <div class="space-y-2">
-                <label
-                    for="dateMisa"
-                    class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider"
-                >
-                    Fecha de la Celebración <span class="text-accent-main">*</span>
-                </label>
-                <div class="relative">
-                    <i class="fa-solid fa-calendar-day absolute left-3.5 top-3.5 text-zinc-500 text-sm"></i>
-                    <input
-                        type="date"
-                        id="dateMisa"
-                        name="dateMisa"
-                        required
-                        class="w-full pl-10 pr-4 py-3 bg-[#0a0a0a] border border-white/10 focus:border-accent-main focus:ring-1 focus:ring-accent-main rounded-xl text-white text-sm outline-none transition-all dark:[&::-webkit-calendar-picker-indicator]:invert cursor-pointer"
-                    />
-                </div>
-            </div>
-
-            <!-- Visibility -->
-            <div class="space-y-2">
-                <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                    Visibilidad
-                </label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <label class="relative flex items-start gap-3 p-3.5 rounded-xl border border-white/10 bg-[#0a0a0a] hover:border-white/20 cursor-pointer transition-all has-[:checked]:border-accent-main has-[:checked]:bg-accent-main/5 group">
-                        <input
-                            type="radio"
-                            name="visibility"
-                            value="PRIVATE"
-                            checked
-                            class="mt-0.5 text-accent-main focus:ring-accent-main focus:ring-offset-0 bg-zinc-900 border-zinc-700 cursor-pointer"
-                        />
-                        <div class="text-xs">
-                            <div class="font-bold text-white flex items-center gap-1.5">
-                                <i class="fa-solid fa-lock text-accent-main text-xs"></i>
-                                <span>Privada</span>
-                            </div>
-                            <p class="text-zinc-400 text-[11px] mt-0.5 leading-snug">
-                                Solo tú y los miembros autorizados por enlace o ministerio.
-                            </p>
-                        </div>
-                    </label>
-
-                    <label class="relative flex items-start gap-3 p-3.5 rounded-xl border border-white/10 bg-[#0a0a0a] hover:border-white/20 cursor-pointer transition-all has-[:checked]:border-accent-main has-[:checked]:bg-accent-main/5 group">
-                        <input
-                            type="radio"
-                            name="visibility"
-                            value="PUBLIC"
-                            class="mt-0.5 text-accent-main focus:ring-accent-main focus:ring-offset-0 bg-zinc-900 border-zinc-700 cursor-pointer"
-                        />
-                        <div class="text-xs">
-                            <div class="font-bold text-white flex items-center gap-1.5">
-                                <i class="fa-solid fa-globe text-emerald-400 text-xs"></i>
-                                <span>Pública</span>
-                            </div>
-                            <p class="text-zinc-400 text-[11px] mt-0.5 leading-snug">
-                                Visible para toda la comunidad en la cartelera de misas.
-                            </p>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Action buttons -->
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-                <a
-                    href="/misas"
-                    class="px-5 py-2.5 rounded-xl border border-white/10 text-zinc-400 hover:text-white hover:bg-white/5 font-semibold text-xs transition-all"
-                >
-                    Cancelar
-                </a>
-                <button
-                    type="submit"
-                    id="submitBtn"
-                    class="px-6 py-2.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-lg shadow-amber-500/10 active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-                >
-                    <i class="fa-solid fa-plus text-xs"></i>
-                    <span>Crear Misa</span>
-                </button>
-            </div>
-        </form>
+    <main class="min-h-[75vh] flex items-center justify-center px-2 py-4 sm:p-4">
+        <CreateMisaModal
+            client:load
+            isOpen={true}
+            onClose={() => {
+                window.location.href = "/misas";
+            }}
+            token={token}
+            currentUser={user}
+            defaultMinistryId={defaultMinistryId}
+            redirectToCreated={true}
+        />
     </main>
 </Layout>
-
-<script>
-    import { createMisa } from "@/services/misas";
-    import { showError, showSuccessToast } from "@/utils/alerts";
-
-    const form = document.getElementById("addMisaForm") as HTMLFormElement;
-    const submitBtn = document.getElementById("submitBtn") as HTMLButtonElement;
-    const dateInput = document.getElementById("dateMisa") as HTMLInputElement;
-
-    // Set today's date by default if empty
-    if (dateInput && !dateInput.value) {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, "0");
-        const day = String(today.getDate()).padStart(2, "0");
-        dateInput.value = `${year}-${month}-${day}`;
-    }
-
-    form?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const title = (formData.get("title") as string)?.trim();
-        const dateMisa = formData.get("dateMisa") as string;
-        const visibility = (formData.get("visibility") as string) || "PRIVATE";
-        const token = form.getAttribute("data-token");
-
-        if (!title) {
-            showError("Campo requerido", "Por favor ingresa un título para la misa");
-            return;
-        }
-
-        if (!dateMisa) {
-            showError("Campo requerido", "Por favor selecciona una fecha");
-            return;
-        }
-
-        if (!token) {
-            await showError("Sesión expirada", "Por favor inicia sesión para continuar.");
-            window.location.href = "/login?redirect=/misas/add";
-            return;
-        }
-
-        // Loading state
-        const originalContent = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-            <svg class="animate-spin h-4 w-4 text-black inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Creando...</span>
-        `;
-
-        try {
-            const { success, data, error } = await createMisa(
-                title,
-                dateMisa,
-                visibility,
-                token,
-            );
-
-            if (success) {
-                await showSuccessToast("Misa creada correctamente");
-                if (data?.id) {
-                    window.location.href = `/misas/${data.id}`;
-                } else {
-                    window.location.href = "/misas";
-                }
-            } else {
-                showError("Error", error || "Error al crear la misa");
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalContent;
-            }
-        } catch (err: any) {
-            showError("Error", "Ocurrió un error inesperado: " + (err?.message || err));
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalContent;
-        }
-    });
-</script>

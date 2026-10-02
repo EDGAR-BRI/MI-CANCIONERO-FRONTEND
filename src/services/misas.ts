@@ -23,7 +23,13 @@ export const getMisas = async (token?: string): Promise<ServiceResponse<Misa[]>>
     }
 };
 
-export const createMisa = async (title: string, dateMisa: string, visibility: string = "PUBLIC", token?: string): Promise<ServiceResponse<Misa>> => {
+export const createMisa = async (
+    title: string,
+    dateMisa: string,
+    visibility: string = "PUBLIC",
+    token?: string,
+    ministryId?: number | null
+): Promise<ServiceResponse<Misa>> => {
     try {
         const headers: HeadersInit = { "Content-Type": "application/json" };
         if (token) {
@@ -34,7 +40,12 @@ export const createMisa = async (title: string, dateMisa: string, visibility: st
             method: "POST",
             headers,
             credentials: "include",
-            body: JSON.stringify({ title, dateMisa, visibility }),
+            body: JSON.stringify({
+                title,
+                dateMisa,
+                visibility,
+                ministryId: ministryId || null
+            }),
             signal: AbortSignal.timeout(10000)
         });
 
@@ -52,7 +63,15 @@ export const createMisa = async (title: string, dateMisa: string, visibility: st
     }
 };
 
-export const updateMisa = async (id: number, title: string, dateMisa: string, visibility: string, token: string | undefined, editToken?: string): Promise<ServiceResponse<Misa>> => {
+export const updateMisa = async (
+    id: number,
+    title: string,
+    dateMisa: string,
+    visibility: string,
+    token: string | undefined,
+    editToken?: string,
+    ministryId?: number | null
+): Promise<ServiceResponse<Misa>> => {
     try {
         const headers: HeadersInit = { "Content-Type": "application/json" };
         if (token) {
@@ -64,11 +83,16 @@ export const updateMisa = async (id: number, title: string, dateMisa: string, vi
             url += `?edit_token=${editToken}`;
         }
 
+        const bodyData: any = { title, dateMisa, visibility };
+        if (ministryId !== undefined) {
+            bodyData.ministryId = ministryId;
+        }
+
         const res = await fetch(url, {
             method: "PUT",
             headers,
             credentials: "include",
-            body: JSON.stringify({ title, dateMisa, visibility }),
+            body: JSON.stringify(bodyData),
             signal: AbortSignal.timeout(10000)
         });
         if (!res.ok) {
@@ -206,9 +230,22 @@ export const updateMisaSong = async (misaId: number, misaSongId: number, key: st
     }
 };
 
-export const cloneMisa = async (originalMisa: Misa, token: string): Promise<ServiceResponse<Misa>> => {
+export const cloneMisa = async (
+    originalMisa: Misa,
+    token: string,
+    newTitle?: string,
+    visibility?: "PUBLIC" | "PRIVATE",
+    targetMinistryId?: number | null
+): Promise<ServiceResponse<Misa>> => {
     try {
-        const createRes = await createMisa(`${originalMisa.title} (Copia)`, new Date().toISOString(), "PRIVATE", token);
+        const titleToUse = newTitle || `${originalMisa.title} (Copia)`;
+        const createRes = await createMisa(
+            titleToUse,
+            originalMisa.dateMisa || new Date().toISOString(),
+            visibility || "PRIVATE",
+            token,
+            targetMinistryId
+        );
 
         if (!createRes.success || !createRes.data) {
             return { success: false, error: createRes.error || "Error al crear la copia de la misa." };
@@ -227,3 +264,133 @@ export const cloneMisa = async (originalMisa: Misa, token: string): Promise<Serv
         return { success: false, error: e instanceof Error ? e.message : "Error al clonar la misa." };
     }
 };
+
+export const addMomentToMisa = async (
+    misaId: number,
+    payload: { momentId?: number; name?: string },
+    token?: string,
+    editToken?: string
+): Promise<ServiceResponse<any>> => {
+    try {
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        let url = `${API_URL}/misas/${misaId}/moments`;
+        if (editToken) url += `?edit_token=${editToken}`;
+
+        const res = await fetch(url, {
+            method: "POST",
+            headers,
+            credentials: "include",
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            return { success: false, error: err?.error || "Error al agregar el momento." };
+        }
+
+        const data = await res.json();
+        return { success: true, data };
+    } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Error de conexión." };
+    }
+};
+
+export const removeMomentFromMisa = async (
+    misaId: number,
+    momentId: number,
+    token?: string,
+    editToken?: string
+): Promise<ServiceResponse<any>> => {
+    try {
+        const headers: HeadersInit = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        let url = `${API_URL}/misas/${misaId}/moments/${momentId}`;
+        if (editToken) url += `?edit_token=${editToken}`;
+
+        const res = await fetch(url, {
+            method: "DELETE",
+            headers,
+            credentials: "include",
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            return { success: false, error: err?.error || "Error al eliminar el momento." };
+        }
+
+        return { success: true };
+    } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Error de conexión." };
+    }
+};
+
+export const reorderMisaMoments = async (
+    misaId: number,
+    orderedMomentIds: number[],
+    token?: string,
+    editToken?: string
+): Promise<ServiceResponse<any>> => {
+    try {
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        let url = `${API_URL}/misas/${misaId}/moments/reorder`;
+        if (editToken) url += `?edit_token=${editToken}`;
+
+        const res = await fetch(url, {
+            method: "PUT",
+            headers,
+            credentials: "include",
+            body: JSON.stringify({ orderedMomentIds }),
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            return { success: false, error: err?.error || "Error al reordenar momentos." };
+        }
+
+        return { success: true };
+    } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Error de conexión." };
+    }
+};
+
+export const reorderMisaSongs = async (
+    misaId: number,
+    orderedSongIds: number[],
+    momentId?: number,
+    token?: string,
+    editToken?: string
+): Promise<ServiceResponse<any>> => {
+    try {
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        let url = `${API_URL}/misas/${misaId}/songs/reorder`;
+        if (editToken) url += `?edit_token=${editToken}`;
+
+        const res = await fetch(url, {
+            method: "PUT",
+            headers,
+            credentials: "include",
+            body: JSON.stringify({ orderedSongIds, momentId }),
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => null);
+            return { success: false, error: err?.error || "Error al reordenar canciones." };
+        }
+
+        return { success: true };
+    } catch (e) {
+        return { success: false, error: e instanceof Error ? e.message : "Error de conexión." };
+    }
+};
+

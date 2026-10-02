@@ -1,578 +1,133 @@
 ---
-// export const prerender = false;
 import Layout from "../../layouts/Layout.astro";
-import Header from "../../components/Header.astro";
-import { getMisas, cloneMisa } from "../../services/misas";
 import { getMoments } from "@/services/moments";
-import MisaSongManager from "@/components/MisaSongManager";
-import type { Moment } from "@/types/misa";
+import { getUserFromToken } from "@/utils/auth";
+import type { Moment, Misa } from "@/types/misa";
 import { API_URL } from "@/services/songs";
+import MisaDetailReact from "@/components/MisaDetailReact";
 
 const { id } = Astro.params;
 
-let misa = null;
-let error = null;
+let misa: Misa | null = null;
+let error: string | null = null;
+let isForbidden = false;
+let ministryName: string | null = null;
 let moments: Moment[] = [];
-let token = Astro.cookies.get("token")?.value;
-let editToken = Astro.url.searchParams.get("edit_token");
-
-if (Astro.request.method === "POST") {
-    const formData = await Astro.request.formData();
-    const action = formData.get("action");
-
-    if (action === "clone" && id && token) {
-        // We need to fetch the misa first to clone it
-        // Or we can rely on `cloneMisa` taking the full object if we had it.
-        // But here we are in the POST request, so 'misa' variable is not yet populated by the GET logic below.
-        // Ideally we should move the fetch logic up or re-fetch.
-        // Let's re-fetch for safety or refactor.
-
-        // Simpler: Fetch just for cloning
-        const headers: HeadersInit = { Authorization: `Bearer ${token}` };
-        const fetchUrl = new URL(`${API_URL}/misas/${id}`);
-        const shareToken = Astro.url.searchParams.get("share_token");
-        if (shareToken) fetchUrl.searchParams.append("share_token", shareToken);
-        if (editToken) fetchUrl.searchParams.append("edit_token", editToken);
-
-        const res = await fetch(fetchUrl.toString(), { headers });
-        if (res.ok) {
-            const originalMisa = await res.json();
-            const result = await cloneMisa(originalMisa, token);
-            if (result.success && result.data) {
-                return Astro.redirect(`/misas/${result.data.id}`);
-            } else {
-                error = result.error || "Error al clonar la misa.";
-            }
-        } else {
-            error = "No se pudo obtener la misa original para clonar.";
-        }
-    }
-}
+const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
 
 if (id) {
     try {
         const headers: HeadersInit = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        // Check for share token in query params
-        const url = new URL(`${API_URL}/misas/${id}`);
-        const shareToken = Astro.url.searchParams.get("share_token");
-        if (shareToken) url.searchParams.append("share_token", shareToken);
-        if (editToken) url.searchParams.append("edit_token", editToken);
+        const url = `${API_URL}/misas/${id}`;
 
         const [misaRes, momentsRes] = await Promise.all([
-            fetch(url.toString(), { headers }),
+            fetch(url, { headers }),
             getMoments(),
         ]);
 
         if (misaRes.ok) {
             misa = await misaRes.json();
-            misa.canEdit = misa.canEdit || misa.isOwner;
         } else {
-            error = "No se encontró la misa.";
+            const errData = await misaRes.json().catch(() => null);
+            if (misaRes.status === 403) {
+                isForbidden = true;
+                ministryName = errData?.ministryName || null;
+                error = errData?.error || "Esta misa es privada.";
+            } else if (misaRes.status === 404) {
+                error = "La misa solicitada no existe.";
+            } else {
+                error = errData?.error || "No se pudo cargar la misa.";
+            }
         }
 
         if (momentsRes.success && momentsRes.data) {
             moments = momentsRes.data;
         }
     } catch (e) {
-        error = "Error de conexión.";
+        error = "Error al conectar con el servidor.";
     }
+} else {
+    error = "Identificador de misa no válido.";
 }
-
-// Helper to format date
-const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-};
 ---
 
-<Layout
-    title={misa ? `${misa.title} - CancioneroDigital` : "Misa no encontrada"}
->
-    <main
-        class="max-w-4xl mx-auto px-4 pt-8 sm:px-8"
-        data-token={token}
-        data-edit-token={editToken}
-    >
+<Layout title={misa ? `${misa.title} - CancioneroDigital` : (isForbidden ? "Misa Privada" : "Misa no disponible")}>
+    <main class="w-full max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-8 flex-1 flex flex-col">
         {
-            error ? (
-                <div class="text-center py-10">
-                    <p class="text-red-500 font-bold text-xl">{error}</p>
-                    <a
-                        href="/misas"
-                        class="text-blue-500 hover:underline mt-4 block"
-                    >
-                        Volver a Misas
-                    </a>
-                </div>
-            ) : misa ? (
-                <div>
-                    <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 ">
-                        <div class="flex justify-between flex-col sm:flex-row sm:items-start items-center ">
-                            <div>
-                                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">
-                                    {misa.title}
-                                </h1>
-                                <p class="text-gray-600 dark:text-gray-400 mt-1 capitalize">
-                                    📅 {formatDate(misa.dateMisa)}
-                                </p>
-                            </div>
-                            <div class="flex gap-2 items-center">
-                                {token && (
-                                    <form method="POST" id="cloneMisaForm">
-                                        <input
-                                            type="hidden"
-                                            name="action"
-                                            value="clone"
-                                        />
-                                        <button
-                                            type="submit"
-                                            id="cloneMisaBtn"
-                                            class="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 px-3 py-1 rounded hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors flex items-center gap-1"
-                                            title="Clonar esta misa para editarla"
-                                        >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                width="12"
-                                                height="12"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                class="lucide lucide-copy"
-                                            >
-                                                <rect
-                                                    width="14"
-                                                    height="14"
-                                                    x="8"
-                                                    y="8"
-                                                    rx="2"
-                                                    ry="2"
-                                                />
-                                                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                                            </svg>
-                                            Clonar
-                                        </button>
-                                    </form>
-                                )}
-
-                                {misa.visibility === "PRIVATE" &&
-                                    (misa.isOwner ||
-                                        token ||
-                                        editToken ||
-                                        Astro.url.searchParams.get(
-                                            "share_token",
-                                        )) && (
-                                        <button
-                                            id="copyShareLinkBtn"
-                                            data-share-token={misa.shareToken}
-                                            class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 px-3 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex items-center gap-1"
-                                        >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                width="12"
-                                                height="12"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                            >
-                                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                                            </svg>
-                                            Link
-                                        </button>
-                                    )}
-                                {misa.isOwner && (
-                                    <button
-                                        id="copyEditorLinkBtn"
-                                        data-edit-token={misa.editToken}
-                                        class="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-3 py-1 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1"
-                                    >
-                                        <svg
-                                            width="12"
-                                            height="12"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="2"
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                        >
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                        </svg>
-                                        Link Editor
-                                    </button>
-                                )}
-                                <a
-                                    href={`/misas/view/${misa.id}${Astro.url.search}`}
-                                    class="text-xs bg-accent-main/10 text-accent-main px-3 py-1 rounded hover:bg-accent-main/20 transition-colors flex items-center gap-1"
-                                    title="Modo Lectura"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="12"
-                                        height="12"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="lucide lucide-book-open"
-                                    >
-                                        <>
-                                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                                        </>
-                                    </svg>
-                                    Lectura
-                                </a>
-                                <button
-                                    id="shareMisaBtn"
-                                    class="text-xs bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 px-3 py-1 rounded hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-colors flex items-center gap-1"
-                                    title="Compartir Misa"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="12"
-                                        height="12"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="lucide lucide-share-2"
-                                    >
-                                        <circle cx="18" cy="5" r="3" />
-                                        <circle cx="6" cy="12" r="3" />
-                                        <circle cx="18" cy="19" r="3" />
-                                        <line
-                                            x1="8.59"
-                                            x2="15.42"
-                                            y1="13.51"
-                                            y2="17.49"
-                                        />
-                                        <line
-                                            x1="15.41"
-                                            x2="8.59"
-                                            y1="6.51"
-                                            y2="10.49"
-                                        />
-                                    </svg>
-                                    Compartir
-                                </button>
-                                {misa.canEdit && (
-                                    <button
-                                        id="editMisaBtn"
-                                        class="text-xs bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition-colors"
-                                    >
-                                        Editar Info
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+            isForbidden ? (
+                <div class="bg-bg-secondary border border-white/5 rounded-2xl p-8 sm:p-12 text-center my-auto max-w-md mx-auto space-y-5 shadow-xl">
+                    <div class="w-14 h-14 rounded-2xl bg-white/5 text-amber-400 flex items-center justify-center mx-auto text-2xl border border-white/10">
+                        <i class="fa-solid fa-lock"></i>
                     </div>
-
-                    <div class="space-y-6">
-                        {moments.map((moment) => {
-                            const momentSongs = misa.misaSongs.filter(
-                                (ms: any) => ms.momentId === moment.id,
-                            );
-
-                            return (
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex flex-col sm:flex-row sm:items-center justify-start gap-2 sm:gap-4 border-b border-white/5 pb-2 last:border-0">
-                                        <h2 class="text-xl font-bold sm:w-32 shrink-0 flex items-center gap-2">
-                                            {moment.nombre}:
-                                            {misa.isOwner && (
-                                                <button
-                                                    data-moment-id={moment.id}
-                                                    class="sm:hidden add-song-btn text-xs h-6 w-6 bg-accent-main text-white font-bold rounded hover:saturate-200 transition-transform transform active:scale-95 flex items-center justify-center"
-                                                    title="Agregar canción"
-                                                >
-                                                    <i class="fa-solid fa-plus" />
-                                                </button>
-                                            )}
-                                        </h2>
-
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            {momentSongs.map((ms: any) => (
-                                                <div class="flex items-center gap-1 group">
-                                                    <a
-                                                        href={`/songs/${ms.song.id}?tone=${encodeURIComponent(ms.key || ms.song.key)}`}
-                                                        class="text-sm text-white bg-accent-main/30 border-2 border-accent-main
-                                                        rounded-full px-4 py-2 text-center font-medium hover:text-white hover:bg-accent-main transition flex items-center gap-2"
-                                                    >
-                                                        <span class="text-center">
-                                                            {ms.song.title}
-                                                        </span>
-                                                        {token ||
-                                                        misa.canEdit ? (
-                                                            <button
-                                                                data-action="edit-tone"
-                                                                data-misa-id={
-                                                                    misa.id
-                                                                }
-                                                                data-misa-song-id={
-                                                                    ms.id
-                                                                }
-                                                                data-current-tone={
-                                                                    ms.key ||
-                                                                    ms.song.key
-                                                                }
-                                                                class="text-xs font-bold text-accent-main bg-white/20 px-1.5 py-0.5 rounded hover:bg-white/40 transition-colors"
-                                                                title="Cambiar tono"
-                                                                onclick="event.preventDefault()"
-                                                            >
-                                                                {ms.key ||
-                                                                    ms.song.key}
-                                                            </button>
-                                                        ) : (
-                                                            <span class="text-xs font-bold text-accent-main bg-white/20 px-1.5 py-0.5 rounded">
-                                                                {ms.key ||
-                                                                    ms.song.key}
-                                                            </span>
-                                                        )}
-                                                    </a>
-                                                    <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                                        {misa.canEdit && (
-                                                            <a
-                                                                href={`/edit-song/${ms.song.id}`}
-                                                                class="text-gray-400 hover:text-accent-main p-1 transition-colors"
-                                                                title="Editar canción"
-                                                            >
-                                                                <i class="fa-solid fa-pen-to-square w-4 h-4 flex items-center justify-center" />
-                                                            </a>
-                                                        )}
-                                                        {(token ||
-                                                            misa.canEdit) && (
-                                                            <button
-                                                                data-action="delete-song"
-                                                                data-misa-id={
-                                                                    misa.id
-                                                                }
-                                                                data-misa-song-id={
-                                                                    ms.id
-                                                                }
-                                                                class="text-gray-400 hover:text-red-500 p-1 transition-colors"
-                                                                title="Eliminar canción"
-                                                            >
-                                                                <i class="fa-solid fa-trash w-4 h-4 flex items-center justify-center" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-
-                                            {misa.isOwner && (
-                                                <button
-                                                    data-moment-id={moment.id}
-                                                    class="hidden sm:block add-song-btn text-sm h-10 w-10 bg-accent-main text-white font-bold rounded-lg hover:saturate-200 transition-transform transform active:scale-95 flex items-center justify-center"
-                                                    title="Agregar canción"
-                                                >
-                                                    <i class="fa-solid fa-plus" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div class="space-y-2">
+                        <h2 class="text-xl font-bold text-white">Misa Privada</h2>
+                        {ministryName ? (
+                            <p class="text-xs text-text-secondary leading-relaxed">
+                                Esta misa pertenece al grupo <strong class="text-white">{ministryName}</strong> y solo sus miembros activos tienen acceso.
+                            </p>
+                        ) : (
+                            <p class="text-xs text-text-secondary leading-relaxed">
+                                {error || "Esta misa es privada y solo su creador tiene acceso."}
+                            </p>
+                        )}
                     </div>
-
-                    <div class="mt-8 flex justify-between">
+                    {user ? (
+                        <p class="text-xs text-text-secondary/70">
+                            Sesión iniciada como <span class="text-white font-mono">{user.name || user.email}</span>
+                        </p>
+                    ) : (
+                        <p class="text-xs text-text-secondary/80">
+                            Si perteneces a este grupo, inicia sesión con tu cuenta para acceder.
+                        </p>
+                    )}
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                        {!user && (
+                            <a
+                                href={`/login?redirect=/misas/${id}`}
+                                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
+                            >
+                                <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                                <span>Iniciar Sesión</span>
+                            </a>
+                        )}
                         <a
                             href="/misas"
-                            class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold text-xs transition-colors"
                         >
-                            ← Volver al listado
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                            <span>Volver a Misas</span>
                         </a>
-                        {/* Aqui podriamos poner un boton para Editar Misa o Agregar Canciones */}
                     </div>
-
-                    {misa.canEdit ? (
-                        <MisaSongManager
-                            client:load
-                            misaId={misa.id}
-                            moments={moments}
-                            token={token}
-                            editToken={editToken}
-                        />
-                    ) : (
-                        !Astro.url.searchParams.has("share_token") &&
-                        misa.visibility !== "PUBLIC" && (
-                            <div class="mt-8 text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
-                                <p class="text-gray-600 dark:text-gray-400 mb-4">
-                                    Inicia sesión para agregar canciones y
-                                    editar la misa.
-                                </p>
-                                <a
-                                    href="/login"
-                                    class="inline-block bg-accent-main text-white font-medium px-6 py-2 rounded-lg hover:bg-accent-main/90 transition-colors"
-                                >
-                                    Iniciar Sesión
-                                </a>
-                            </div>
-                        )
-                    )}
+                </div>
+            ) : error || !misa ? (
+                <div class="bg-bg-secondary border border-white/5 rounded-2xl p-8 sm:p-12 text-center my-auto max-w-md mx-auto space-y-4 shadow-xl">
+                    <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h2 class="text-xl font-bold text-white">Misa no disponible</h2>
+                        <p class="text-xs text-text-secondary">{error || "No se pudo cargar la información."}</p>
+                    </div>
+                    <a
+                        href="/misas"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
+                    >
+                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                        <span>Volver a Misas</span>
+                    </a>
                 </div>
             ) : (
-                <div class="text-center py-10">
-                    <p class="text-gray-500">Cargando...</p>
-                </div>
+                <MisaDetailReact
+                    client:load
+                    initialMisa={misa}
+                    allMoments={moments}
+                    token={token}
+                    currentUser={user}
+                />
             )
         }
     </main>
 </Layout>
-
-<script>
-    import "../../scripts/misa-details";
-
-    const shareBtn = document.getElementById("shareMisaBtn");
-    if (shareBtn) {
-        shareBtn.addEventListener("click", async () => {
-            const url = window.location.href;
-            const title = document.title;
-
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: title,
-                        url: url,
-                    });
-                } catch (err) {
-                    console.error("Error sharing:", err);
-                }
-            } else {
-                try {
-                    await navigator.clipboard.writeText(url);
-                    alert("Enlace copiado al portapapeles");
-                } catch (err) {
-                    console.error("Failed to copy:", err);
-                }
-            }
-        });
-    }
-
-    const cloneForm = document.getElementById("cloneMisaForm");
-    const cloneBtn = document.getElementById(
-        "cloneMisaBtn",
-    ) as HTMLButtonElement | null;
-
-    if (cloneForm && cloneBtn) {
-        cloneForm.addEventListener("submit", () => {
-            cloneBtn.disabled = true;
-            cloneBtn.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-2 h-3 w-3 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Clonando...
-             `;
-            cloneBtn.classList.add("opacity-50", "cursor-not-allowed");
-        });
-    }
-</script>
-
-<!-- <script></script> -->
-
-<!-- Edit Misa Modal -->
-<div
-    id="editMisaModal"
-    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
->
-    <div
-        class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg border border-gray-200 dark:border-gray-700 mx-4 overflow-hidden"
-    >
-        <div
-            class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center"
-        >
-            <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">
-                Editar Misa
-            </h3>
-            <button
-                id="closeEditMisaModal"
-                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                >✕</button
-            >
-        </div>
-        <form id="editMisaForm" class="p-6 space-y-4" data-misa-id={id}>
-            <div>
-                <label
-                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >Título</label
-                >
-                <input
-                    type="text"
-                    name="title"
-                    value={misa?.title}
-                    required
-                    class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-main outline-none"
-                />
-            </div>
-            <div>
-                <label
-                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >Fecha</label
-                >
-                <input
-                    type="datetime-local"
-                    name="dateMisa"
-                    value={misa?.dateMisa
-                        ? new Date(misa.dateMisa).toISOString().slice(0, 16)
-                        : ""}
-                    required
-                    class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-main outline-none"
-                />
-            </div>
-            <div>
-                <label
-                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                    >Visibilidad</label
-                >
-                <select
-                    name="visibility"
-                    id="visibilitySelect"
-                    class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-gray-900 dark:text-white focus:ring-2 focus:ring-accent-main outline-none"
-                >
-                    <option
-                        value="PUBLIC"
-                        selected={misa?.visibility === "PUBLIC"}>Pública</option
-                    >
-                    <option
-                        value="PRIVATE"
-                        selected={misa?.visibility === "PRIVATE"}
-                        >Privada (Solo tú y enlace)</option
-                    >
-                </select>
-            </div>
-            <div class="flex justify-between pt-4">
-                <button
-                    type="button"
-                    id="deleteMisaBtn"
-                    class="bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 font-bold py-2 px-6 rounded-lg transition-colors"
-                >
-                    Eliminar Misa
-                </button>
-                <button
-                    type="submit"
-                    class="bg-accent-main hover:bg-accent-main/90 text-white font-bold py-2 px-6 rounded-lg transition-transform transform active:scale-95"
-                >
-                    Guardar Cambios
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
