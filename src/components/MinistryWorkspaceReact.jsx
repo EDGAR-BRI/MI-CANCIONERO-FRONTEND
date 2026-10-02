@@ -626,7 +626,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                             {ministry.misas.map(misa => (
                                 <a
                                     key={misa.id}
-                                    href={`/misas/${misa.id}`}
+                                    href={`/misas/view/${misa.id}`}
                                     className="bg-[#171717] border border-white/10 hover:border-accent-main/40 rounded-2xl p-5 transition-all flex flex-col justify-between group"
                                 >
                                     <div className="space-y-2">
