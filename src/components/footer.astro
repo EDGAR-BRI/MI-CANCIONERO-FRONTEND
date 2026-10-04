@@ -1,3 +1,8 @@
+---
+import packageJson from "../../package.json";
+const version = packageJson.version;
+---
+
 <footer
     class="w-full max-w-full overflow-hidden border-t border-white/10 bg-[#121212] text-xs text-zinc-400 px-4 pt-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 transition-colors"
 >
@@ -8,6 +13,7 @@
                 <img src="/icono.svg" alt="Cancionero" class="w-5 h-5 opacity-80 pointer-events-none select-none" draggable="false" />
                 <span class="font-semibold text-zinc-200">Cancionero Digital</span>
             </a>
+            <span class="bg-white/5 border border-white/10 text-zinc-400 px-1.5 py-0.5 rounded text-[10px] font-mono leading-none">v{version}</span>
             <span class="hidden sm:inline text-zinc-600">•</span>
             <span class="text-zinc-500">© {new Date().getFullYear()} Todos los derechos reservados</span>
         </div>
