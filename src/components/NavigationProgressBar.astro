@@ -1,129 +1,241 @@
 ---
 // NavigationProgressBar.astro
 // Barra de progreso global para transiciones de página en Astro (ClientRouter)
+import { getFluidNotchPath } from "@/utils/navShape";
+
+const initialD = getFluidNotchPath(390, 39);
 ---
 
 <div
 	id="navigation-progress-bar"
-	transition:persist
-	class="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-auto md:top-0 left-0 right-0 h-[3px] z-50 md:z-[99999] pointer-events-none opacity-0"
+	transition:persist="nav-progress"
+	class="pointer-events-none select-none"
 	aria-hidden="true"
 >
+	<!-- Barra de progreso para Desktop: fija arriba de la pantalla -->
 	<div
-		id="navigation-progress-bar-inner"
-		class="h-full w-0 bg-accent-main shadow-[0_0_12px_#FF5722,0_0_6px_#FF5722] transition-[width] duration-200 ease-out"
-	></div>
+		id="navigation-progress-desktop"
+		class="hidden md:block fixed top-0 left-0 right-0 h-[3px] z-[99999] opacity-0 pointer-events-none transition-opacity duration-150"
+	>
+		<div
+			id="navigation-progress-desktop-inner"
+			class="h-full w-0 bg-accent-main shadow-[0_0_14px_#FF5722,0_0_6px_#FF5722]"
+		></div>
+	</div>
+
+	<!-- Barra de progreso para Móvil: silueta con muesca líquida sobre el BottomNav -->
+	<div
+		id="navigation-progress-mobile"
+		class="md:hidden fixed bottom-0 left-0 w-full z-[55] opacity-0 pointer-events-none transition-opacity duration-150"
+		style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); overflow: visible;"
+	>
+		<svg
+			id="navigation-progress-mobile-svg"
+			class="w-full h-full pointer-events-none"
+			style="overflow: visible;"
+		>
+			<defs>
+				<filter id="nav-progress-glow" x="-20%" y="-50%" width="140%" height="200%">
+					<feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#FF5722" flood-opacity="0.9" />
+					<feDropShadow dx="0" dy="0" stdDeviation="1.5" flood-color="#FF5722" flood-opacity="1" />
+				</filter>
+			</defs>
+			<path
+				id="navigation-progress-mobile-path"
+				fill="none"
+				stroke="#FF5722"
+				stroke-width="2.5"
+				stroke-linecap="round"
+				filter="url(#nav-progress-glow)"
+				d={initialD}
+				style="stroke-dasharray: 500; stroke-dashoffset: 500;"
+			/>
+		</svg>
+	</div>
 </div>
 
-<style>
-	#navigation-progress-bar {
-		bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
-	}
-	@media (min-width: 768px) {
-		#navigation-progress-bar {
-			top: 0;
-			bottom: auto;
-		}
-	}
-</style>
-
 <script>
-	let trickleTimer: ReturnType<typeof setInterval> | null = null;
-	let currentProgress = 0;
+	import { getFluidNotchPath } from "@/utils/navShape";
+
 	let isNavigating = false;
+	let pageLoaded = false;
+	let startTime = 0;
+	let currentProgress = 0;
+	let targetProgress = 0;
+	let rafId: number | null = null;
+	let fadeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	const MIN_SWEEP_DURATION = 420; // Garantiza un barrido visible y fluido incluso en páginas cacheadas/prefetched
 
 	function getElements() {
-		const container = document.getElementById("navigation-progress-bar");
-		const inner = document.getElementById("navigation-progress-bar-inner");
-		return { container, inner };
+		const desktopContainer = document.getElementById("navigation-progress-desktop");
+		const desktopInner = document.getElementById("navigation-progress-desktop-inner");
+		const mobileContainer = document.getElementById("navigation-progress-mobile");
+		const mobilePath = document.getElementById("navigation-progress-mobile-path") as SVGPathElement | null;
+		return { desktopContainer, desktopInner, mobileContainer, mobilePath };
+	}
+
+	function updateMobilePathGeometry(forceProgress?: number) {
+		const { mobilePath } = getElements();
+		if (!mobilePath) return;
+
+		const nav = document.getElementById("bottom-nav");
+		if (!nav) return;
+		const w = nav.clientWidth || window.innerWidth;
+		const activeIdx = parseInt(nav.getAttribute("data-active-index") || "0", 10);
+		const totalItems = parseInt(nav.getAttribute("data-total-items") || "5", 10);
+		const cx = (activeIdx + 0.5) * (w / totalItems);
+		const d = getFluidNotchPath(w, cx);
+
+		mobilePath.setAttribute("d", d);
+		const totalLength = mobilePath.getTotalLength() || (w + 40);
+		mobilePath.style.strokeDasharray = `${totalLength}`;
+
+		const p = forceProgress !== undefined ? forceProgress : currentProgress;
+		mobilePath.style.strokeDashoffset = `${totalLength * (1 - p / 100)}`;
 	}
 
 	function setProgress(val: number) {
-		currentProgress = Math.min(val, 100);
-		const { inner } = getElements();
-		if (inner) {
-			inner.style.width = `${currentProgress}%`;
+		currentProgress = Math.max(0, Math.min(val, 100));
+		const { desktopInner, mobilePath } = getElements();
+
+		if (desktopInner) {
+			desktopInner.style.width = `${currentProgress}%`;
 		}
+
+		if (mobilePath) {
+			const totalLength = mobilePath.getTotalLength();
+			if (totalLength > 0) {
+				mobilePath.style.strokeDasharray = `${totalLength}`;
+				mobilePath.style.strokeDashoffset = `${totalLength * (1 - currentProgress / 100)}`;
+			}
+		}
+	}
+
+	function tick(now: number) {
+		if (!isNavigating) return;
+		const elapsed = now - startTime;
+
+		if (!pageLoaded) {
+			// Fase 1: Barrido inicial elegante y continuo hasta ~75%
+			const t = Math.min(elapsed / 900, 1);
+			targetProgress = 20 + 55 * (1 - Math.pow(1 - t, 2));
+		} else {
+			// Fase 2: Página lista; completar hacia el 100% respetando la duración mínima de visualización
+			const factor = Math.min(elapsed / MIN_SWEEP_DURATION, 1);
+			targetProgress = Math.max(targetProgress, factor * 100);
+
+			if (elapsed >= MIN_SWEEP_DURATION && currentProgress >= 99) {
+				setProgress(100);
+				isNavigating = false;
+				rafId = null;
+
+				fadeTimeout = setTimeout(() => {
+					const { desktopContainer, mobileContainer } = getElements();
+					if (desktopContainer) {
+						desktopContainer.style.transition = "opacity 180ms ease";
+						desktopContainer.style.opacity = "0";
+					}
+					if (mobileContainer) {
+						mobileContainer.style.transition = "opacity 180ms ease";
+						mobileContainer.style.opacity = "0";
+					}
+
+					setTimeout(() => {
+						if (!isNavigating) {
+							setProgress(0);
+						}
+					}, 200);
+				}, 70);
+
+				return;
+			}
+		}
+
+		// Interpolación suave (lerp) hacia el objetivo
+		currentProgress += (targetProgress - currentProgress) * 0.22;
+		setProgress(currentProgress);
+
+		rafId = requestAnimationFrame(tick);
 	}
 
 	function start() {
-		const { container, inner } = getElements();
-		if (!container || !inner) return;
-
-		isNavigating = true;
-		if (trickleTimer) {
-			clearInterval(trickleTimer);
-			trickleTimer = null;
+		if (fadeTimeout) {
+			clearTimeout(fadeTimeout);
+			fadeTimeout = null;
 		}
 
-		// Reset instantáneo
-		inner.style.transition = "none";
+		isNavigating = true;
+		pageLoaded = false;
+		startTime = performance.now();
+		currentProgress = 0;
+		targetProgress = 20;
+
+		const { desktopContainer, mobileContainer } = getElements();
+
+		if (desktopContainer) {
+			desktopContainer.style.transition = "opacity 60ms ease";
+			desktopContainer.style.opacity = "1";
+		}
+		if (mobileContainer) {
+			mobileContainer.style.transition = "opacity 60ms ease";
+			mobileContainer.style.opacity = "1";
+		}
+
+		updateMobilePathGeometry(0);
 		setProgress(0);
-		container.style.transition = "opacity 100ms ease";
-		container.style.opacity = "1";
 
-		// Forzar reflow para reiniciar la animación
-		void inner.offsetWidth;
-
-		// Salto inicial rápido al 25% para feedback visual instantáneo (0ms)
-		inner.style.transition = "width 250ms ease-out";
-		setProgress(25);
-
-		// Incremento continuo (trickle) mientras se resuelve la página en SSR
-		trickleTimer = setInterval(() => {
-			if (currentProgress < 60) {
-				setProgress(currentProgress + 8);
-			} else if (currentProgress < 82) {
-				setProgress(currentProgress + 3);
-			} else if (currentProgress < 94) {
-				setProgress(currentProgress + 1);
-			}
-		}, 180);
+		if (rafId !== null) {
+			cancelAnimationFrame(rafId);
+		}
+		rafId = requestAnimationFrame(tick);
 	}
 
 	function finish() {
-		if (!isNavigating) return;
-		isNavigating = false;
-
-		if (trickleTimer) {
-			clearInterval(trickleTimer);
-			trickleTimer = null;
-		}
-
-		const { container, inner } = getElements();
-		if (!container || !inner) return;
-
-		// Avanzar al 100%
-		inner.style.transition = "width 150ms ease-out";
-		setProgress(100);
-
-		// Desvanecer suavemente
-		setTimeout(() => {
-			container.style.transition = "opacity 200ms ease";
-			container.style.opacity = "0";
-
-			setTimeout(() => {
-				if (!isNavigating) {
-					setProgress(0);
-				}
-			}, 200);
-		}, 180);
+		pageLoaded = true;
 	}
 
-	// Ciclo de vida de navegación con Astro ClientRouter
+	// Ciclo de vida con Astro ClientRouter
 	document.addEventListener("astro:before-preparation", () => {
 		start();
 	});
 
 	document.addEventListener("astro:after-preparation", () => {
-		setProgress(95);
+		targetProgress = Math.max(targetProgress, 88);
 	});
 
 	document.addEventListener("astro:page-load", () => {
 		finish();
+		updateMobilePathGeometry();
 	});
 
-	// Respaldo de seguridad en caso de cancelación o error
+	// Trigger inmediato en clics de enlaces internos (0ms feedback)
+	document.addEventListener("click", (e) => {
+		const anchor = (e.target as HTMLElement)?.closest("a");
+		if (!anchor) return;
+		const href = anchor.getAttribute("href");
+		if (
+			href &&
+			!href.startsWith("http") &&
+			!href.startsWith("#") &&
+			!href.startsWith("tel:") &&
+			!href.startsWith("mailto:") &&
+			!anchor.target &&
+			!anchor.hasAttribute("download")
+		) {
+			start();
+		}
+	});
+
+	// Evento personalizado para sincronización desde BottomNav u otros componentes
+	window.addEventListener("nav-progress:start", () => {
+		start();
+	});
+
+	window.addEventListener("resize", () => {
+		updateMobilePathGeometry();
+	});
+
 	window.addEventListener("unhandledrejection", () => {
 		finish();
 	});

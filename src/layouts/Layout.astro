@@ -74,10 +74,10 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<slot name="head" />
 	</head>
 	<body class="bg-bg-main text-text-main min-h-screen w-full max-w-full overflow-x-clip flex flex-col">
-		<SplashScreen />
-		<NavigationProgressBar />
-		<Header class="" />
-		<OfflineBannerReact client:load />
+		<SplashScreen transition:persist="splash" />
+		<NavigationProgressBar transition:persist="nav-progress" />
+		<Header transition:persist="header" class="" />
+		<OfflineBannerReact client:load transition:persist="offline-banner" />
 		<div
 			class={`flex-1 flex flex-col w-full max-w-full min-w-0 ${!isProfile ? 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0' : ''}`}
 		>
@@ -88,8 +88,8 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 				<Footer />
 			</div>
 		</div>
-		<BottomNav />
-		<PwaInstallPrompt />
+		<BottomNav transition:persist="bottom-nav" />
+		<PwaInstallPrompt transition:persist="pwa-install" />
 		<script>
 			import "@/pwa";
 			import { initGlobalAlertSwipe } from "@/utils/alerts";
