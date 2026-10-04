@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import sitemap from '@astrojs/sitemap';
+import icon from 'astro-icon';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,10 +19,10 @@ export default defineConfig({
   output: 'server', // O 'hybrid' si algunas páginas son estáticas
   adapter: vercel(),
   prefetch: {
-    prefetchAll: true,
+    prefetchAll: false,
     defaultStrategy: 'hover',
   },
-  integrations: [react(), AstroPWA({
+  integrations: [icon(), react(), AstroPWA({
     registerType: 'autoUpdate',
     injectRegister: 'auto',
     manifest: {
@@ -70,13 +71,40 @@ export default defineConfig({
       ]
     },
     workbox: {
-      navigateFallback: '/404',
-      globPatterns: ['**/*.{css,js,html,svg,png,ico,txt}']
+      navigateFallback: '/offline',
+      navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /\.[a-zA-Z0-9]+$/],
+      globPatterns: ['**/*.{css,js,html,svg,png,ico,txt}'],
+      runtimeCaching: [
+        {
+          urlPattern: ({ request }) => request.mode === 'navigate',
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'pages-cache',
+            networkTimeoutSeconds: 2.5,
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24 * 30,
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        {
+          urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'images-cache',
+            expiration: {
+              maxEntries: 60,
+              maxAgeSeconds: 60 * 60 * 24 * 30,
+            },
+          },
+        },
+      ],
     },
     devOptions: {
-      enabled: true,
-      navigateFallbackAllowlist: [/^\/$/],
-      type: 'module',
+      enabled: false,
     },
   }), sitemap()],
   vite: {

@@ -1,12 +1,13 @@
 {
   "name": "letras-acordes",
   "type": "module",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "scripts": {
     "dev": "astro dev --host",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "icons:bundle": "node scripts/generate-icon-bundle.js",
     "version:patch": "npm version patch",
     "version:minor": "npm version minor",
     "version:major": "npm version major",
@@ -24,12 +25,14 @@
     "@blobatar/react": "^2.7.0",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/outfit": "^5.2.8",
+    "@iconify/react": "^6.0.2",
     "@supabase/supabase-js": "^2.89.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vite-pwa/astro": "^1.2.0",
     "astro": "^5.16.12",
+    "astro-icon": "^1.2.0",
     "blobatar": "^2.7.0",
     "jwt-decode": "^4.0.0",
     "react": "^19.2.3",
@@ -44,6 +47,10 @@
     "vite": "^6.4.1"
   },
   "devDependencies": {
+    "@iconify-json/fa6-brands": "^1.2.6",
+    "@iconify-json/fa6-regular": "^1.2.4",
+    "@iconify-json/fa6-solid": "^1.2.4",
+    "@iconify-json/lucide": "^1.2.139",
     "@playwright/test": "^1.63.0",
     "vitest": "^5.0.2"
   }

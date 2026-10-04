@@ -1,0 +1,25 @@
+---
+import { Icon } from 'astro-icon/components';
+import { normalizeIconName } from '@/utils/iconMap';
+
+interface Props {
+  name: string;
+  class?: string;
+  className?: string;
+  spin?: boolean;
+  [key: string]: any;
+}
+
+const { name, class: classProp, className, spin = false, ...rest } = Astro.props;
+const resolvedClass = `${spin ? 'animate-spin ' : ''}${classProp || className || ''}`.trim();
+const normalizedName = normalizeIconName(name);
+---
+
+<Icon
+  name={normalizedName}
+  class={resolvedClass}
+  width="1em"
+  height="1em"
+  style="display: inline-block; vertical-align: -0.125em; flex-shrink: 0;"
+  {...rest}
+/>

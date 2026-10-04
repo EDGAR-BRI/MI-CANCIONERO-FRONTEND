@@ -725,3 +725,17 @@ body.song-focus-mode .song-view-col {
 .ease-fluid {
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
+
+/* ==========================================================================
+   NORMALIZACIÓN UNIVERSAL DE ICONOS SVG
+   Garantiza que cualquier SVG sin clase w-* explícita respete el font-size (1em)
+   y no se desborde en contenedores flex/grid.
+   ========================================================================== */
+svg:not([width]):not([class*="w-"]),
+svg[width="1em"] {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.125em;
+    flex-shrink: 0;
+}
