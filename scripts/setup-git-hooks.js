@@ -6,7 +6,7 @@ const scriptContent = `#!/usr/bin/env bash
 
 # Ejecutar auto-versionador basado en Conventional Commits
 if [ -f "scripts/auto-version-hook.js" ]; then
-  node scripts/auto-version-hook.js
+  exec node scripts/auto-version-hook.js
 fi
 `;
 
