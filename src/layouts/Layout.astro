@@ -47,7 +47,6 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 		<meta name="apple-mobile-web-app-title" content="Cancionero" />
-		<script src="../pwa.ts"></script>
 
 		<!-- Primary Meta Tags -->
 		<title>{title}</title>
@@ -90,6 +89,7 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		</div>
 		<BottomNav />
 		<script>
+			import "@/pwa";
 			import { initGlobalAlertSwipe } from "@/utils/alerts";
 			initGlobalAlertSwipe();
 			document.addEventListener("astro:page-load", () => {

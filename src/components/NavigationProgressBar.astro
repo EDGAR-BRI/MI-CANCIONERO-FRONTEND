@@ -6,7 +6,7 @@
 <div
 	id="navigation-progress-bar"
 	transition:persist
-	class="fixed top-0 left-0 right-0 h-[3px] z-[99999] pointer-events-none opacity-0"
+	class="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-auto md:top-0 left-0 right-0 h-[3px] z-50 md:z-[99999] pointer-events-none opacity-0"
 	aria-hidden="true"
 >
 	<div
@@ -14,6 +14,18 @@
 		class="h-full w-0 bg-accent-main shadow-[0_0_12px_#FF5722,0_0_6px_#FF5722] transition-[width] duration-200 ease-out"
 	></div>
 </div>
+
+<style>
+	#navigation-progress-bar {
+		bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+	}
+	@media (min-width: 768px) {
+		#navigation-progress-bar {
+			top: 0;
+			bottom: auto;
+		}
+	}
+</style>
 
 <script>
 	let trickleTimer: ReturnType<typeof setInterval> | null = null;

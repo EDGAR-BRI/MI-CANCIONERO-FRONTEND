@@ -53,7 +53,9 @@ import { pwaInfo } from "virtual:pwa-info";
         {pwaInfo ? <Fragment set:html={pwaInfo.webManifest.linkTag} /> : <link rel="manifest" href="/manifest.webmanifest" />}
         <meta name="theme-color" content="#0a0a0a" />
         <title>{title} | Panel de Administración</title>
-        <script src="../pwa.ts"></script>
+        <script>
+            import "@/pwa";
+        </script>
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"

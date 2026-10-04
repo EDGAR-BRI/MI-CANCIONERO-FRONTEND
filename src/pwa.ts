@@ -30,3 +30,10 @@ document.addEventListener('astro:page-load', () => {
         }).catch(() => {});
     }
 });
+
+// Guardar el evento beforeinstallprompt para soporte de instalación WebAPK
+window.addEventListener('beforeinstallprompt', (e) => {
+    (window as any).deferredPrompt = e;
+    console.log('[PWA] Aplicación lista para instalación WebAPK');
+});
+
