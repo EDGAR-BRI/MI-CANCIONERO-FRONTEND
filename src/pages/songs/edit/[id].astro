@@ -197,24 +197,27 @@ if (Astro.request.method === "POST") {
                     </div>
                 </div>
 
-                <div class="border-t border-white/10 pt-6 flex flex-col gap-20">
-                    <div class="mb-4">
-                        <div class="flex items-center gap-3">
+                <div class="border-t border-white/10 pt-6">
+                    <div class="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
                             <h3 class="text-xl font-semibold text-white">
                                 Letra y Acordes
                             </h3>
-                            {
-                                canDelete && (
+                            <p class="text-sm text-text-secondary mt-1">
+                                Edita la letra y posición de los acordes.
+                            </p>
+                        </div>
+                        {
+                            canDelete && (
+                                <div class="w-full sm:w-auto">
                                     <AiAutocompleteButton
                                         token={token}
                                         apiUrl={API_URL}
+                                        showIconOnly={false}
                                     />
-                                )
-                            }
-                        </div>
-                        <p class="text-sm text-text-secondary mt-1">
-                            Edita la letra y posición de los acordes.
-                        </p>
+                                </div>
+                            )
+                        }
                     </div>
                     {/* Pre-fill content in ChordEditor */}
                     <ChordEditor

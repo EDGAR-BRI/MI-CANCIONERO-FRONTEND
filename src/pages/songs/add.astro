@@ -7,11 +7,14 @@ import "@/styles/global.css";
 import type { Category } from "@/types/category";
 import type { Author } from "@/types/author";
 import { createSong, API_URL } from "@/services/songs";
+import AiButton from "@/components/Ui/AiButton.astro";
 import AiAutocompleteButton from "@/components/Ui/AiAutocompleteButton.astro";
 import CategoryMultiSelectReact from "@/components/CategoryMultiSelectReact";
 import AuthorSelectReact from "@/components/AuthorSelectReact";
+import SearchExternalSongModal from "@/components/SearchExternalSongModal";
 
 import { getUserFromToken, hasPermission } from "@/utils/auth";
+
 
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
@@ -177,19 +180,17 @@ if (Astro.request.method === "POST") {
                                 los acordes en la posición exacta.
                             </p>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <button
-                                type="button"
+                        <div class="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+                            <AiButton
                                 id="btn-ai-search-song"
-                                title="Autocompletar canción original por fragmento de letra"
-                                class="flex items-center gap-2 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold py-2 px-4 rounded-full shadow-md transition-all transform hover:scale-105"
-                            >
-                                <span>🔍</span> Autocompletar canción
-                            </button>
+                                icon="search"
+                                text="Autocompletar canción"
+                                mobileText="Autocompletar"
+                                title="Buscar canciones y acordes en internet para autocompletar"
+                            />
                             <AiAutocompleteButton
                                 token={token}
                                 apiUrl={API_URL}
-                                class="flex items-center gap-2 bg-linear-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white text-sm font-bold py-2 px-4 rounded-full shadow-md transition-all transform hover:scale-105"
                                 showIconOnly={false}
                             />
                         </div>
@@ -247,6 +248,16 @@ if (Astro.request.method === "POST") {
         </form>
     </dialog>
 
+    {/* Modal para buscar canciones en internet con Vista Previa */}
+    <SearchExternalSongModal
+        client:load
+        apiUrl={API_URL}
+        token={token}
+        user={user}
+        categories={categories}
+        canCreate={true}
+    />
+
     <div
         id="add-song-data"
         data-api-url={API_URL}
@@ -257,71 +268,12 @@ if (Astro.request.method === "POST") {
     </div>
 
     <script>
-        import Swal from "sweetalert2";
-
-        // Configuración de tema oscuro para SweetAlert2
-        const swalDark = {
-            background: "#1f2937",
-            color: "#fff",
-            confirmButtonColor: "#f97316",
-            cancelButtonColor: "#4b5563",
-        };
-
-        // Funciones de alerta personalizadas
-        const showError = (title: string, text: string) => {
-            return Swal.fire({
-                ...swalDark,
-                icon: "error",
-                title: title,
-                text: text,
-            });
-        };
-
-        const showSuccessToast = (
-            title: string,
-            text: string,
-            timer: number = 3000,
-        ) => {
-            return Swal.fire({
-                ...swalDark,
-                icon: "success",
-                title: title,
-                text: text,
-                toast: true,
-                position: "top-end",
-                showConfirmButton: false,
-                timer: timer,
-            });
-        };
-
-        const showConfirm = (
-            title: string,
-            text: string,
-            confirmText: string = "Sí",
-            cancelText: string = "Cancelar",
-        ) => {
-            return Swal.fire({
-                ...swalDark,
-                title,
-                text,
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonText: confirmText,
-                cancelButtonText: cancelText,
-                reverseButtons: true,
-            });
-        };
-
-        const showLoading = (title: string) => {
-            return Swal.fire({
-                ...swalDark,
-                title,
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                },
-            });
-        };
+        import {
+            showError,
+            showSuccessToast,
+            showConfirm,
+            showLoading,
+        } from "@/utils/alerts";
 
         const initAddSongPage = () => {
             console.log("Initializing Add Song Page script");
@@ -336,6 +288,74 @@ if (Astro.request.method === "POST") {
 
             if (errorMessage) {
                 console.error("Error Message:", errorMessage);
+            }
+
+            // Check for prefilled external song from search view or suggestions
+            const prefillRaw = sessionStorage.getItem("prefill_external_song");
+            if (prefillRaw) {
+                try {
+                    const data = JSON.parse(prefillRaw);
+                    const chordContent = data.chordPro || data.content;
+
+                    const applyPrefill = () => {
+                        const titleInput = document.querySelector("#title") as HTMLInputElement | null;
+                        if (titleInput && data.title && !titleInput.value) {
+                            titleInput.value = data.title;
+                        }
+
+                        if (data.artist) {
+                            window.dispatchEvent(new CustomEvent("set-author", {
+                                detail: { name: data.artist }
+                            }));
+                        }
+
+                        if (data.key) {
+                            const keySelect = document.querySelector("#key") as HTMLSelectElement | null;
+                            if (keySelect) {
+                                keySelect.value = data.key;
+                                window.dispatchEvent(new CustomEvent("song-key-change", {
+                                    detail: { key: data.key }
+                                }));
+                            }
+                        }
+
+                        if (data.youtubeUrl) {
+                            const urlInput = document.querySelector("#url_song") as HTMLInputElement | null;
+                            if (urlInput && !urlInput.value) {
+                                urlInput.value = data.youtubeUrl;
+                            }
+                        }
+
+                        if (data.categories && data.categories.length > 0) {
+                            window.dispatchEvent(new CustomEvent("set-categories", {
+                                detail: { names: data.categories }
+                            }));
+                        }
+
+                        if (chordContent) {
+                            window.dispatchEvent(new CustomEvent("update-editor-content", {
+                                detail: { content: chordContent, key: data.key }
+                            }));
+                        }
+                    };
+
+                    // Intento inmediato y reintentos para asegurar que todas las islas de React lo capturen
+                    applyPrefill();
+                    setTimeout(applyPrefill, 100);
+                    setTimeout(applyPrefill, 350);
+                    setTimeout(applyPrefill, 700);
+                    setTimeout(() => {
+                        applyPrefill();
+                        sessionStorage.removeItem("prefill_external_song");
+                        showSuccessToast("¡Datos cargados!", `${data.title} listo para editar`);
+                    }, 1200);
+
+                    // Escuchar si ChordEditor avisa que acaba de montarse
+                    window.addEventListener("chord-editor-mounted", applyPrefill, { once: true });
+                } catch (e) {
+                    console.error("Error reading prefilled external song:", e);
+                    sessionStorage.removeItem("prefill_external_song");
+                }
             }
 
             // --- Category Logic ---
@@ -472,7 +492,7 @@ if (Astro.request.method === "POST") {
                 }
             }
 
-            // --- AI Search Song by Lyrics Logic ---
+            // --- External Search & Autocomplete Song Modal ---
             const btnAISearch = document.getElementById(
                 "btn-ai-search-song",
             ) as HTMLButtonElement | null;
@@ -482,186 +502,19 @@ if (Astro.request.method === "POST") {
                     btnAISearch,
                 ) as HTMLButtonElement;
 
-                newBtnAISearch.addEventListener("click", async () => {
-                    console.log("AI Search Song Button Clicked");
+                newBtnAISearch.addEventListener("click", () => {
                     const titleInput = document.querySelector(
                         "#title",
                     ) as HTMLInputElement | null;
-                    const artistInput = document.querySelector(
-                        "#artist",
-                    ) as HTMLInputElement | null;
-                    const contentInput = document.querySelector(
-                        '[name="content"]',
-                    ) as HTMLInputElement | HTMLTextAreaElement | null;
-
-                    const title = titleInput?.value || "";
-                    const artist = artistInput?.value || "";
-                    const lyricFragment = contentInput?.value || "";
-
-                    // Validar que haya al menos un fragmento de letra
-                    if (!lyricFragment || lyricFragment.trim().length === 0) {
-                        await showError(
-                            "Fragmento de letra requerido",
-                            "Por favor escribe al menos 2-4 líneas de la letra de la canción que deseas buscar.\n\nEjemplo:\n'Santo, santo, santo es el Señor\nDios del universo\nLlenos están el cielo y la tierra'",
-                        );
-                        return;
-                    }
-
-                    // Validar que el fragmento tenga suficiente contenido (mínimo ~2 líneas)
-                    if (lyricFragment.trim().length < 50) {
-                        await showError(
-                            "Fragmento muy corto",
-                            "El fragmento de letra es demasiado corto para identificar la canción.\n\nPor favor escribe al menos 2-4 líneas completas de la letra.\n\nEjemplo:\n'Santo, santo, santo es el Señor\nDios del universo\nLlenos están el cielo y la tierra'",
-                        );
-                        return;
-                    }
-
-                    // Confirmar con el usuario
-                    const artistInfo = artist ? ` de ${artist}` : "";
-                    const titleInfo = title ? ` (${title})` : "";
-                    const fragmentPreview = lyricFragment.substring(0, 100);
-                    const confirmResult = await showConfirm(
-                        "¿Buscar canción por letra?",
-                        `Se buscará la canción original usando este fragmento${titleInfo}${artistInfo}:\n\n"${fragmentPreview}${lyricFragment.length > 100 ? "..." : ""}"\n\nEl contenido actual del editor será reemplazado con la canción completa encontrada.`,
-                        "Sí, buscar",
-                        "Cancelar",
+                    const initialQuery = titleInput?.value?.trim() || "";
+                    window.dispatchEvent(
+                        new CustomEvent("open-external-search-modal", {
+                            detail: { query: initialQuery },
+                        }),
                     );
-
-                    if (!confirmResult.isConfirmed) return;
-
-                    try {
-                        // Mostrar indicador de carga
-                        showLoading("Buscando canción...");
-
-                        // Deshabilitar botón
-                        newBtnAISearch.disabled = true;
-                        newBtnAISearch.classList.add(
-                            "opacity-75",
-                            "cursor-not-allowed",
-                        );
-
-                        // Importar dinámicamente el servicio de IA
-                        const { searchSongByLyrics } =
-                            await import("../../services/ai.ts");
-
-                        // Llamar al servicio para buscar canción por letra
-                        const result = await searchSongByLyrics(
-                            {
-                                lyricFragment: lyricFragment,
-                                artist: artist || undefined,
-                                title: title || undefined,
-                            },
-                            token,
-                            API_URL,
-                        );
-
-                        if (!result.success) {
-                            throw new Error(
-                                result.error || "Error al buscar la canción",
-                            );
-                        }
-
-                        const data = result.data;
-                        console.log("AI Search Song Response:", data);
-
-                        if (data && data.chordPro) {
-                            // Actualizar campos del formulario con la información encontrada
-                            if (data.metadata?.title && titleInput) {
-                                titleInput.value = data.metadata.title;
-                            }
-                            const detectedAuthor = data.metadata?.author || data.metadata?.artist;
-                            if (detectedAuthor) {
-                                window.dispatchEvent(
-                                    new CustomEvent("set-author", {
-                                        detail: { name: detectedAuthor },
-                                    }),
-                                );
-                            }
-                            if (data.metadata?.key) {
-                                const keySelect = document.querySelector(
-                                    "#key",
-                                ) as HTMLSelectElement | null;
-                                if (keySelect) {
-                                    keySelect.value = data.metadata.key;
-                                    // Disparar evento de cambio de tono
-                                    window.dispatchEvent(
-                                        new CustomEvent("song-key-change", {
-                                            detail: { key: data.metadata.key },
-                                        }),
-                                    );
-                                }
-                            }
-
-                            // Disparar evento personalizado para que React actualice el editor
-                            window.dispatchEvent(
-                                new CustomEvent("update-editor-content", {
-                                    detail: { content: data.chordPro },
-                                }),
-                            );
-
-                            // Cerrar loading y mostrar información de la canción encontrada
-                            const chordsList =
-                                data.chords?.list?.join(", ") || "N/A";
-                            const songTitle = data.metadata?.title || "Canción";
-                            const songArtist =
-                                data.metadata?.artist || "Desconocido";
-                            await showSuccessToast(
-                                "¡Canción encontrada!",
-                                `${songTitle} - ${songArtist} (${data.metadata?.key || "N/A"}) | ${data.chords?.count || 0} acordes`,
-                                6000,
-                            );
-                        } else {
-                            throw new Error("Respuesta inválida del servidor");
-                        }
-                    } catch (error) {
-                        console.error("Error al buscar canción:", error);
-                        const errorMsg =
-                            error instanceof Error
-                                ? error.message
-                                : "Error desconocido";
-
-                        // Determinar el tipo de error
-                        const isNotFound =
-                            errorMsg.includes("No se pudo identificar") ||
-                            errorMsg.includes("no encontr");
-
-                        const isTimeout =
-                            errorMsg.includes("timeout") ||
-                            errorMsg.includes("ECONNABORTED") ||
-                            errorMsg.includes("Network Error");
-
-                        const isServerError =
-                            errorMsg.includes("500") ||
-                            errorMsg.includes("502") ||
-                            errorMsg.includes("503");
-
-                        if (isNotFound) {
-                            await showError(
-                                "Canción no identificada",
-                                "No se pudo identificar la canción con el fragmento proporcionado.\n\nIntenta con:\n• Un fragmento más largo (4-6 líneas)\n• Frases más distintivas de la canción\n• Agregar el nombre del artista como pista",
-                            );
-                        } else if (isTimeout || isServerError) {
-                            await showError(
-                                "Servicio de IA no disponible",
-                                "El servicio de inteligencia artificial no está respondiendo en este momento.\n\nPosibles causas:\n• El servicio puede estar temporalmente caído\n• Problemas de conexión a internet\n• El servidor está sobrecargado\n\nPor favor intenta nuevamente en unos minutos.",
-                            );
-                        } else {
-                            await showError(
-                                "Error al buscar la canción",
-                                `${errorMsg}\n\nPor favor verifica tu conexión a internet e intenta nuevamente.`,
-                            );
-                        }
-                    } finally {
-                        // Cerrar loading y restaurar botón
-                        Swal.close();
-                        newBtnAISearch.disabled = false;
-                        newBtnAISearch.classList.remove(
-                            "opacity-75",
-                            "cursor-not-allowed",
-                        );
-                    }
                 });
             }
+
 
             // --- Key Logic ---
             const keySelect = document.querySelector(
