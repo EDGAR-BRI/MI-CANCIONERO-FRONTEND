@@ -214,6 +214,20 @@ export const searchSongs = async (query: string, categoryId: string = ""): Promi
         songSearchCache.set(cacheKey, { data, timestamp: Date.now() });
         return { success: true, data };
     } catch (e) {
+        if (typeof window !== "undefined") {
+            try {
+                const { getDownloadedSongs } = await import("../utils/offlineStorage");
+                const downloaded = await getDownloadedSongs();
+                const q = query.trim().toLowerCase();
+                const matched = downloaded.filter(s =>
+                    s.title.toLowerCase().includes(q) ||
+                    (s.author?.name && s.author.name.toLowerCase().includes(q))
+                );
+                return { success: true, data: matched };
+            } catch (err) {
+                console.warn("Error fallback offline searchSongs:", err);
+            }
+        }
         console.error("Service exception:", e);
         return { success: false, error: "Error de conexión." };
     }
@@ -228,12 +242,26 @@ export const getSongById = async (id: string | number, forceFresh = false): Prom
     try {
         const res = await fetch(`${API_URL}/songs/${id}`);
         if (!res.ok) {
+            if (typeof window !== "undefined") {
+                const { getSongOffline } = await import("../utils/offlineStorage");
+                const offline = await getSongOffline(id);
+                if (offline) return { success: true, data: offline };
+            }
             return { success: false, error: "Error al obtener la canción." };
         }
         const data = await res.json();
         songDetailCache.set(id, { data, timestamp: Date.now() });
         return { success: true, data };
     } catch (e) {
+        if (typeof window !== "undefined") {
+            try {
+                const { getSongOffline } = await import("../utils/offlineStorage");
+                const offline = await getSongOffline(id);
+                if (offline) return { success: true, data: offline };
+            } catch (err) {
+                console.warn("Error fallback offline getSongById:", err);
+            }
+        }
         console.error("Service exception:", e);
         return { success: false, error: "Error de conexión." };
     }

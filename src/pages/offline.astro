@@ -1,0 +1,14 @@
+---
+export const prerender = false;
+import Layout from "@/layouts/Layout.astro";
+import OfflineCenterReact from "@/components/OfflineCenterReact";
+---
+
+<Layout
+    title="Contenido Sin Conexión - Cancionero Digital"
+    description="Accede a tus misas litúrgicas y canciones descargadas sin necesidad de conexión a internet."
+>
+    <main class="w-full max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8 flex-1 flex flex-col pb-24 md:pb-12">
+        <OfflineCenterReact client:load />
+    </main>
+</Layout>

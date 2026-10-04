@@ -13,11 +13,25 @@ export const getMisas = async (token?: string): Promise<ServiceResponse<Misa[]>>
             signal: AbortSignal.timeout(10000)
         });
         if (!res.ok) {
+            if (typeof window !== "undefined") {
+                const { getDownloadedMisas } = await import("../utils/offlineStorage");
+                const downloaded = await getDownloadedMisas();
+                if (downloaded.length > 0) return { success: true, data: downloaded };
+            }
             return { success: false, error: "Error al obtener las misas." };
         }
         const data = await res.json();
         return { success: true, data: Array.isArray(data) ? data : [] };
     } catch (e) {
+        if (typeof window !== "undefined") {
+            try {
+                const { getDownloadedMisas } = await import("../utils/offlineStorage");
+                const downloaded = await getDownloadedMisas();
+                if (downloaded.length > 0) return { success: true, data: downloaded };
+            } catch (err) {
+                console.warn("Error fallback offline getMisas:", err);
+            }
+        }
         console.error("Service exception:", e);
         return { success: false, error: e instanceof Error ? e.message : "Error de conexión." };
     }
