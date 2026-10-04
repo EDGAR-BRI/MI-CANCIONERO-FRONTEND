@@ -4,6 +4,69 @@ import { execSync } from 'node:child_process';
 
 const PKG_PATH = path.resolve('package.json');
 
+/**
+ * Recorre el árbol de procesos ancestros en Linux (/proc/<pid>/...)
+ * para localizar la línea de comandos original del proceso git commit.
+ */
+function findGitCommitCmdline() {
+  let curr = process.ppid;
+  while (curr && curr > 1) {
+    try {
+      const rawCmd = fs.readFileSync(`/proc/${curr}/cmdline`, 'utf8');
+      if (rawCmd) {
+        const cmdline = rawCmd.split('\0').filter(Boolean);
+        const isGit = cmdline.some(arg => arg === 'git' || arg.endsWith('/git'));
+        const isCommit = cmdline.includes('commit');
+        if (isGit && isCommit) {
+          return cmdline;
+        }
+      }
+      const stat = fs.readFileSync(`/proc/${curr}/stat`, 'utf8').split(' ');
+      curr = parseInt(stat[3], 10);
+    } catch {
+      break;
+    }
+  }
+  return null;
+}
+
+/**
+ * Extrae el mensaje del commit desde los argumentos de git commit.
+ */
+function extractCommitMessage(cmdline) {
+  if (!cmdline || !Array.isArray(cmdline)) return '';
+
+  // 1. Flags -m o --message (soporta múltiples -m, toma el título del primero)
+  for (let i = 0; i < cmdline.length; i++) {
+    const arg = cmdline[i];
+    if (arg === '-m' || arg === '--message') {
+      if (cmdline[i + 1]) return cmdline[i + 1];
+    } else if (arg.startsWith('--message=')) {
+      return arg.slice('--message='.length);
+    } else if (arg.startsWith('-m=')) {
+      return arg.slice(3);
+    }
+  }
+
+  // 2. Flags -F o --file
+  for (let i = 0; i < cmdline.length; i++) {
+    const arg = cmdline[i];
+    if (arg === '-F' || arg === '--file') {
+      const filePath = cmdline[i + 1];
+      if (filePath && fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, 'utf8');
+      }
+    } else if (arg.startsWith('--file=') || arg.startsWith('-F=')) {
+      const filePath = arg.split('=')[1];
+      if (filePath && fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, 'utf8');
+      }
+    }
+  }
+
+  return '';
+}
+
 function main() {
   try {
     if (!fs.existsSync(PKG_PATH)) return;
@@ -18,28 +81,8 @@ function main() {
       // Ignorar si git diff falla
     }
 
-    // Obtener los argumentos de la línea de comandos del proceso git padre
-    const ppid = process.ppid;
-    let cmdline = [];
-    try {
-      cmdline = fs.readFileSync(`/proc/${ppid}/cmdline`, 'utf8').split('\0');
-    } catch {
-      return;
-    }
-
-    let msg = '';
-    const mIndex = cmdline.indexOf('-m');
-    if (mIndex !== -1 && cmdline[mIndex + 1]) {
-      msg = cmdline[mIndex + 1];
-    } else {
-      const fileArg = cmdline.find(arg => arg.startsWith('-F') || arg.startsWith('--file=') || arg === '--file');
-      if (fileArg) {
-        const filePath = fileArg.startsWith('--file=') ? fileArg.split('=')[1] : cmdline[cmdline.indexOf(fileArg) + 1];
-        if (filePath && fs.existsSync(filePath)) {
-          msg = fs.readFileSync(filePath, 'utf8');
-        }
-      }
-    }
+    const cmdline = findGitCommitCmdline();
+    let msg = extractCommitMessage(cmdline);
 
     msg = msg.trim();
     if (!msg) return;
