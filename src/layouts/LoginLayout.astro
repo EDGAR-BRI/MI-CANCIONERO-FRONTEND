@@ -16,9 +16,7 @@ const canonicalURL = new URL(
     Astro.url.pathname,
     Astro.site || "https://tusitio.com",
 );
-
-import Header from "@/components/Header.astro";
-import Footer from "@/components/footer.astro";
+import { pwaInfo } from "virtual:pwa-info";
 ---
 
 <!doctype html>
@@ -27,6 +25,9 @@ import Footer from "@/components/footer.astro";
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        {pwaInfo ? <Fragment set:html={pwaInfo.webManifest.linkTag} /> : <link rel="manifest" href="/manifest.webmanifest" />}
+        <meta name="theme-color" content="#0a0a0a" />
+        <script src="../pwa.ts"></script>
 
         <!-- Primary Meta Tags -->
         <title>Login</title>
