@@ -2,6 +2,7 @@
 import { getUserFromToken, hasPermission } from "@/utils/auth";
 import SearchInput from "./SearchInput.astro";
 import UserAvatar from "./UserAvatar.jsx";
+import AppIcon from "@/components/Ui/AppIcon.astro";
 
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
@@ -108,6 +109,14 @@ const canViewAdmin = hasPermission(user, "view.admin");
                         class="hover:text-text-main cursor-pointer transition-colors"
                     >
                         <a href="/ministerios" data-astro-prefetch>Ministerios</a>
+                    </li>
+                    <li
+                        class="hover:text-text-main cursor-pointer transition-colors"
+                    >
+                        <a href="/offline" data-astro-prefetch class="flex items-center gap-1.5" title="Canciones y misas descargadas">
+                            <AppIcon name="cloud-arrow-down" class="text-xs w-3.5 h-3.5" />
+                            <span>Offline</span>
+                        </a>
                     </li>
                     {
                         isLoggedIn && canCreateSong && (

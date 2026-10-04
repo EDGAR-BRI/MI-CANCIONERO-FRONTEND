@@ -1,4 +1,5 @@
 ---
+import AppIcon from "@/components/Ui/AppIcon.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { API_URL } from "@/services/songs";
 
@@ -56,7 +57,7 @@ try {
                 type="button"
                 class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-                <i class="fa-solid fa-plus-circle"></i>
+                <AppIcon name="plus-circle" />
                 <span>Nueva Categoría</span>
             </button>
         </div>
@@ -64,7 +65,7 @@ try {
         {
             error && (
                 <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-4 rounded-xl flex items-center gap-2.5">
-                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <AppIcon name="triangle-exclamation" class="text-red-400" />
                     <span>{error}</span>
                 </div>
             )
@@ -73,7 +74,7 @@ try {
         <!-- Filter Toolbar -->
         <div class="bg-bg-secondary border border-white/5 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div class="relative flex-1">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
+                <AppIcon name="magnifying-glass" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs" />
                 <input
                     id="categorySearchInput"
                     type="text"
@@ -86,7 +87,7 @@ try {
                     class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white p-1 text-xs"
                     title="Limpiar búsqueda"
                 >
-                    <i class="fa-solid fa-xmark"></i>
+                    <AppIcon name="xmark" />
                 </button>
             </div>
 
@@ -100,7 +101,7 @@ try {
                         <option value="PUBLIC">Solo Públicas</option>
                         <option value="SECRET">Solo Ocultas / Especiales</option>
                     </select>
-                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-[10px]"></i>
+                    <AppIcon name="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-[10px]" />
                 </div>
 
                 <div class="px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-xs text-text-secondary font-mono shrink-0 whitespace-nowrap">
@@ -158,7 +159,7 @@ try {
                                     class="edit-cat-btn py-2 px-3 rounded-lg font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors flex items-center justify-center gap-1.5"
                                     data-cat={JSON.stringify(cat)}
                                 >
-                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <AppIcon name="pen-to-square" />
                                     <span>Editar</span>
                                 </button>
                                 <button
@@ -168,7 +169,7 @@ try {
                                     data-name={cat.name}
                                     data-count={songCount}
                                 >
-                                    <i class="fa-solid fa-trash"></i>
+                                    <AppIcon name="trash" />
                                     <span>Eliminar</span>
                                 </button>
                             </div>
@@ -235,7 +236,7 @@ try {
                                                     data-cat={JSON.stringify(cat)}
                                                     title="Editar categoría"
                                                 >
-                                                    <i class="fa-solid fa-pen-to-square text-sm" />
+                                                    <AppIcon name="pen-to-square" class="text-sm" />
                                                 </button>
                                                 <button
                                                     type="button"
@@ -245,7 +246,7 @@ try {
                                                     data-count={songCount}
                                                     title="Eliminar categoría"
                                                 >
-                                                    <i class="fa-solid fa-trash text-sm" />
+                                                    <AppIcon name="trash" class="text-sm" />
                                                 </button>
                                             </div>
                                         </td>
@@ -260,7 +261,7 @@ try {
 
         <!-- No Results Fallback -->
         <div id="noCatResults" class="hidden bg-bg-secondary border border-white/5 rounded-xl p-8 text-center space-y-2">
-            <i class="fa-solid fa-tags text-2xl text-text-secondary/50"></i>
+            <AppIcon name="tags" class="text-2xl text-text-secondary/50" />
             <p class="text-sm font-medium text-white">No se encontraron categorías</p>
             <p class="text-xs text-text-secondary">Intenta con otros términos o cambia el filtro de visibilidad.</p>
         </div>
@@ -278,7 +279,7 @@ try {
                 <div class="px-5 py-4 border-b border-white/5 flex justify-between items-center bg-bg-main shrink-0">
                     <div class="flex items-center gap-2.5">
                         <div class="w-7 h-7 rounded-lg bg-accent-main/15 text-accent-main flex items-center justify-center text-xs">
-                            <i class="fa-solid fa-tags"></i>
+                            <AppIcon name="tags" />
                         </div>
                         <h3 id="catModalTitle" class="text-base font-bold text-white">
                             Nueva Categoría
@@ -290,7 +291,7 @@ try {
                         class="text-text-secondary hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                         aria-label="Cerrar modal"
                     >
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                        <AppIcon name="xmark" class="text-lg" />
                     </button>
                 </div>
 

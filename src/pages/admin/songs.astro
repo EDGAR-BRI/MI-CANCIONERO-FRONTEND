@@ -1,4 +1,5 @@
 ---
+import AppIcon from "@/components/Ui/AppIcon.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { API_URL } from "@/services/songs";
 
@@ -54,7 +55,7 @@ try {
                 href="/songs/add"
                 class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-                <i class="fa-solid fa-plus-circle"></i>
+                <AppIcon name="plus-circle" />
                 <span>Nueva Canción</span>
             </a>
         </div>
@@ -62,7 +63,7 @@ try {
         {
             error && (
                 <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-4 rounded-xl flex items-center gap-2.5">
-                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <AppIcon name="triangle-exclamation" class="text-red-400" />
                     <span>{error}</span>
                 </div>
             )
@@ -71,7 +72,7 @@ try {
         <!-- Filter Toolbar -->
         <div class="bg-bg-secondary border border-white/5 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             <div class="relative flex-1">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
+                <AppIcon name="magnifying-glass" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary text-xs" />
                 <input
                     id="songSearchInput"
                     type="text"
@@ -84,7 +85,7 @@ try {
                     class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white p-1 text-xs"
                     title="Limpiar búsqueda"
                 >
-                    <i class="fa-solid fa-xmark"></i>
+                    <AppIcon name="xmark" />
                 </button>
             </div>
 
@@ -98,7 +99,7 @@ try {
                         <option value="true">Solo Activas</option>
                         <option value="false">Solo Inactivas</option>
                     </select>
-                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-[10px]"></i>
+                    <AppIcon name="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-[10px]" />
                 </div>
 
                 <div class="px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-xs text-text-secondary font-mono shrink-0 whitespace-nowrap">
@@ -133,7 +134,7 @@ try {
                                         </a>
                                     </h3>
                                     <p class="text-xs text-text-secondary truncate mt-0.5">
-                                        <i class="fa-solid fa-feather-pointed text-[10px] mr-1 opacity-60"></i>
+                                        <AppIcon name="feather-pointed" class="text-[10px] mr-1 opacity-60" />
                                         {song.author?.name || "Autor desconocido"}
                                     </p>
                                 </div>
@@ -165,7 +166,7 @@ try {
                                     class="py-2 px-2.5 rounded-lg font-medium text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-colors flex items-center justify-center gap-1.5"
                                     title="Ver canto"
                                 >
-                                    <i class="fa-solid fa-eye text-xs"></i>
+                                    <AppIcon name="eye" class="text-xs" />
                                     <span>Ver</span>
                                 </a>
                                 <a
@@ -173,7 +174,7 @@ try {
                                     class="py-2 px-2.5 rounded-lg font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 transition-colors flex items-center justify-center gap-1.5"
                                     title="Editar canto"
                                 >
-                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                    <AppIcon name="pen-to-square" class="text-xs" />
                                     <span>Editar</span>
                                 </a>
                                 <button
@@ -183,7 +184,7 @@ try {
                                     data-title={song.title}
                                     title="Eliminar canto"
                                 >
-                                    <i class="fa-solid fa-trash text-xs"></i>
+                                    <AppIcon name="trash" class="text-xs" />
                                     <span>Borrar</span>
                                 </button>
                             </div>
@@ -255,14 +256,14 @@ try {
                                                     class="p-2 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 transition-colors"
                                                     title="Ver canto"
                                                 >
-                                                    <i class="fa-solid fa-eye text-sm" />
+                                                    <AppIcon name="eye" class="text-sm" />
                                                 </a>
                                                 <a
                                                     href={`/songs/edit/${song.id}`}
                                                     class="p-2 rounded-lg text-text-secondary hover:text-blue-400 hover:bg-white/5 transition-colors"
                                                     title="Editar canto y acordes"
                                                 >
-                                                    <i class="fa-solid fa-pen-to-square text-sm" />
+                                                    <AppIcon name="pen-to-square" class="text-sm" />
                                                 </a>
                                                 <button
                                                     type="button"
@@ -271,7 +272,7 @@ try {
                                                     data-title={song.title}
                                                     title="Eliminar permanentemente"
                                                 >
-                                                    <i class="fa-solid fa-trash text-sm" />
+                                                    <AppIcon name="trash" class="text-sm" />
                                                 </button>
                                             </div>
                                         </td>
@@ -286,7 +287,7 @@ try {
 
         <!-- No Results Fallback -->
         <div id="noSongResults" class="hidden bg-bg-secondary border border-white/5 rounded-xl p-8 text-center space-y-2">
-            <i class="fa-solid fa-music-slash text-2xl text-text-secondary/50"></i>
+            <AppIcon name="music-slash" class="text-2xl text-text-secondary/50" />
             <p class="text-sm font-medium text-white">No se encontraron canciones</p>
             <p class="text-xs text-text-secondary">Intenta con otros términos o cambia el filtro de estado.</p>
         </div>

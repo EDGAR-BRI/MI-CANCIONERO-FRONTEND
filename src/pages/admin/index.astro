@@ -1,4 +1,5 @@
 ---
+import AppIcon from "@/components/Ui/AppIcon.astro";
 import AdminLayout from "../../layouts/AdminLayout.astro";
 import { API_URL } from "@/services/songs";
 import { getUserFromToken } from "@/utils/auth";
@@ -83,7 +84,7 @@ try {
                     href="/songs/add"
                     class="bg-accent-main hover:bg-accent-main/90 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
-                    <i class="fa-solid fa-plus-circle"></i>
+                    <AppIcon name="plus-circle" />
                     <span>Nueva Canción</span>
                 </a>
             </div>
@@ -92,7 +93,7 @@ try {
         {
             error && (
                 <div class="bg-red-500/10 border border-red-500/30 text-red-300 text-xs sm:text-sm p-3.5 rounded-xl flex items-center gap-2.5">
-                    <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+                    <AppIcon name="triangle-exclamation" class="text-red-400" />
                     <span>{error}</span>
                 </div>
             )
@@ -110,7 +111,7 @@ try {
                         Canciones
                     </span>
                     <div class="w-7 h-7 rounded-lg bg-accent-main/10 text-accent-main border border-accent-main/20 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-music"></i>
+                        <AppIcon name="music" />
                     </div>
                 </div>
                 <div class="mt-2.5">
@@ -133,7 +134,7 @@ try {
                         Categorías
                     </span>
                     <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-tags"></i>
+                        <AppIcon name="tags" />
                     </div>
                 </div>
                 <div class="mt-2.5">
@@ -156,7 +157,7 @@ try {
                         Autores
                     </span>
                     <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-feather-pointed"></i>
+                        <AppIcon name="feather-pointed" />
                     </div>
                 </div>
                 <div class="mt-2.5">
@@ -179,7 +180,7 @@ try {
                         Usuarios
                     </span>
                     <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-users"></i>
+                        <AppIcon name="users" />
                     </div>
                 </div>
                 <div class="mt-2.5">
@@ -202,7 +203,7 @@ try {
                         Roles
                     </span>
                     <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-shield-halved"></i>
+                        <AppIcon name="shield-halved" />
                     </div>
                 </div>
                 <div class="mt-2.5">
@@ -225,7 +226,7 @@ try {
                         Caché & Servidor
                     </span>
                     <div class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center text-xs">
-                        <i class="fa-solid fa-server"></i>
+                        <AppIcon name="server" />
                     </div>
                 </div>
                 <div class="mt-2.5">
@@ -253,12 +254,12 @@ try {
                     class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
                 >
                     <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-users text-base"></i>
+                        <AppIcon name="users" class="text-base" />
                     </div>
                     <div class="min-w-0 flex-1">
                         <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                             <span>Gestión de Usuarios</span>
-                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                            <AppIcon name="chevron-right" class="text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform" />
                         </h3>
                         <p class="text-xs text-text-secondary mt-1">
                             Crear, editar teléfonos, cambiar roles y moderar cuentas.
@@ -272,12 +273,12 @@ try {
                     class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
                 >
                     <div class="w-10 h-10 rounded-xl bg-accent-main/10 text-accent-main border border-accent-main/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-music text-base"></i>
+                        <AppIcon name="music" class="text-base" />
                     </div>
                     <div class="min-w-0 flex-1">
                         <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                             <span>Gestión de Canciones</span>
-                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                            <AppIcon name="chevron-right" class="text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform" />
                         </h3>
                         <p class="text-xs text-text-secondary mt-1">
                             Activar o desactivar cantos, buscar por título o autor y editar letras.
@@ -291,12 +292,12 @@ try {
                     class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
                 >
                     <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-tags text-base"></i>
+                        <AppIcon name="tags" class="text-base" />
                     </div>
                     <div class="min-w-0 flex-1">
                         <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                             <span>Categorías Litúrgicas</span>
-                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                            <AppIcon name="chevron-right" class="text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform" />
                         </h3>
                         <p class="text-xs text-text-secondary mt-1">
                             Administrar momentos de la misa, tiempos litúrgicos y cantos asociados.
@@ -310,12 +311,12 @@ try {
                     class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
                 >
                     <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-feather-pointed text-base"></i>
+                        <AppIcon name="feather-pointed" class="text-base" />
                     </div>
                     <div class="min-w-0 flex-1">
                         <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                             <span>Autores y Compositores</span>
-                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                            <AppIcon name="chevron-right" class="text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform" />
                         </h3>
                         <p class="text-xs text-text-secondary mt-1">
                             Controlar nombres de cantautores, comunidades y créditos musicales.
@@ -329,12 +330,12 @@ try {
                     class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
                 >
                     <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-shield-halved text-base"></i>
+                        <AppIcon name="shield-halved" class="text-base" />
                     </div>
                     <div class="min-w-0 flex-1">
                         <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                             <span>Roles y Permisos</span>
-                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                            <AppIcon name="chevron-right" class="text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform" />
                         </h3>
                         <p class="text-xs text-text-secondary mt-1">
                             Crear roles y asignar permisos litúrgicos de forma granular.
@@ -348,12 +349,12 @@ try {
                     class="bg-bg-secondary border border-white/5 rounded-xl p-4 hover:border-accent-main/50 transition-colors flex items-start gap-3.5 group"
                 >
                     <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-server text-base"></i>
+                        <AppIcon name="server" class="text-base" />
                     </div>
                     <div class="min-w-0 flex-1">
                         <h3 class="text-sm font-semibold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                             <span>Mantenimiento y Caché</span>
-                            <i class="fa-solid fa-chevron-right text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform"></i>
+                            <AppIcon name="chevron-right" class="text-xs text-text-secondary group-hover:translate-x-0.5 transition-transform" />
                         </h3>
                         <p class="text-xs text-text-secondary mt-1">
                             Purgar caché de Redis, verificar infraestructura y estado del servidor.

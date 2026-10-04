@@ -31,6 +31,7 @@ import BottomNav from "@/components/BottomNav.astro";
 import NavigationProgressBar from "@/components/NavigationProgressBar.astro";
 import SplashScreen from "@/components/SplashScreen.astro";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt.astro";
+import OfflineBannerReact from "@/components/OfflineBannerReact";
 
 const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsWith("/perfil") || showMobileFooter;
 ---
@@ -69,10 +70,6 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<meta property="twitter:title" content={title} />
 		<meta property="twitter:description" content={description} />
 		<meta property="twitter:image" content={new URL(image, Astro.url)} />
-		<link
-			rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-		/>
 		<ClientRouter />
 		<slot name="head" />
 	</head>
@@ -80,6 +77,7 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<SplashScreen />
 		<NavigationProgressBar />
 		<Header class="" />
+		<OfflineBannerReact client:load />
 		<div
 			class={`flex-1 flex flex-col w-full max-w-full min-w-0 ${!isProfile ? 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0' : ''}`}
 		>
@@ -95,9 +93,18 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<script>
 			import "@/pwa";
 			import { initGlobalAlertSwipe } from "@/utils/alerts";
+			import { syncOfflineQueue } from "@/services/offlineSync";
+
 			initGlobalAlertSwipe();
 			document.addEventListener("astro:page-load", () => {
 				initGlobalAlertSwipe();
+				if (navigator.onLine) {
+					syncOfflineQueue().catch(() => {});
+				}
+			});
+
+			window.addEventListener("online", () => {
+				syncOfflineQueue().catch(() => {});
 			});
 		</script>
 	</body>

@@ -1,7 +1,7 @@
 import Swal, { type SweetAlertOptions } from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
-const CLOSE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+const CLOSE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 384 512" fill="currentColor"><path d="M342.6 150.6c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3L245.3 248l142.6 142.6c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L200 293.3l-142.6 142.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L154.7 248 12.1 105.4c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L200 202.7l142.6-142.6z"/></svg>`;
 
 const swalDark: SweetAlertOptions = {
     background: "#1A1A1A",

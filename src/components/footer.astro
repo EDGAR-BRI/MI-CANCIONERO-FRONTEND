@@ -1,5 +1,6 @@
 ---
 import packageJson from "../../package.json";
+import AppIcon from "@/components/Ui/AppIcon.astro";
 const version = packageJson.version;
 ---
 
@@ -38,7 +39,7 @@ const version = packageJson.version;
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition-all active:scale-95 text-xs font-medium"
                     title="Repositorio en GitHub"
                 >
-                    <i class="fa-brands fa-github text-sm"></i>
+                    <AppIcon name="fa6-brands:github" class="text-sm w-4 h-4" />
                     <span>GitHub</span>
                 </a>
 
@@ -49,7 +50,7 @@ const version = packageJson.version;
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 hover:text-emerald-300 transition-all active:scale-95 text-xs font-medium"
                     title="Contactar por WhatsApp"
                 >
-                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                    <AppIcon name="fa6-brands:whatsapp" class="text-sm w-4 h-4" />
                     <span>Contacto</span>
                 </a>
             </div>

@@ -3,6 +3,7 @@ import "../styles/global.css";
 import "@fontsource/outfit";
 import "@fontsource/jetbrains-mono";
 import { getUserFromToken } from "@/utils/auth";
+import AppIcon from "@/components/Ui/AppIcon.astro";
 
 interface Props {
     title: string;
@@ -31,13 +32,13 @@ const isCurrent = (path: string) => {
 };
 
 const navItems = [
-    { label: "Resumen", href: "/admin", icon: "fa-gauge" },
-    { label: "Usuarios", href: "/admin/users", icon: "fa-users" },
-    { label: "Canciones", href: "/admin/songs", icon: "fa-music" },
-    { label: "Categorías", href: "/admin/categories", icon: "fa-tags" },
-    { label: "Autores", href: "/admin/authors", icon: "fa-feather-pointed" },
-    { label: "Roles", href: "/admin/roles", icon: "fa-shield-halved" },
-    { label: "Sistema", href: "/admin/system", icon: "fa-server" },
+    { label: "Resumen", href: "/admin", icon: "gauge" },
+    { label: "Usuarios", href: "/admin/users", icon: "users" },
+    { label: "Canciones", href: "/admin/songs", icon: "music" },
+    { label: "Categorías", href: "/admin/categories", icon: "tags" },
+    { label: "Autores", href: "/admin/authors", icon: "feather-pointed" },
+    { label: "Roles", href: "/admin/roles", icon: "shield-halved" },
+    { label: "Sistema", href: "/admin/system", icon: "server" },
 ];
 import { pwaInfo } from "virtual:pwa-info";
 ---
@@ -56,10 +57,6 @@ import { pwaInfo } from "virtual:pwa-info";
         <script>
             import "@/pwa";
         </script>
-        <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        />
     </head>
     <body
         class="bg-bg-main min-h-screen text-text-main flex flex-col md:flex-row font-sans overflow-x-hidden"
@@ -76,10 +73,10 @@ import { pwaInfo } from "virtual:pwa-info";
                         class="text-text-secondary hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors focus:outline-none"
                         aria-label="Abrir menú de administración"
                     >
-                        <i class="fa-solid fa-bars text-lg"></i>
+                        <AppIcon name="bars" class="text-lg w-5 h-5" />
                     </button>
                     <a href="/admin" class="flex items-center gap-2 text-white font-bold tracking-tight">
-                        <i class="fa-solid fa-shield-halved text-accent-main text-base"></i>
+                        <AppIcon name="shield-halved" class="text-accent-main text-base w-4 h-4" />
                         <span>AdminPanel</span>
                     </a>
                 </div>
@@ -90,7 +87,7 @@ import { pwaInfo } from "virtual:pwa-info";
                         class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-colors"
                         title="Volver al Cancionero"
                     >
-                        <i class="fa-solid fa-arrow-left text-xs"></i>
+                        <AppIcon name="arrow-left" class="text-xs w-3 h-3" />
                         <span>App</span>
                     </a>
                 </div>
@@ -110,7 +107,7 @@ import { pwaInfo } from "virtual:pwa-info";
                                         : "bg-bg-secondary text-text-secondary hover:text-white hover:bg-white/5 border-white/5"
                                 }`}
                             >
-                                <i class={`fa-solid ${item.icon} text-[11px]`}></i>
+                                <AppIcon name={item.icon} class="text-[11px] w-3 h-3" />
                                 <span>{item.label}</span>
                             </a>
                         );
@@ -139,7 +136,7 @@ import { pwaInfo } from "virtual:pwa-info";
                 >
                     <a href="/admin" class="flex items-center gap-2.5">
                         <div class="w-8 h-8 rounded-lg bg-accent-main/10 border border-accent-main/30 flex items-center justify-center text-accent-main">
-                            <i class="fa-solid fa-shield-halved text-sm"></i>
+                            <AppIcon name="shield-halved" class="text-sm w-4 h-4" />
                         </div>
                         <div>
                             <h1 class="text-base font-bold text-white tracking-tight leading-none">
@@ -157,7 +154,7 @@ import { pwaInfo } from "virtual:pwa-info";
                         class="md:hidden text-text-secondary hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                         aria-label="Cerrar menú"
                     >
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                        <AppIcon name="xmark" class="text-lg w-5 h-5" />
                     </button>
                 </div>
 
@@ -195,9 +192,10 @@ import { pwaInfo } from "virtual:pwa-info";
                                             : "text-text-secondary hover:bg-white/5 hover:text-white border-transparent"
                                     }`}
                                 >
-                                    <i
-                                        class={`fa-solid ${item.icon} w-5 text-center text-sm ${active ? "text-accent-main" : "text-text-secondary"}`}
-                                    ></i>
+                                    <AppIcon
+                                        name={item.icon}
+                                        class={`w-5 text-center text-sm ${active ? "text-accent-main" : "text-text-secondary"}`}
+                                    />
                                     <span>{item.label}</span>
                                 </a>
                             );
@@ -209,7 +207,7 @@ import { pwaInfo } from "virtual:pwa-info";
                             href="/"
                             class="flex items-center gap-3 px-3.5 py-2 text-sm font-medium rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-colors"
                         >
-                            <i class="fa-solid fa-arrow-left w-5 text-center text-sm"></i>
+                            <AppIcon name="arrow-left" class="w-5 text-center text-sm" />
                             <span>Volver a la App</span>
                         </a>
                     </div>
@@ -222,7 +220,7 @@ import { pwaInfo } from "virtual:pwa-info";
                     href="/logout"
                     class="flex items-center justify-center gap-2 w-full px-3.5 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-xl border border-red-500/20 transition-colors"
                 >
-                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <AppIcon name="right-from-bracket" class="text-sm w-4 h-4" />
                     <span>Cerrar Sesión</span>
                 </a>
             </div>

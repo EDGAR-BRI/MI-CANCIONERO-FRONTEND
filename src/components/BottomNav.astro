@@ -1,5 +1,6 @@
 ---
 import { getUserFromToken, hasPermission } from "@/utils/auth";
+import AppIcon from "@/components/Ui/AppIcon.astro";
 
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
@@ -26,7 +27,7 @@ const isActive = (path: string) => {
             class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/") && currentPath === "/" ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
             data-astro-prefetch
         >
-            <i class="fa-solid fa-home text-xl"></i>
+            <AppIcon name="house" class="text-xl w-5 h-5" />
             <span class="text-[10px] font-medium">Inicio</span>
         </a>
 
@@ -35,7 +36,7 @@ const isActive = (path: string) => {
             class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/misas") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
             data-astro-prefetch
         >
-            <i class="fa-solid fa-book text-xl"></i>
+            <AppIcon name="book" class="text-xl w-5 h-5" />
             <span class="text-[10px] font-medium">Misas</span>
         </a>
 
@@ -49,7 +50,7 @@ const isActive = (path: string) => {
                     <div
                         class={`flex items-center justify-center w-14 h-14 rounded-full shadow-lg ${isActive("/songs/add") ? "bg-accent-main text-white ring-4 ring-bg-secondary" : "bg-bg-main border border-white/10 text-accent-main"}`}
                     >
-                        <i class="fa-solid fa-plus text-2xl" />
+                        <AppIcon name="plus" class="text-2xl w-6 h-6" />
                     </div>
                 </a>
             )
@@ -61,7 +62,7 @@ const isActive = (path: string) => {
                     class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/songs/all") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
                     data-astro-prefetch
                 >
-                    <i class="fa-solid fa-music text-xl" />
+                    <AppIcon name="music" class="text-xl w-5 h-5" />
                     <span class="text-[10px] font-medium">Canciones</span>
                 </a>
             )
@@ -74,7 +75,7 @@ const isActive = (path: string) => {
                     class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/admin") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
                     data-astro-prefetch
                 >
-                    <i class="fa-solid fa-shield text-xl" />
+                    <AppIcon name="shield" class="text-xl w-5 h-5" />
                     <span class="text-[10px] font-medium">Admin</span>
                 </a>
             )
@@ -85,7 +86,7 @@ const isActive = (path: string) => {
             class={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive("/ministerios") ? "text-accent-main" : "text-text-secondary hover:text-text-main"}`}
             data-astro-prefetch
         >
-            <i class="fa-solid fa-users text-xl" />
+            <AppIcon name="users" class="text-xl w-5 h-5" />
             <span class="text-[10px] font-medium">Ministerios</span>
         </a>
     </div>
