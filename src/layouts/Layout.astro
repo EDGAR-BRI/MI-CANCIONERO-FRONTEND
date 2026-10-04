@@ -37,7 +37,7 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 ---
 
 <!doctype html>
-<html lang="es" class="h-full w-full">
+<html lang="es" class="h-full w-full overflow-x-hidden">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
@@ -73,7 +73,7 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<ClientRouter />
 		<slot name="head" />
 	</head>
-	<body class="bg-bg-main text-text-main min-h-screen w-full max-w-full overflow-x-clip flex flex-col">
+	<body class="bg-bg-main text-text-main min-h-screen w-full max-w-full overflow-x-hidden flex flex-col">
 		<SplashScreen transition:persist="splash" />
 		<NavigationProgressBar transition:persist="nav-progress" />
 		<Header transition:persist="header" class="" />

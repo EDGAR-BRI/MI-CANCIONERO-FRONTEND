@@ -8,11 +8,15 @@ export const NOTCH_DEPTH = 36; // Profundidad de la muesca (36px)
 
 /**
  * Genera el path SVG del borde superior del BottomNav con la muesca líquida en la posición cx.
+ * Si cx es null, undefined, menor a 0 o depth <= 0, retorna una línea horizontal recta sin muesca.
  */
-export function getFluidNotchPath(width: number, cx: number): string {
+export function getFluidNotchPath(width: number, cx: number | null | undefined, depth: number = NOTCH_DEPTH): string {
     const w = Math.max(width, 320);
+    if (cx === null || cx === undefined || cx < 0 || depth <= 0) {
+        return `M 0,0 L ${w},0`;
+    }
     const aw = NOTCH_WIDTH;
-    const d = NOTCH_DEPTH;
+    const d = depth;
 
     // Curva cúbica Bézier simétrica fluida estilo Dribbble
     return `M 0,0 L ${cx - aw},0 C ${cx - 26},0 ${cx - 22},${d} ${cx},${d} C ${cx + 22},${d} ${cx + 24},0 ${cx + aw},0 L ${w},0`;
@@ -21,8 +25,8 @@ export function getFluidNotchPath(width: number, cx: number): string {
 /**
  * Genera el path SVG cerrado para rellenar el fondo del BottomNav (#1A1A1A).
  */
-export function getFluidNotchBgPath(width: number, cx: number, heightTotal: number = 160): string {
-    const topPath = getFluidNotchPath(width, cx);
+export function getFluidNotchBgPath(width: number, cx: number | null | undefined, depth: number = NOTCH_DEPTH, heightTotal: number = 160): string {
+    const topPath = getFluidNotchPath(width, cx, depth);
     const w = Math.max(width, 320);
     return `${topPath} L ${w},${heightTotal} L 0,${heightTotal} Z`;
 }
@@ -31,7 +35,8 @@ export function getFluidNotchBgPath(width: number, cx: number, heightTotal: numb
  * Genera el path SVG para la máscara interior de la muesca (#050505) evitando que el contenido
  * de la página en scroll se filtre visualmente detrás de la esfera.
  */
-export function getNotchMaskPath(cx: number): string {
+export function getNotchMaskPath(cx: number | null | undefined): string {
+    if (cx === null || cx === undefined || cx < 0) return "";
     const aw = NOTCH_WIDTH;
     const d = NOTCH_DEPTH;
     return `M ${cx - aw},0 C ${cx - 26},0 ${cx - 22},${d} ${cx},${d} C ${cx + 22},${d} ${cx + 24},0 ${cx + aw},0 Z`;

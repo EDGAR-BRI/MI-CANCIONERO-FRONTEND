@@ -41,11 +41,11 @@ const matchedIndex = navItems.findIndex((item) => {
     if (item.path === "/") return currentPath === "/";
     return currentPath.startsWith(item.path);
 });
-const activeIndex = matchedIndex >= 0 ? matchedIndex : 0;
+const activeIndex = matchedIndex;
 
 // Cálculo inicial para SSR
 const initialW = 390;
-const initialCx = (activeIndex + 0.5) * (initialW / navItems.length);
+const initialCx = activeIndex >= 0 ? (activeIndex + 0.5) * (initialW / navItems.length) : null;
 const initialTopD = getFluidNotchPath(initialW, initialCx);
 const initialBgD = getFluidNotchBgPath(initialW, initialCx);
 ---
@@ -55,13 +55,14 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
     transition:persist="bottom-nav"
     data-active-index={activeIndex}
     data-total-items={navItems.length}
-    class="md:hidden fixed bottom-0 left-0 w-full z-50 pb-safe select-none transition-all duration-300"
+    class="md:hidden fixed bottom-0 left-0 w-full max-w-full z-50 pb-safe select-none transition-all duration-300"
+    style="overflow-x: clip; overflow-y: visible;"
 >
     <!-- Silueta SVG de fondo continuo y borde superior con muesca líquida transparente -->
     <svg
         id="bottom-nav-shape"
         class="absolute top-0 left-0 w-full pointer-events-none -z-10"
-        style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); overflow: visible;"
+        style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); overflow: hidden;"
         aria-hidden="true"
     >
         <path
@@ -81,8 +82,10 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
     <!-- Esfera flotante activa que se desliza con animación elástica -->
     <div
         id="bottom-nav-indicator"
-        class="absolute top-0 left-0 w-12 h-12 rounded-full bg-accent-main text-white flex items-center justify-center shadow-[0_8px_20px_rgba(255,87,34,0.45)] pointer-events-none z-20"
-        style={`transform: translate3d(calc(${initialCx}px - 50%), -14px, 0);`}
+        class={`absolute top-0 left-0 w-12 h-12 rounded-full bg-accent-main text-white flex items-center justify-center shadow-[0_8px_20px_rgba(255,87,34,0.45)] pointer-events-none z-20 transition-all duration-300 ${
+            activeIndex >= 0 ? "opacity-100 scale-100" : "opacity-0 scale-50 pointer-events-none"
+        }`}
+        style={activeIndex >= 0 ? `transform: translate3d(calc(${initialCx}px - 50%), -14px, 0);` : `transform: translate3d(calc(${initialW / 2}px - 50%), -14px, 0);`}
         aria-hidden="true"
     >
         {
@@ -138,7 +141,7 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
 </style>
 
 <script>
-    import { getFluidNotchPath, getFluidNotchBgPath } from "@/utils/navShape";
+    import { getFluidNotchPath, getFluidNotchBgPath, NOTCH_DEPTH } from "@/utils/navShape";
 
     let currentAnimFrame: number | null = null;
     let currentAnimatedCx: number | null = null;
@@ -147,7 +150,7 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
         const nav = document.getElementById("bottom-nav");
         if (!nav) return null;
         const totalItems = parseInt(nav.getAttribute("data-total-items") || "5", 10);
-        const w = nav.clientWidth || window.innerWidth;
+        const w = nav.clientWidth || document.documentElement.clientWidth || window.innerWidth;
         return { nav, totalItems, w };
     };
 
@@ -214,6 +217,61 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
         currentAnimFrame = requestAnimationFrame(step);
     };
 
+    const animateNotchDepth = (
+        cx: number,
+        fromDepth: number,
+        toDepth: number,
+        durationMs = 280,
+        onComplete?: () => void
+    ) => {
+        const metrics = getNavMetrics();
+        if (!metrics) return;
+        const { w } = metrics;
+        const bgPath = document.getElementById("bottom-nav-bg");
+        const borderPath = document.getElementById("bottom-nav-border");
+        const progressPath = document.getElementById("navigation-progress-mobile-path");
+        if (!bgPath || !borderPath) return;
+
+        if (currentAnimFrame !== null) {
+            cancelAnimationFrame(currentAnimFrame);
+            currentAnimFrame = null;
+        }
+
+        const startTime = performance.now();
+        const easeOutQuad = (x: number) => 1 - (1 - x) * (1 - x);
+
+        const step = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / durationMs, 1);
+            const eased = easeOutQuad(progress);
+            const curD = fromDepth + (toDepth - fromDepth) * eased;
+
+            bgPath.setAttribute("d", getFluidNotchBgPath(w, cx, curD));
+            borderPath.setAttribute("d", getFluidNotchPath(w, cx, curD));
+            if (progressPath) {
+                progressPath.setAttribute("d", getFluidNotchPath(w, cx, curD));
+            }
+
+            if (progress < 1) {
+                currentAnimFrame = requestAnimationFrame(step);
+            } else {
+                currentAnimFrame = null;
+                if (toDepth <= 0) {
+                    bgPath.setAttribute("d", getFluidNotchBgPath(w, null));
+                    borderPath.setAttribute("d", getFluidNotchPath(w, null));
+                    if (progressPath) progressPath.setAttribute("d", getFluidNotchPath(w, null));
+                } else {
+                    bgPath.setAttribute("d", getFluidNotchBgPath(w, cx, toDepth));
+                    borderPath.setAttribute("d", getFluidNotchPath(w, cx, toDepth));
+                    if (progressPath) progressPath.setAttribute("d", getFluidNotchPath(w, cx, toDepth));
+                }
+                if (onComplete) onComplete();
+            }
+        };
+
+        currentAnimFrame = requestAnimationFrame(step);
+    };
+
     const setActiveTabIndex = (activeIdx: number, immediate = false) => {
         const metrics = getNavMetrics();
         if (!metrics) return;
@@ -256,21 +314,70 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
             }
         });
 
+        const bgPath = document.getElementById("bottom-nav-bg");
+        const borderPath = document.getElementById("bottom-nav-border");
+        const indicator = document.getElementById("bottom-nav-indicator");
+        const progressPath = document.getElementById("navigation-progress-mobile-path");
+
+        if (activeIdx < 0) {
+            // Sin pestaña activa (ej: vista /perfil)
+            if (indicator) {
+                indicator.classList.remove("opacity-100", "scale-100");
+                indicator.classList.add("opacity-0", "scale-50", "pointer-events-none");
+            }
+
+            if (immediate || currentAnimatedCx === null) {
+                if (currentAnimFrame !== null) {
+                    cancelAnimationFrame(currentAnimFrame);
+                    currentAnimFrame = null;
+                }
+                currentAnimatedCx = null;
+                if (bgPath) bgPath.setAttribute("d", getFluidNotchBgPath(w, null));
+                if (borderPath) borderPath.setAttribute("d", getFluidNotchPath(w, null));
+                if (progressPath) progressPath.setAttribute("d", getFluidNotchPath(w, null));
+            } else {
+                // Suavizar colapso de la muesca
+                animateNotchDepth(currentAnimatedCx, NOTCH_DEPTH, 0, 240, () => {
+                    currentAnimatedCx = null;
+                });
+            }
+            return;
+        }
+
+        // Con pestaña activa (activeIdx >= 0)
         const targetCx = getTabCx(activeIdx, w, totalItems);
 
         if (immediate) {
+            if (currentAnimFrame !== null) {
+                cancelAnimationFrame(currentAnimFrame);
+                currentAnimFrame = null;
+            }
             currentAnimatedCx = targetCx;
-            const bgPath = document.getElementById("bottom-nav-bg");
-            const borderPath = document.getElementById("bottom-nav-border");
-            const indicator = document.getElementById("bottom-nav-indicator");
-            const progressPath = document.getElementById("navigation-progress-mobile-path");
-
             if (bgPath) bgPath.setAttribute("d", getFluidNotchBgPath(w, targetCx));
             if (borderPath) borderPath.setAttribute("d", getFluidNotchPath(w, targetCx));
-            if (indicator) indicator.style.transform = `translate3d(calc(${targetCx}px - 50%), -14px, 0)`;
             if (progressPath) progressPath.setAttribute("d", getFluidNotchPath(w, targetCx));
+            if (indicator) {
+                indicator.style.transform = `translate3d(calc(${targetCx}px - 50%), -14px, 0)`;
+                indicator.classList.remove("opacity-0", "scale-50", "pointer-events-none");
+                indicator.classList.add("opacity-100", "scale-100");
+            }
         } else {
-            animateNotchTo(targetCx);
+            if (indicator) {
+                indicator.classList.remove("opacity-0", "scale-50", "pointer-events-none");
+                indicator.classList.add("opacity-100", "scale-100");
+            }
+
+            if (currentAnimatedCx === null) {
+                // Viniendo de un estado sin muesca (ej: desde /perfil)
+                currentAnimatedCx = targetCx;
+                if (indicator) {
+                    indicator.style.transform = `translate3d(calc(${targetCx}px - 50%), -14px, 0)`;
+                }
+                animateNotchDepth(targetCx, 0, NOTCH_DEPTH, 260);
+            } else {
+                // Desplazamiento horizontal fluido entre pestañas
+                animateNotchTo(targetCx);
+            }
         }
     };
 
@@ -280,15 +387,11 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
         const { nav } = metrics;
 
         const currentPath = window.location.pathname;
-        const links = nav.querySelectorAll<HTMLAnchorElement>('a[data-nav-path]');
-        let activeIdx = 0;
-
-        links.forEach((link, idx) => {
+        const links = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a[data-nav-path]'));
+        const activeIdx = links.findIndex((link) => {
             const path = link.getAttribute('data-nav-path') || '';
-            const isMatch = path === '/' ? currentPath === '/' : currentPath.startsWith(path);
-            if (isMatch) {
-                activeIdx = idx;
-            }
+            if (path === '/') return currentPath === '/';
+            return currentPath.startsWith(path);
         });
 
         setActiveTabIndex(activeIdx, immediate);
@@ -301,7 +404,7 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
         const links = nav.querySelectorAll<HTMLAnchorElement>('a[data-nav-path]');
         links.forEach((link, idx) => {
             link.onclick = () => {
-                const currentActive = parseInt(nav.getAttribute('data-active-index') || '0', 10);
+                const currentActive = parseInt(nav.getAttribute('data-active-index') || '-1', 10);
                 if (idx !== currentActive) {
                     window.dispatchEvent(new CustomEvent('nav-progress:start'));
                     setActiveTabIndex(idx, false);
@@ -310,7 +413,17 @@ const initialBgD = getFluidNotchBgPath(initialW, initialCx);
         });
     };
 
-    // Renderizar inicialmente
+    // Inicializar posición según el estado actual en el DOM
+    const initialActive = parseInt(document.getElementById("bottom-nav")?.getAttribute("data-active-index") || "-1", 10);
+    if (initialActive >= 0) {
+        const metrics = getNavMetrics();
+        if (metrics) {
+            currentAnimatedCx = getTabCx(initialActive, metrics.w, metrics.totalItems);
+        }
+    } else {
+        currentAnimatedCx = null;
+    }
+
     updateActiveTabFromUrl(true);
     bindTabClicks();
 

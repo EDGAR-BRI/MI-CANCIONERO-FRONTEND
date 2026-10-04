@@ -232,6 +232,12 @@
 html {
     scroll-behavior: smooth;
     color-scheme: dark;
+    overflow-x: hidden;
+}
+
+body {
+    overflow-x: hidden;
+    max-width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -26,13 +26,13 @@ const initialD = getFluidNotchPath(390, 39);
 	<!-- Barra de progreso para Móvil: silueta con muesca líquida sobre el BottomNav -->
 	<div
 		id="navigation-progress-mobile"
-		class="md:hidden fixed bottom-0 left-0 w-full z-[55] opacity-0 pointer-events-none transition-opacity duration-150"
-		style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); overflow: visible;"
+		class="md:hidden fixed bottom-0 left-0 w-full z-[55] opacity-0 pointer-events-none transition-opacity duration-150 overflow-hidden"
+		style="height: calc(4rem + env(safe-area-inset-bottom, 0px)); overflow: hidden;"
 	>
 		<svg
 			id="navigation-progress-mobile-svg"
 			class="w-full h-full pointer-events-none"
-			style="overflow: visible;"
+			style="overflow: hidden;"
 		>
 			<defs>
 				<filter id="nav-progress-glow" x="-20%" y="-50%" width="140%" height="200%">
@@ -81,10 +81,10 @@ const initialD = getFluidNotchPath(390, 39);
 
 		const nav = document.getElementById("bottom-nav");
 		if (!nav) return;
-		const w = nav.clientWidth || window.innerWidth;
-		const activeIdx = parseInt(nav.getAttribute("data-active-index") || "0", 10);
+		const w = nav.clientWidth || document.documentElement.clientWidth || window.innerWidth;
+		const activeIdx = parseInt(nav.getAttribute("data-active-index") || "-1", 10);
 		const totalItems = parseInt(nav.getAttribute("data-total-items") || "5", 10);
-		const cx = (activeIdx + 0.5) * (w / totalItems);
+		const cx = activeIdx >= 0 ? (activeIdx + 0.5) * (w / totalItems) : null;
 		const d = getFluidNotchPath(w, cx);
 
 		mobilePath.setAttribute("d", d);
