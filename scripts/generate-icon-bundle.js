@@ -38,6 +38,9 @@ const rawSet = new Set();
 
 const faRegex = /\bfa-([a-z0-9-]+)\b/g;
 const namePropRegex = /name=["']([a-zA-Z0-9-:]+)["']/g;
+const nameAttrRegex = /name=\{([^}]+)\}/g;
+const stringLiteralRegex = /['"]([a-zA-Z0-9-:]+)['"]/g;
+const iconPropRegex = /icon:\s*['"]([a-zA-Z0-9-:]+)['"]/g;
 
 for (const filePath of allSrcFiles) {
   const content = fs.readFileSync(filePath, 'utf8');
@@ -47,6 +50,16 @@ for (const filePath of allSrcFiles) {
     rawSet.add(`fa-${match[1]}`);
   }
   while ((match = namePropRegex.exec(content)) !== null) {
+    rawSet.add(match[1]);
+  }
+  while ((match = nameAttrRegex.exec(content)) !== null) {
+    const expr = match[1];
+    let strMatch;
+    while ((strMatch = stringLiteralRegex.exec(expr)) !== null) {
+      rawSet.add(strMatch[1]);
+    }
+  }
+  while ((match = iconPropRegex.exec(content)) !== null) {
     rawSet.add(match[1]);
   }
 }
@@ -125,8 +138,20 @@ for (const raw of rawSet) {
   }
 }
 
-// Extra essential UI and liturgical icons
+// Extra essential UI, playback, liturgical and admin icons
 const extras = [
+  // Media / Playback
+  { set: faSolid, name: 'play', key: 'fa6-solid:play' },
+  { set: faSolid, name: 'pause', key: 'fa6-solid:pause' },
+  { set: faSolid, name: 'stop', key: 'fa6-solid:stop' },
+  { set: faSolid, name: 'backward', key: 'fa6-solid:backward' },
+  { set: faSolid, name: 'forward', key: 'fa6-solid:forward' },
+  { set: faSolid, name: 'angles-down', key: 'fa6-solid:angles-down' },
+  { set: faSolid, name: 'angles-up', key: 'fa6-solid:angles-up' },
+  { set: faSolid, name: 'rotate-left', key: 'fa6-solid:rotate-left' },
+  { set: faSolid, name: 'rotate-right', key: 'fa6-solid:rotate-right' },
+  // Status & Fallback
+  { set: faSolid, name: 'circle-question', key: 'fa6-solid:circle-question' },
   { set: faSolid, name: 'spinner', key: 'fa6-solid:spinner' },
   { set: faSolid, name: 'circle-notch', key: 'fa6-solid:circle-notch' },
   { set: faSolid, name: 'triangle-exclamation', key: 'fa6-solid:triangle-exclamation' },
@@ -134,6 +159,7 @@ const extras = [
   { set: faSolid, name: 'xmark', key: 'fa6-solid:xmark' },
   { set: faSolid, name: 'magnifying-glass', key: 'fa6-solid:magnifying-glass' },
   { set: faSolid, name: 'plus', key: 'fa6-solid:plus' },
+  { set: faSolid, name: 'minus', key: 'fa6-solid:minus' },
   { set: faSolid, name: 'circle-plus', key: 'fa6-solid:circle-plus' },
   { set: faSolid, name: 'user', key: 'fa6-solid:user' },
   { set: faSolid, name: 'users', key: 'fa6-solid:users' },
@@ -155,6 +181,7 @@ const extras = [
   { set: faSolid, name: 'right-from-bracket', key: 'fa6-solid:right-from-bracket' },
   { set: faSolid, name: 'music', key: 'fa6-solid:music' },
   { set: faSolid, name: 'wand-magic-sparkles', key: 'fa6-solid:wand-magic-sparkles' },
+  // Liturgical & Categories
   { set: faSolid, name: 'church', key: 'fa6-solid:church' },
   { set: faSolid, name: 'cross', key: 'fa6-solid:cross' },
   { set: faSolid, name: 'dove', key: 'fa6-solid:dove' },
@@ -164,6 +191,30 @@ const extras = [
   { set: faSolid, name: 'wine-glass', key: 'fa6-solid:wine-glass' },
   { set: faSolid, name: 'clock', key: 'fa6-solid:clock' },
   { set: faSolid, name: 'calendar-day', key: 'fa6-solid:calendar-day' },
+  { set: faSolid, name: 'heart', key: 'fa6-solid:heart' },
+  { set: faSolid, name: 'hands-clapping', key: 'fa6-solid:hands-clapping' },
+  { set: faSolid, name: 'crown', key: 'fa6-solid:crown' },
+  { set: faSolid, name: 'sun', key: 'fa6-solid:sun' },
+  { set: faSolid, name: 'gift', key: 'fa6-solid:gift' },
+  { set: faSolid, name: 'fire-flame-curved', key: 'fa6-solid:fire-flame-curved' },
+  { set: faSolid, name: 'child', key: 'fa6-solid:child' },
+  { set: faSolid, name: 'door-open', key: 'fa6-solid:door-open' },
+  { set: faSolid, name: 'person-walking-arrow-right', key: 'fa6-solid:person-walking-arrow-right' },
+  { set: faSolid, name: 'eye-slash', key: 'fa6-solid:eye-slash' },
+  { set: faSolid, name: 'eye', key: 'fa6-solid:eye' },
+  // Admin & Controls
+  { set: faSolid, name: 'gauge', key: 'fa6-solid:gauge' },
+  { set: faSolid, name: 'tags', key: 'fa6-solid:tags' },
+  { set: faSolid, name: 'feather-pointed', key: 'fa6-solid:feather-pointed' },
+  { set: faSolid, name: 'shield', key: 'fa6-solid:shield' },
+  { set: faSolid, name: 'shield-halved', key: 'fa6-solid:shield-halved' },
+  { set: faSolid, name: 'server', key: 'fa6-solid:server' },
+  { set: faSolid, name: 'broom', key: 'fa6-solid:broom' },
+  { set: faSolid, name: 'database', key: 'fa6-solid:database' },
+  { set: faSolid, name: 'layer-group', key: 'fa6-solid:layer-group' },
+  { set: faSolid, name: 'bolt', key: 'fa6-solid:bolt' },
+  { set: faSolid, name: 'circle-info', key: 'fa6-solid:circle-info' },
+  // Brands & Lucide
   { set: faBrands, name: 'youtube', key: 'fa6-brands:youtube' },
   { set: faBrands, name: 'google', key: 'fa6-brands:google' },
   { set: faBrands, name: 'whatsapp', key: 'fa6-brands:whatsapp' },

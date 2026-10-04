@@ -12,6 +12,9 @@ import icon from 'astro-icon';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  devToolbar: {
+    enabled: false
+  },
   server: {
     port: 4321
   },
