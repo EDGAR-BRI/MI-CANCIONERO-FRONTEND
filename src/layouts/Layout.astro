@@ -29,6 +29,7 @@ import Header from "../components/Header.astro";
 import Footer from "@/components/footer.astro";
 import BottomNav from "@/components/BottomNav.astro";
 import NavigationProgressBar from "@/components/NavigationProgressBar.astro";
+import SplashScreen from "@/components/SplashScreen.astro";
 
 const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsWith("/perfil") || showMobileFooter;
 ---
@@ -75,6 +76,7 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<slot name="head" />
 	</head>
 	<body class="bg-bg-main text-text-main min-h-screen w-full max-w-full overflow-x-clip flex flex-col">
+		<SplashScreen />
 		<NavigationProgressBar />
 		<Header class="" />
 		<div
