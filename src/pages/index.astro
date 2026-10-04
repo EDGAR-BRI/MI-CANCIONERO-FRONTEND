@@ -3,7 +3,7 @@ import AppIcon from "@/components/Ui/AppIcon.astro";
 // export const prerender = false;
 Astro.response.headers.set(
 	"Cache-Control",
-	"no-cache, no-store, must-revalidate",
+	"private, no-cache",
 );
 import Layout from "@/layouts/Layout.astro";
 import "../styles/global.css";

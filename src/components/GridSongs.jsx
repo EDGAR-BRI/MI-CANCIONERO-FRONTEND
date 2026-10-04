@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../services/songs';
 import SongCardReact from './SongCardReact';
+import { getSongListFromStore, storeSongList } from '../stores/songsStore';
 
 export default function GridSongs({ endpoint, initialSongs = [] }) {
-    const [songs, setSongs] = useState(initialSongs);
-    const [loading, setLoading] = useState(!initialSongs || initialSongs.length === 0);
+    const cacheKey = endpoint || `${API_URL}/songs?limit=12`;
+    const cachedSongs = getSongListFromStore(cacheKey);
+
+    const [songs, setSongs] = useState(() => {
+        if (cachedSongs && cachedSongs.length > 0) return cachedSongs;
+        return initialSongs;
+    });
+    const [loading, setLoading] = useState(() => {
+        if (cachedSongs && cachedSongs.length > 0) return false;
+        return (!initialSongs || initialSongs.length === 0);
+    });
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        // If we have initial songs and no specific endpoint change context, we might skip? 
-        // But usually if endpoint is passed we want to ensure we are in sync or if it changes.
-        // For simplicity: if initialSongs is populate and endpoint matches what produced it, we skip. 
-        // But here we rely on endpoint prop.
+        const currentKey = endpoint || `${API_URL}/songs?limit=12`;
+        const cached = getSongListFromStore(currentKey);
+        if (cached && cached.length > 0) {
+            setSongs(cached);
+            setLoading(false);
+            return;
+        }
 
         const fetchSongs = async () => {
-            setLoading(true);
+            if (songs.length === 0) setLoading(true);
             try {
                 const url = endpoint || `${API_URL}/songs?limit=12`;
                 const res = await fetch(url);
@@ -23,6 +36,7 @@ export default function GridSongs({ endpoint, initialSongs = [] }) {
                 }
                 const data = await res.json();
                 setSongs(data);
+                storeSongList(currentKey, data);
                 setError(null);
             } catch (err) {
                 console.error("Error fetching songs:", err);
@@ -32,17 +46,7 @@ export default function GridSongs({ endpoint, initialSongs = [] }) {
             }
         };
 
-        // If initialSongs provided, we assume it matches the FIRST render intent.
-        // But if endpoint changes (dynamic filter), we MUST fetch.
-        // If it's the very first mount and we have initialSongs, we can skip fetch IF we assume endpoint corresponds to it.
-        // To be safe and simple: If initialSongs has data, we don't auto-fetch on mount unless endpoint updates?
-        // Let's just fetch if endpoint is defined or if we have no songs.
-
-        if (endpoint || songs.length === 0) {
-            fetchSongs();
-        } else if (initialSongs.length > 0) {
-            setLoading(false);
-        }
+        fetchSongs();
     }, [endpoint]);
 
     // Skeleton Component

@@ -1,5 +1,7 @@
 import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
+import { $misas, initMisasStore } from '../stores/misasStore';
 import { getMyMinistries, type MinistrySummary } from '../services/ministries';
 import type { Misa } from '../types/misa';
 import CreateMisaModal from './CreateMisaModal';
@@ -36,7 +38,15 @@ export default function HomeDashboardReact({
     initialMisas = [],
     initialMinistries = []
 }: HomeDashboardProps) {
-    const [misas] = useState<Misa[]>(initialMisas);
+    const storeMisas = useStore($misas);
+
+    useEffect(() => {
+        if (Array.isArray(initialMisas) && initialMisas.length > 0) {
+            initMisasStore(initialMisas);
+        }
+    }, [initialMisas]);
+
+    const misas = storeMisas.length > 0 ? storeMisas : initialMisas;
     const [ministries, setMinistries] = useState<MinistrySummary[]>(initialMinistries);
     const [showCreateModal, setShowCreateModal] = useState(false);
 

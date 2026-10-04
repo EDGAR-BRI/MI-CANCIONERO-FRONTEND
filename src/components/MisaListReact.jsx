@@ -1,5 +1,7 @@
 import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
+import { $misas, $misasLoaded, initMisasStore, setMisasStore } from '../stores/misasStore';
 import MisaCardSkeleton from './skeletons/MisaCardSkeleton';
 import { getMisas } from '../services/misas';
 import CreateMisaModal from './CreateMisaModal';
@@ -18,7 +20,7 @@ const parseJwt = (tokenStr) => {
                 .split('')
                 .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
                 .join('')
-        );
+                );
         return JSON.parse(jsonPayload);
     } catch {
         return null;
@@ -26,8 +28,38 @@ const parseJwt = (tokenStr) => {
 };
 
 const MisaListReact = ({ token, currentUser, initialMisas }) => {
-    const [loading, setLoading] = useState(initialMisas === undefined);
-    const [misas, setMisas] = useState(initialMisas || []);
+    const storeMisas = useStore($misas);
+    const storeLoaded = useStore($misasLoaded);
+
+    // Inicializar store si viene de SSR
+    if (Array.isArray(initialMisas) && initialMisas.length > 0 && storeMisas.length === 0) {
+        initMisasStore(initialMisas);
+    }
+
+    const effectiveInitial = storeMisas.length > 0 
+        ? storeMisas 
+        : (Array.isArray(initialMisas) ? initialMisas : []);
+
+    const [loading, setLoading] = useState(() => {
+        if (storeLoaded && storeMisas.length > 0) return false;
+        if (Array.isArray(initialMisas) && initialMisas.length > 0) return false;
+        return initialMisas === undefined;
+    });
+    const [misas, setMisasState] = useState(effectiveInitial);
+
+    // Sincronizar estado local con actualizaciones del store
+    useEffect(() => {
+        if (storeMisas.length > 0) {
+            setMisasState(storeMisas);
+            setLoading(false);
+        }
+    }, [storeMisas]);
+
+    const setMisas = (newList) => {
+        setMisasState(newList);
+        setMisasStore(newList);
+    };
+
     const [userId, setUserId] = useState(() => {
         if (currentUser?.id) return currentUser.id;
         if (token) {
@@ -85,16 +117,18 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
             }
         }
 
-        if (initialMisas === undefined) {
+        if (initialMisas === undefined && storeMisas.length === 0) {
             fetchMisas();
-        } else if (initialMisas.length === 0 && !isDeviceOnline()) {
+        } else if (initialMisas.length === 0 && !isDeviceOnline() && storeMisas.length === 0) {
             loadOfflineMisas();
         }
     }, [token]);
 
     const fetchMisas = async () => {
         try {
-            setLoading(true);
+            if (misas.length === 0) {
+                setLoading(true);
+            }
             const { success, data, error } = await getMisas(token);
             if (success && Array.isArray(data)) {
                 setMisas(data);
