@@ -30,6 +30,7 @@ import Footer from "@/components/footer.astro";
 import BottomNav from "@/components/BottomNav.astro";
 import NavigationProgressBar from "@/components/NavigationProgressBar.astro";
 import SplashScreen from "@/components/SplashScreen.astro";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt.astro";
 
 const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsWith("/perfil") || showMobileFooter;
 ---
@@ -90,6 +91,7 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 			</div>
 		</div>
 		<BottomNav />
+		<PwaInstallPrompt />
 		<script>
 			import "@/pwa";
 			import { initGlobalAlertSwipe } from "@/utils/alerts";

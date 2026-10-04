@@ -1,0 +1,94 @@
+---
+---
+
+<div
+	id="pwa-install-banner"
+	transition:persist
+	class="hidden fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-50 bg-bg-secondary border border-white/10 rounded-2xl p-3.5 shadow-2xl items-center gap-3 backdrop-blur-md"
+>
+	<img
+		src="/pwa-192x192.png"
+		alt="Cancionero"
+		class="w-10 h-10 rounded-xl shadow select-none flex-shrink-0"
+		draggable="false"
+	/>
+	<div class="flex-1 min-w-0">
+		<h4 class="text-sm font-bold text-white truncate">Instalar Cancionero</h4>
+		<p class="text-xs text-text-secondary truncate">App nativa, más rápida y sin conexión</p>
+	</div>
+	<div class="flex items-center gap-2 flex-shrink-0">
+		<button
+			id="pwa-install-btn"
+			type="button"
+			class="bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-colors shadow-md cursor-pointer"
+		>
+			Instalar
+		</button>
+		<button
+			id="pwa-dismiss-btn"
+			type="button"
+			class="p-2 text-text-secondary hover:text-white transition-colors cursor-pointer"
+			aria-label="Cerrar aviso de instalación"
+		>
+			<i class="fa-solid fa-xmark text-sm"></i>
+		</button>
+	</div>
+</div>
+
+<script is:inline>
+	(function () {
+		const isStandalone =
+			window.matchMedia("(display-mode: standalone)").matches ||
+			window.navigator.standalone === true;
+
+		if (isStandalone) return;
+
+		const banner = document.getElementById("pwa-install-banner");
+		const installBtn = document.getElementById("pwa-install-btn");
+		const dismissBtn = document.getElementById("pwa-dismiss-btn");
+
+		function checkAndShow() {
+			const isDismissed = sessionStorage.getItem("pwa_install_dismissed");
+			if (window.deferredPrompt && banner && !isDismissed) {
+				banner.classList.remove("hidden");
+				banner.classList.add("flex");
+			}
+		}
+
+		window.addEventListener("beforeinstallprompt", (e) => {
+			e.preventDefault();
+			window.deferredPrompt = e;
+			checkAndShow();
+		});
+
+		// Chequear al cargar o navegar
+		document.addEventListener("astro:page-load", () => {
+			checkAndShow();
+		});
+
+		if (installBtn) {
+			installBtn.addEventListener("click", async () => {
+				const promptEvent = window.deferredPrompt;
+				if (!promptEvent) return;
+
+				promptEvent.prompt();
+				const { outcome } = await promptEvent.userChoice;
+				if (outcome === "accepted") {
+					window.deferredPrompt = null;
+					if (banner) {
+						banner.classList.add("hidden");
+						banner.classList.remove("flex");
+					}
+				}
+			});
+		}
+
+		if (dismissBtn && banner) {
+			dismissBtn.addEventListener("click", () => {
+				banner.classList.add("hidden");
+				banner.classList.remove("flex");
+				sessionStorage.setItem("pwa_install_dismissed", "true");
+			});
+		}
+	})();
+</script>
