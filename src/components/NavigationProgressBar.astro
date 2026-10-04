@@ -1,0 +1,118 @@
+---
+// NavigationProgressBar.astro
+// Barra de progreso global para transiciones de página en Astro (ClientRouter)
+---
+
+<div
+	id="navigation-progress-bar"
+	transition:persist
+	class="fixed top-0 left-0 right-0 h-[3px] z-[99999] pointer-events-none opacity-0"
+	aria-hidden="true"
+>
+	<div
+		id="navigation-progress-bar-inner"
+		class="h-full w-0 bg-accent-main shadow-[0_0_12px_#FF5722,0_0_6px_#FF5722] transition-[width] duration-200 ease-out"
+	></div>
+</div>
+
+<script>
+	let trickleTimer: ReturnType<typeof setInterval> | null = null;
+	let currentProgress = 0;
+	let isNavigating = false;
+
+	function getElements() {
+		const container = document.getElementById("navigation-progress-bar");
+		const inner = document.getElementById("navigation-progress-bar-inner");
+		return { container, inner };
+	}
+
+	function setProgress(val: number) {
+		currentProgress = Math.min(val, 100);
+		const { inner } = getElements();
+		if (inner) {
+			inner.style.width = `${currentProgress}%`;
+		}
+	}
+
+	function start() {
+		const { container, inner } = getElements();
+		if (!container || !inner) return;
+
+		isNavigating = true;
+		if (trickleTimer) {
+			clearInterval(trickleTimer);
+			trickleTimer = null;
+		}
+
+		// Reset instantáneo
+		inner.style.transition = "none";
+		setProgress(0);
+		container.style.transition = "opacity 100ms ease";
+		container.style.opacity = "1";
+
+		// Forzar reflow para reiniciar la animación
+		void inner.offsetWidth;
+
+		// Salto inicial rápido al 25% para feedback visual instantáneo (0ms)
+		inner.style.transition = "width 250ms ease-out";
+		setProgress(25);
+
+		// Incremento continuo (trickle) mientras se resuelve la página en SSR
+		trickleTimer = setInterval(() => {
+			if (currentProgress < 60) {
+				setProgress(currentProgress + 8);
+			} else if (currentProgress < 82) {
+				setProgress(currentProgress + 3);
+			} else if (currentProgress < 94) {
+				setProgress(currentProgress + 1);
+			}
+		}, 180);
+	}
+
+	function finish() {
+		if (!isNavigating) return;
+		isNavigating = false;
+
+		if (trickleTimer) {
+			clearInterval(trickleTimer);
+			trickleTimer = null;
+		}
+
+		const { container, inner } = getElements();
+		if (!container || !inner) return;
+
+		// Avanzar al 100%
+		inner.style.transition = "width 150ms ease-out";
+		setProgress(100);
+
+		// Desvanecer suavemente
+		setTimeout(() => {
+			container.style.transition = "opacity 200ms ease";
+			container.style.opacity = "0";
+
+			setTimeout(() => {
+				if (!isNavigating) {
+					setProgress(0);
+				}
+			}, 200);
+		}, 180);
+	}
+
+	// Ciclo de vida de navegación con Astro ClientRouter
+	document.addEventListener("astro:before-preparation", () => {
+		start();
+	});
+
+	document.addEventListener("astro:after-preparation", () => {
+		setProgress(95);
+	});
+
+	document.addEventListener("astro:page-load", () => {
+		finish();
+	});
+
+	// Respaldo de seguridad en caso de cancelación o error
+	window.addEventListener("unhandledrejection", () => {
+		finish();
+	});
+</script>

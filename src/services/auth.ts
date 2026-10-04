@@ -46,7 +46,7 @@ export const updateProfile = async (data: UpdateProfileData, token?: string) => 
         try {
             const { actions } = await import("astro:actions");
             if (actions && typeof actions.updateProfile === "function") {
-                const actionResult = await actions.updateProfile(data);
+                const actionResult = await (actions as any).updateProfile(data);
                 if (actionResult && !actionResult.error && actionResult.data) {
                     return {
                         success: true,

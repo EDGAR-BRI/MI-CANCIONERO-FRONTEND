@@ -7,7 +7,7 @@ const SongCardReact = ({ song }) => {
     const authorName = song.author?.name || song.author || "Desconocido";
 
     return (
-        <a href={`/songs/${song.id}`} className="block group">
+        <a href={`/songs/${song.id}`} className="block group active:scale-[0.98] transition-all" data-astro-prefetch="hover">
             <article className="bg-bg-secondary border border-white/5 rounded-xl p-4 sm:p-5 hover:border-accent-main/50 transition-colors h-full flex flex-col justify-between">
                 <div>
                     <h2

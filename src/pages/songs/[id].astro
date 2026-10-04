@@ -59,19 +59,18 @@ const canEdit =
             <p class="text-gray-400 text-xs">Cancionero Digital</p>
         </div>
     </div>
-    <div class="flex flex-1 max-w-[1400px] mx-auto w-full print:block">
+    <div class="flex flex-1 max-w-[1400px] mx-auto w-full print:block relative">
         <SongToolsReact
             client:load
             id={id}
+            title={song?.title}
             canEdit={!!canEdit}
             initialKey={song?.key}
-            onTranspose={undefined}
-            onToggleChords={undefined}
-            onPrint={undefined}
         />
 
-        <main class="flex-1 px-3 py-4 sm:p-6 md:p-10 min-w-0 print:px-8 print:py-0">
+        <main class="flex-1 px-3 py-4 sm:p-6 md:p-10 min-w-0 print:px-8 print:py-0 pb-36 md:pb-12 song-focus-container">
             <HeaderLyricReact
+                client:load
                 id={id}
                 title={song?.title}
                 author={song?.author}
@@ -80,12 +79,13 @@ const canEdit =
                 category={song?.category}
                 categories={song?.categories}
                 user={song?.user}
+                videoUrl={song?.url_song}
             />
 
             <div
                 class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start print:block"
             >
-                <div class="lg:col-span-2 print:w-full">
+                <div class="lg:col-span-2 print:w-full song-view-col">
                     <SongView
                         client:load
                         initialContent={song?.content}
@@ -93,8 +93,8 @@ const canEdit =
                         originalKey={song?.key}
                     />
                 </div>
-                <div class="lg:col-span-1 no-print">
-                    <YouTubePlayerReact url={song?.url_song} client:visible />
+                <div class="lg:col-span-1 no-print no-focus-mode">
+                    <YouTubePlayerReact url={song?.url_song} client:load />
                 </div>
             </div>
         </main>

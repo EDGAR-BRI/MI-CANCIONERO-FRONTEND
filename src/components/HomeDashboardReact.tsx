@@ -111,7 +111,8 @@ export default function HomeDashboardReact({
                     {/* Botón: Mis Grupos */}
                     <a
                         href="/ministerios"
-                        className="bg-bg-secondary border border-white/5 hover:border-accent-main/50 rounded-xl p-4 sm:p-5 transition-colors group flex flex-col justify-between"
+                        data-astro-prefetch="hover"
+                        className="bg-bg-secondary border border-white/5 hover:border-accent-main/50 rounded-xl p-4 sm:p-5 transition-colors group flex flex-col justify-between active:scale-[0.98]"
                     >
                         <div className="flex items-center justify-between mb-3">
                             <div className="w-10 h-10 rounded-lg bg-white/5 text-accent-main flex items-center justify-center">
@@ -174,7 +175,8 @@ export default function HomeDashboardReact({
                     </div>
                     <a
                         href="/misas"
-                        className="text-xs font-medium text-accent-main hover:text-white transition-colors flex items-center gap-1"
+                        data-astro-prefetch="hover"
+                        className="text-xs font-medium text-accent-main hover:text-white transition-colors flex items-center gap-1 active:scale-[0.98]"
                     >
                         <span>Ver todas</span>
                         <i className="fa-solid fa-angle-right text-[10px]"></i>
@@ -239,15 +241,17 @@ export default function HomeDashboardReact({
                                     <div className="flex items-center gap-3 pt-3 border-t border-white/5">
                                         <a
                                             href={`/misas/view/${nextMisa.id}`}
-                                            className="flex-1 bg-accent-main hover:bg-accent-main/90 text-white font-bold text-sm py-2.5 px-4 rounded-xl transition-colors text-center"
+                                            data-astro-prefetch="hover"
+                                            className="flex-1 bg-accent-main hover:bg-accent-main/90 text-white font-bold text-sm py-2.5 px-4 rounded-xl transition-colors text-center active:scale-[0.98]"
                                         >
                                             Ver Misa
                                         </a>
 
                                         <a
                                             href={`/misas/${nextMisa.id}`}
+                                            data-astro-prefetch="hover"
                                             title="Modo Edición / Organizar cantos"
-                                            className="bg-white/5 hover:bg-white/10 text-white font-medium text-sm py-2.5 px-4 rounded-xl border border-white/10 transition-colors flex items-center gap-2 shrink-0"
+                                            className="bg-white/5 hover:bg-white/10 text-white font-medium text-sm py-2.5 px-4 rounded-xl border border-white/10 transition-colors flex items-center gap-2 shrink-0 active:scale-[0.98]"
                                         >
                                             <i className="fa-solid fa-pen-to-square text-accent-main text-xs"></i>
                                             <span>Editar</span>
@@ -266,7 +270,8 @@ export default function HomeDashboardReact({
                                         <a
                                             key={misa.id}
                                             href={`/misas/view/${misa.id}`}
-                                            className="bg-bg-secondary border border-white/5 hover:border-accent-main/50 rounded-xl p-4 transition-colors group flex items-center justify-between"
+                                            data-astro-prefetch="hover"
+                                            className="bg-bg-secondary border border-white/5 hover:border-accent-main/50 rounded-xl p-4 transition-colors group flex items-center justify-between active:scale-[0.98]"
                                         >
                                             <div className="min-w-0 pr-3">
                                                 <div className="flex items-center gap-2 mb-1">

@@ -159,7 +159,7 @@ try {
                                     {perm.name}
                                 </p>
                                 <p class="text-[11px] text-text-secondary truncate mt-0.5">
-                                    {perm.description || "Permiso de sistema"}
+                                    {(perm as any).description || "Permiso de sistema"}
                                 </p>
                             </div>
 
@@ -215,7 +215,7 @@ try {
                                             {perm.name}
                                         </div>
                                         <div class="text-[11px] text-text-secondary truncate max-w-xs mt-0.5">
-                                            {perm.description || "Permiso de sistema"}
+                                            {(perm as any).description || "Permiso de sistema"}
                                         </div>
                                     </td>
                                     {

@@ -5,6 +5,7 @@ import { SongRenderer } from './SongRenderer';
 import { YouTubePlayerReact } from './YouTubePlayerReact';
 import { API_URL } from '../services/songs';
 import { transposeText } from '../utils/music';
+import { getChordsPreference, setChordsPreference } from '../utils/preferences';
 
 // Helper to determine next key
 const getTransposedKey = (key, semitones) => {
@@ -30,7 +31,7 @@ export default function SongContainer({ id, token, initialSong }) {
     // Playback state
     const [currentKey, setCurrentKey] = useState(initialSong?.key || '');
     const [transposeAmount, setTransposeAmount] = useState(0); // 0 = original
-    const [showChords, setShowChords] = useState(true);
+    const [showChords, setShowChords] = useState(() => getChordsPreference(false));
 
     useEffect(() => {
         const fetchSong = async () => {
@@ -107,8 +108,13 @@ export default function SongContainer({ id, token, initialSong }) {
         <div className="flex flex-1 max-w-[1400px] mx-auto w-full print:block">
             <SongToolsReact
                 id={id}
+                title={song?.title}
                 onTranspose={handleTranspose}
-                onToggleChords={() => setShowChords(!showChords)}
+                onToggleChords={() => {
+                    const nextVal = !showChords;
+                    setShowChords(nextVal);
+                    setChordsPreference(nextVal);
+                }}
                 onPrint={handlePrint}
                 canEdit={canEdit}
             />

@@ -186,12 +186,14 @@ export default function AuthorSelectReact({
                     setIsOpen(prev => !prev);
                     setTimeout(() => searchInputRef.current?.focus(), 50);
                 }}
-                className="w-full flex items-center justify-between px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg text-white text-sm hover:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors cursor-pointer text-left"
+                className={`w-full h-[50px] flex items-center justify-between px-3 py-2 bg-bg-secondary border rounded-lg text-text-main text-sm sm:text-base transition-colors cursor-pointer text-left ${
+                    isOpen ? 'border-accent-main ring-1 ring-accent-main/30' : 'border-white/10 hover:border-white/20'
+                }`}
             >
                 <div className="flex items-center gap-2 truncate">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-4 h-4 text-amber-400 shrink-0"
+                        className="w-4 h-4 text-accent-main shrink-0"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -208,7 +210,7 @@ export default function AuthorSelectReact({
                 </div>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`w-4 h-4 text-neutral-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-text-secondary shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -222,9 +224,9 @@ export default function AuthorSelectReact({
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute z-50 mt-1 w-full bg-neutral-900 border border-neutral-700 rounded-lg shadow-2xl overflow-hidden backdrop-blur-md">
+                <div className="absolute z-50 mt-1 w-full bg-bg-secondary border border-white/10 rounded-lg shadow-2xl overflow-hidden backdrop-blur-md">
                     {/* Search bar inside dropdown */}
-                    <div className="p-2 border-b border-neutral-800">
+                    <div className="p-2 border-b border-white/5">
                         <div className="relative">
                             <input
                                 ref={searchInputRef}
@@ -242,11 +244,11 @@ export default function AuthorSelectReact({
                                     }
                                 }}
                                 placeholder="Buscar o crear autor..."
-                                className="w-full px-2.5 py-1.5 pl-8 bg-neutral-950 border border-neutral-800 rounded text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500"
+                                className="w-full px-2.5 py-1.5 pl-8 bg-bg-main border border-white/10 rounded text-xs text-text-main placeholder-text-secondary/50 focus:outline-none focus:border-accent-main"
                             />
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
-                                className="w-3.5 h-3.5 text-neutral-500 absolute left-2.5 top-1/2 -translate-y-1/2"
+                                className="w-3.5 h-3.5 text-text-secondary absolute left-2.5 top-1/2 -translate-y-1/2"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -261,7 +263,7 @@ export default function AuthorSelectReact({
                     </div>
 
                     {/* Authors List */}
-                    <div className="max-h-56 overflow-y-auto p-1 divide-y divide-neutral-800/40">
+                    <div className="max-h-56 overflow-y-auto p-1 divide-y divide-white/5">
                         {filteredAuthors.map(author => {
                             const isSelected = author.id === selectedId;
                             return (
@@ -271,8 +273,8 @@ export default function AuthorSelectReact({
                                     onClick={() => handleSelect(author)}
                                     className={`w-full flex items-center justify-between px-3 py-2 text-left rounded-md text-xs transition-colors cursor-pointer ${
                                         isSelected
-                                            ? 'bg-amber-500/15 text-amber-300 font-medium'
-                                            : 'text-neutral-300 hover:bg-neutral-800/80 hover:text-white'
+                                            ? 'bg-accent-main/15 text-accent-main font-medium'
+                                            : 'text-text-secondary hover:bg-white/5 hover:text-white'
                                     }`}
                                 >
                                     <div className="flex items-center gap-2 truncate">
@@ -281,7 +283,7 @@ export default function AuthorSelectReact({
                                     {isSelected && (
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
-                                            className="w-4 h-4 text-amber-400 shrink-0"
+                                            className="w-4 h-4 text-accent-main shrink-0"
                                             viewBox="0 0 24 24"
                                             fill="none"
                                             stroke="currentColor"
@@ -303,7 +305,7 @@ export default function AuthorSelectReact({
                                     type="button"
                                     onClick={handleCreateAuthor}
                                     disabled={savingNew}
-                                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 text-xs rounded-md font-medium transition-colors cursor-pointer"
+                                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent-main/10 border border-accent-main/30 text-accent-main hover:bg-accent-main/20 text-xs rounded-md font-medium transition-colors cursor-pointer"
                                 >
                                     {savingNew ? (
                                         <span>Creando...</span>
@@ -330,7 +332,7 @@ export default function AuthorSelectReact({
                         )}
 
                         {filteredAuthors.length === 0 && !search.trim() && (
-                            <p className="p-3 text-center text-xs text-neutral-500">
+                            <p className="p-3 text-center text-xs text-text-secondary">
                                 No hay autores disponibles
                             </p>
                         )}

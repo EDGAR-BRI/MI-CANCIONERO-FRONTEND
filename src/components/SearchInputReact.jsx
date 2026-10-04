@@ -306,17 +306,29 @@ export default function SearchInputReact({ className = "" }) {
                             )}
 
                             {!isLoading && suggestions.length === 0 && (
-                                <div className="py-7 px-4 text-center">
+                                <div className="py-7 px-4 text-center space-y-3">
                                     <p className="text-sm text-zinc-300">
-                                        No se encontraron canciones para <span className="text-accent-main font-semibold">"{query.trim()}"</span>
+                                        No se encontraron canciones locales para <span className="text-accent-main font-semibold">"{query.trim()}"</span>
                                     </p>
-                                    <button
-                                        type="button"
-                                        onClick={handleSubmit}
-                                        className="mt-2 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
-                                    >
-                                        Presiona <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white font-mono text-[10px]">Enter</kbd> para ver la búsqueda general
-                                    </button>
+                                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                                        <a
+                                            href={`/songs/search/${encodeURIComponent(query.trim())}?tab=external`}
+                                            onClick={() => setIsExpanded(false)}
+                                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-medium text-xs shadow-md transition-colors cursor-pointer"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                            </svg>
+                                            <span>Buscar en internet</span>
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={handleSubmit}
+                                            className="w-full sm:w-auto px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                        >
+                                            Búsqueda general (Enter)
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
@@ -368,16 +380,32 @@ export default function SearchInputReact({ className = "" }) {
                             ))}
                         </div>
 
-                        {/* Footer si hay sugerencias */}
+                        {/* Footer con opciones de búsqueda */}
                         {suggestions.length > 0 && (
-                            <div
-                                onClick={handleSubmit}
-                                className="px-4 py-2.5 bg-white/[0.02] hover:bg-white/[0.05] border-t border-white/5 flex items-center justify-between text-xs text-accent-main hover:text-white cursor-pointer font-medium transition-colors"
-                            >
-                                <span>Ver todos los resultados para "{query.trim()}"</span>
-                                <span className="text-[10px] text-zinc-500 font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
-                                    ↵ Enter
-                                </span>
+                            <div className="bg-white/[0.02] border-t border-white/5 divide-y divide-white/5">
+                                <div
+                                    onClick={handleSubmit}
+                                    className="px-4 py-2.5 hover:bg-white/[0.05] flex items-center justify-between text-xs text-accent-main hover:text-white cursor-pointer font-medium transition-colors"
+                                >
+                                    <span>Ver todos los resultados locales para "{query.trim()}"</span>
+                                    <span className="text-[10px] text-zinc-500 font-mono bg-white/5 px-1.5 py-0.5 rounded border border-white/10">
+                                        ↵ Enter
+                                    </span>
+                                </div>
+
+                                <a
+                                    href={`/songs/search/${encodeURIComponent(query.trim())}?tab=external`}
+                                    onClick={() => setIsExpanded(false)}
+                                    className="px-4 py-2 hover:bg-white/[0.05] flex items-center justify-between text-xs text-zinc-400 hover:text-accent-main cursor-pointer transition-colors"
+                                >
+                                    <span className="flex items-center gap-1.5">
+                                        <svg className="w-3.5 h-3.5 text-accent-main" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                        </svg>
+                                        <span>Buscar "{query.trim()}" en internet</span>
+                                    </span>
+                                    <span className="text-zinc-500 text-xs">→</span>
+                                </a>
                             </div>
                         )}
                     </div>

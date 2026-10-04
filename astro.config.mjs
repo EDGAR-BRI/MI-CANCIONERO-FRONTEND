@@ -17,6 +17,10 @@ export default defineConfig({
   site: 'https://www.micancionero.online',
   output: 'server', // O 'hybrid' si algunas páginas son estáticas
   adapter: vercel(),
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover',
+  },
   integrations: [react(), AstroPWA({
     registerType: 'autoUpdate',
     injectRegister: 'auto',

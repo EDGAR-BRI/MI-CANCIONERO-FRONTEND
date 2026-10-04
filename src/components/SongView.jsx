@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import SongLine from './SongLine';
-import { transposeText } from '../utils/music';
+import { transposeText, transposeKey } from '../utils/music';
+import { getChordsPreference, setChordsPreference } from '../utils/preferences';
+import { sanitizeSongContent } from '../utils/songSanitizer';
 
 export default function SongView({
     initialContent,
     initialKey = 'C',
     originalKey = 'C',
-    initialShowChords = true,
+    initialShowChords = false,
     className = "pb-20"
 }) {
     const [content, setContent] = useState(() => {
-        const safeContent = initialContent || "";
-        // If initialKey (target) is different from originalKey (source), transpose immediately
+        const safeContent = sanitizeSongContent(initialContent || "");
         if (initialKey && originalKey && initialKey !== originalKey) {
             try {
                 return transposeText(safeContent, originalKey, initialKey);
@@ -23,64 +24,96 @@ export default function SongView({
         return safeContent;
     });
     const [currentKey, setCurrentKey] = useState(initialKey || originalKey);
-    const [showChords, setShowChords] = useState(initialShowChords);
+    const [showChords, setShowChords] = useState(() => {
+        return getChordsPreference(initialShowChords);
+    });
+    const [fontSize, setFontSize] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('cancionero_font_size');
+            if (saved) {
+                const parsed = parseInt(saved, 10);
+                if (!isNaN(parsed) && parsed >= 12 && parsed <= 32) return parsed;
+            }
+        }
+        return 18;
+    });
 
     useEffect(() => {
-
-        // Helper interno simple para calcular la nueva nota clave
-        // Nota: music.js tiene transposeChord, pero aquí necesitamos mover solo el Key un paso.
-        // Podríamos usar la lógica full de music.js pero para "semitonos" es más directo calcular el índice.
-        const transposeKey = (key, semitones) => {
-            const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-            // Normalizar flat a sharp si es necesario
-            const map = {
-                'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
-                'Cb': 'B', 'Fb': 'E', 'E#': 'F', 'B#': 'C'
-            };
-            const n = map[key] || key;
-            let idx = NOTES.indexOf(n);
-            if (idx === -1) return key;
-
-            let newIdx = (idx + semitones) % 12;
-            if (newIdx < 0) newIdx += 12;
-            return NOTES[newIdx];
-        };
-
-        // Versión mejorada que usa transposeText directamente si pasamos la lógica correcta:
-        // Pero transposeText pide (text, fromKey, toKey).
-        // Así que calculemos el newKey primero.
-
         const handleTransposeEvent = (e) => {
-            const semitones = e.detail.semitones;
-            setCurrentKey(prevKey => {
-                const newKey = transposeKey(prevKey, semitones);
-                setContent(prevContent => transposeText(prevContent, prevKey, newKey));
-                return newKey;
-            });
+            if (!e || !e.detail) return;
+
+            // Reset directly to original content and key
+            if (e.detail.reset) {
+                setCurrentKey(originalKey || initialKey || 'C');
+                setContent(sanitizeSongContent(initialContent || ""));
+                return;
+            }
+
+            // Direct target key specified
+            if (e.detail.newKey) {
+                const targetKey = e.detail.newKey;
+                setCurrentKey(targetKey);
+                setContent(transposeText(sanitizeSongContent(initialContent || ""), originalKey || 'C', targetKey));
+                return;
+            }
+
+            // Relative semitone step
+            if (typeof e.detail.semitones === 'number') {
+                const semitones = e.detail.semitones;
+                setCurrentKey(prevKey => {
+                    const newKey = transposeKey(prevKey, semitones);
+                    setContent(prevContent => transposeText(prevContent, prevKey, newKey));
+                    return newKey;
+                });
+            }
         };
 
         const handleToggleChordsEvent = (e) => {
             if (e && e.detail && typeof e.detail.show === 'boolean') {
                 setShowChords(e.detail.show);
             } else {
-                setShowChords(prev => !prev);
+                setShowChords(prev => {
+                    const next = !prev;
+                    setChordsPreference(next);
+                    return next;
+                });
+            }
+        };
+
+        const handleChordsPreferenceChanged = (e) => {
+            if (e && e.detail && typeof e.detail.show === 'boolean') {
+                setShowChords(e.detail.show);
+            }
+        };
+
+        const handleFontSizeEvent = (e) => {
+            if (e && e.detail && typeof e.detail.size === 'number') {
+                setFontSize(e.detail.size);
             }
         };
 
         window.addEventListener('song-transpose', handleTransposeEvent);
         window.addEventListener('song-toggle-chords', handleToggleChordsEvent);
+        window.addEventListener('song-chords-preference-changed', handleChordsPreferenceChanged);
+        window.addEventListener('song-font-size', handleFontSizeEvent);
 
         return () => {
             window.removeEventListener('song-transpose', handleTransposeEvent);
             window.removeEventListener('song-toggle-chords', handleToggleChordsEvent);
-        }
-    }, []);
+            window.removeEventListener('song-chords-preference-changed', handleChordsPreferenceChanged);
+            window.removeEventListener('song-font-size', handleFontSizeEvent);
+        };
+    }, [initialContent, originalKey, initialKey]);
 
     return (
-        <div className={className}>
-            {(content || "").split('\n').map((line, i) => (
+        <div
+            className={`max-w-full ${className || ''}`}
+            style={{ '--song-font-size': `${fontSize}px` }}
+        >
+            {(content || "").replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').map((line, i) => (
                 <SongLine key={i} line={line} showChords={showChords} />
             ))}
         </div>
     );
 }
+

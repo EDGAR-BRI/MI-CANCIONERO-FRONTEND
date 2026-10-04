@@ -24,23 +24,20 @@ let initialMisas: Misa[] = [];
 let initialMinistries: MinistrySummary[] = [];
 
 try {
-	const misasRes = await getMisas(token);
-	if (misasRes.success && Array.isArray(misasRes.data)) {
-		initialMisas = misasRes.data;
+	const [misasRes, minRes] = await Promise.allSettled([
+		getMisas(token),
+		user && token ? getMyMinistries(token) : Promise.resolve(null),
+	]);
+
+	if (misasRes.status === "fulfilled" && misasRes.value?.success && Array.isArray(misasRes.value.data)) {
+		initialMisas = misasRes.value.data;
+	}
+
+	if (minRes.status === "fulfilled" && minRes.value?.success && minRes.value.data?.ministries) {
+		initialMinistries = minRes.value.data.ministries;
 	}
 } catch (e) {
-	console.error("Error fetching misas on SSR:", e);
-}
-
-if (user && token) {
-	try {
-		const minRes = await getMyMinistries(token);
-		if (minRes.success && minRes.data?.ministries) {
-			initialMinistries = minRes.data.ministries;
-		}
-	} catch (e) {
-		console.error("Error fetching ministries on SSR:", e);
-	}
+	console.error("Error fetching initial dashboard data on SSR:", e);
 }
 
 const seoTitle = "Cancionero Digital | Letras y Acordes Católicos";

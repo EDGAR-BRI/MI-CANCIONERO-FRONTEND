@@ -53,6 +53,29 @@ export default function CategoryMultiSelectReact({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Escuchar evento externo para autoseleccionar categorías
+    useEffect(() => {
+        const handleSetCategories = (e: CustomEvent<{ names?: string[], ids?: number[] }>) => {
+            if (e.detail?.ids && Array.isArray(e.detail.ids)) {
+                setSelectedIds(e.detail.ids);
+            } else if (e.detail?.names && Array.isArray(e.detail.names)) {
+                const matchedIds: number[] = [];
+                for (const name of e.detail.names) {
+                    const found = categories.find(c => c.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(c.name.toLowerCase()));
+                    if (found && !matchedIds.includes(found.id)) {
+                        matchedIds.push(found.id);
+                    }
+                }
+                if (matchedIds.length > 0) {
+                    setSelectedIds(matchedIds);
+                }
+            }
+        };
+        window.addEventListener('set-categories' as any, handleSetCategories);
+        return () => window.removeEventListener('set-categories' as any, handleSetCategories);
+    }, [categories]);
+
+
     const toggleCategory = (id: number) => {
         setSelectedIds((prev) => {
             if (prev.includes(id)) {

@@ -54,6 +54,11 @@ if (code && !serverError) {
                     });
                 }
 
+                const authRedirect = Astro.cookies.get("auth_redirect")?.value;
+                if (authRedirect) {
+                    Astro.cookies.delete("auth_redirect", { path: "/" });
+                    return Astro.redirect(authRedirect);
+                }
                 return Astro.redirect("/");
             } else {
                 serverError = "No se recibió el token de autenticación del servidor.";
@@ -131,7 +136,11 @@ if (code && !serverError) {
                 if (data.token) {
                     // Set cookie on client if needed
                     document.cookie = `token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
-                    window.location.href = '/';
+                    const savedRedirect = document.cookie.match(/auth_redirect=([^;]+)/)?.[1];
+                    if (savedRedirect) {
+                        document.cookie = 'auth_redirect=; path=/; max-age=0';
+                    }
+                    window.location.href = savedRedirect ? decodeURIComponent(savedRedirect) : '/';
                 } else {
                     alert(data.error || 'Error al autenticar');
                     window.location.href = '/login';

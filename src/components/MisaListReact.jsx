@@ -209,7 +209,8 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
         <a
             key={misa.id}
             href={`/misas/view/${misa.id}`}
-            className="block bg-[#121212] hover:bg-[#181818] p-4 sm:p-6 rounded-2xl transition-all border border-white/10 hover:border-accent-main/40 relative overflow-hidden group shadow-lg flex flex-col justify-between"
+            data-astro-prefetch="hover"
+            className="block bg-[#121212] hover:bg-[#181818] p-4 sm:p-6 rounded-2xl transition-all border border-white/10 hover:border-accent-main/40 relative overflow-hidden group shadow-lg flex flex-col justify-between active:scale-[0.98]"
         >
             <div>
                 <div className="flex items-center justify-between gap-2 mb-3">

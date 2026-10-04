@@ -59,12 +59,22 @@ export const transposeChord = (chord, semitones) => {
     return newRoot + suffix;
 };
 
+export const transposeKey = (key, semitones) => {
+    if (!key) return key;
+    const normalized = normalizeNote(key);
+    const idx = NOTES.indexOf(normalized);
+    if (idx === -1) return key;
+    let newIdx = (idx + semitones) % 12;
+    if (newIdx < 0) newIdx += 12;
+    return NOTES[newIdx];
+};
+
 export const transposeText = (text, fromKey, toKey) => {
     if (!text || typeof text !== 'string') return text || "";
     const semitones = getSemidistance(fromKey, toKey);
     if (semitones === 0) return text;
 
-    return text.replace(/\[(.*?)\]/g, (match, chord) => {
+    return text.replace(/\[(.*?)\]/g, (_, chord) => {
         return `[${transposeChord(chord, semitones)}]`;
     });
 };

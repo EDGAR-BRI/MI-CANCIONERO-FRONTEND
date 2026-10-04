@@ -19,6 +19,15 @@ export const getApiUrl = (): string => {
 
 export const API_URL = getApiUrl();
 
+interface CacheEntry<T> {
+    data: T;
+    timestamp: number;
+}
+
+const songDetailCache = new Map<string | number, CacheEntry<Song>>();
+const songSearchCache = new Map<string, CacheEntry<Song[]>>();
+const CACHE_TTL_MS = 60 * 1000; // 60 segundos de caché cliente
+
 export interface ServiceResponse<T = any> {
     success: boolean;
     data?: T;
@@ -96,10 +105,60 @@ export const createSong = async (formData: FormData, token?: string): Promise<Se
         }
 
         const savedSong = await res.json();
+        songSearchCache.clear();
         return { success: true, data: savedSong };
     } catch (e) {
         console.error("Service exception:", e);
         return { success: false, error: "Error de conexión con el servidor." };
+    }
+};
+
+export interface DirectSongInput {
+    title: string;
+    authorName?: string;
+    authorId?: number;
+    key?: string;
+    url_song?: string;
+    content: string;
+    categoryIds?: number[];
+    categoryId?: number;
+    active?: boolean;
+}
+
+export const createSongDirect = async (songData: DirectSongInput, token?: string): Promise<ServiceResponse<Song>> => {
+    if (!songData.title.trim()) {
+        return { success: false, error: "El título de la canción es obligatorio." };
+    }
+
+    try {
+        const headers: HeadersInit = { "Content-Type": "application/json" };
+        if (token) {
+            headers["Cookie"] = `token=${token}`;
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const res = await fetch(`${API_URL}/songs`, {
+            method: "POST",
+            headers,
+            credentials: "include",
+            body: JSON.stringify({
+                ...songData,
+                key: songData.key || "C",
+                active: songData.active !== undefined ? songData.active : true,
+            }),
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            return { success: false, error: errData.error || "Error al guardar la canción.", data: errData };
+        }
+
+        const savedSong = await res.json();
+        songSearchCache.clear();
+        return { success: true, data: savedSong };
+    } catch (e: any) {
+        console.error("createSongDirect exception:", e);
+        return { success: false, error: e?.message || "Error de conexión con el servidor." };
     }
 };
 
@@ -130,6 +189,8 @@ export const updateSong = async (id: number, formData: FormData, token?: string)
         }
 
         const updatedSong = await res.json();
+        songDetailCache.delete(id);
+        songSearchCache.clear();
         return { success: true, data: updatedSong };
     } catch (e) {
         console.error("Service exception:", e);
@@ -138,12 +199,19 @@ export const updateSong = async (id: number, formData: FormData, token?: string)
 };
 
 export const searchSongs = async (query: string, categoryId: string = ""): Promise<ServiceResponse<Song[]>> => {
+    const cacheKey = `${query.trim().toLowerCase()}_${categoryId}`;
+    const cached = songSearchCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+        return { success: true, data: cached.data };
+    }
+
     try {
         const res = await fetch(`${API_URL}/songs?q=${encodeURIComponent(query)}&categoryId=${categoryId}`);
         if (!res.ok) {
             return { success: false, error: "Error al buscar canciones." };
         }
         const data = await res.json();
+        songSearchCache.set(cacheKey, { data, timestamp: Date.now() });
         return { success: true, data };
     } catch (e) {
         console.error("Service exception:", e);
@@ -151,13 +219,19 @@ export const searchSongs = async (query: string, categoryId: string = ""): Promi
     }
 };
 
-export const getSongById = async (id: string | number): Promise<ServiceResponse<Song>> => {
+export const getSongById = async (id: string | number, forceFresh = false): Promise<ServiceResponse<Song>> => {
+    const cached = songDetailCache.get(id);
+    if (!forceFresh && cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+        return { success: true, data: cached.data };
+    }
+
     try {
         const res = await fetch(`${API_URL}/songs/${id}`);
         if (!res.ok) {
             return { success: false, error: "Error al obtener la canción." };
         }
         const data = await res.json();
+        songDetailCache.set(id, { data, timestamp: Date.now() });
         return { success: true, data };
     } catch (e) {
         console.error("Service exception:", e);
@@ -183,6 +257,8 @@ export const deleteSongById = async (id: number | string, token: string | undefi
             return { success: false, error: errData.error || "Error al eliminar la canción." };
         }
 
+        songDetailCache.delete(id);
+        songSearchCache.clear();
         return { success: true };
     } catch (e) {
         console.error("Service exception:", e);
@@ -229,6 +305,7 @@ export const createAuthor = async (name: string, token?: string): Promise<Servic
 export interface DownloadSongPdfOptions {
     withChords?: boolean;
     tone?: string;
+    title?: string;
 }
 
 export const downloadSongPdf = async (
@@ -236,7 +313,7 @@ export const downloadSongPdf = async (
     options: DownloadSongPdfOptions = {}
 ): Promise<{ success: boolean; isRateLimited?: boolean; retryAfter?: number; error?: string }> => {
     try {
-        const { withChords = true, tone } = options;
+        const { withChords = true, tone, title } = options;
         const params = new URLSearchParams();
         params.set('withChords', withChords ? 'true' : 'false');
         if (tone) params.set('tone', tone);
@@ -267,10 +344,32 @@ export const downloadSongPdf = async (
 
         const blob = await res.blob();
         const contentDisposition = res.headers.get('Content-Disposition');
-        let filename = `cancion-${songId}.pdf`;
+        let filename = '';
+
         if (contentDisposition) {
-            const match = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (match && match[1]) filename = match[1];
+            const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+            if (utf8Match && utf8Match[1]) {
+                try {
+                    filename = decodeURIComponent(utf8Match[1].trim().replace(/^["']|["']$/g, ''));
+                } catch (_) {}
+            }
+            if (!filename) {
+                const match = contentDisposition.match(/filename="?([^";]+)"?/i);
+                if (match && match[1]) {
+                    filename = match[1].trim();
+                }
+            }
+        }
+
+        if (!filename) {
+            const cleanTitle = (title || 'Cancion')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9_\-]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_|_$/g, '');
+            const suffix = withChords ? '' : '_letra';
+            filename = `${cleanTitle || `cancion-${songId}`}${suffix}.pdf`;
         }
 
         const url = window.URL.createObjectURL(blob);

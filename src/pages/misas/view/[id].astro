@@ -5,6 +5,7 @@ import { getMoments } from "../../../services/moments";
 import { getUserFromToken } from "../../../utils/auth";
 import SongView from "../../../components/SongView.jsx";
 import HeaderLyric from "../../../components/HeaderLyric.astro";
+import MisaAutoScrollReact from "@/components/MisaAutoScrollReact.jsx";
 import { API_URL } from "@/services/songs";
 
 const { id } = Astro.params;
@@ -282,9 +283,14 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full lg:w-auto no-print">
-                                    {/* Botón y menú desplegable para exportar PDF */}
-                                    <div class="relative w-full sm:w-auto" id="pdfDropdownContainer" data-misa-id={id}>
+                                <div class="grid grid-cols-3 sm:flex sm:items-center gap-2 w-full lg:w-auto no-print">
+                                    <div
+                                        class="relative w-full sm:w-auto"
+                                        id="pdfDropdownContainer"
+                                        data-misa-id={id}
+                                        data-misa-title={misa?.title}
+                                        data-misa-date={misa?.dateMisa}
+                                    >
                                         <button
                                             id="pdfDropdownBtn"
                                             type="button"
@@ -336,6 +342,9 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                         <i class="fa-solid fa-music text-[11px] text-text-secondary group-hover:text-white transition-colors"></i>
                                         <span>Acordes</span>
                                     </button>
+
+                                    {/* Auto-scroll para la lectura de la misa */}
+                                    <MisaAutoScrollReact client:load />
                                 </div>
                             </div>
                         </div>
@@ -454,6 +463,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
     <script>
         import { showError, showSuccessToast } from "@/utils/alerts";
         import { API_URL } from "@/services/songs";
+        import { getChordsPreference, setChordsPreference } from "@/utils/preferences";
 
         let isChordsActive = false;
         let isDownloadingPdf = false;
@@ -525,13 +535,51 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                 }
 
                 // Extraer nombre de archivo si viene en Content-Disposition
-                let filename = `Misa_${withChords ? "con_acordes" : "solo_letra"}.pdf`;
+                let filename = "";
                 const disposition = res.headers.get("Content-Disposition");
-                if (disposition && disposition.includes("filename=")) {
-                    const match = disposition.match(/filename="?([^";]+)"?/);
-                    if (match && match[1]) {
-                        filename = decodeURIComponent(match[1]);
+                if (disposition) {
+                    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+                    if (utf8Match && utf8Match[1]) {
+                        try {
+                            filename = decodeURIComponent(utf8Match[1].trim().replace(/^["']|["']$/g, ""));
+                        } catch (_) {}
                     }
+                    if (!filename) {
+                        const match = disposition.match(/filename="?([^";]+)"?/i);
+                        if (match && match[1]) {
+                            filename = match[1].trim();
+                        }
+                    }
+                }
+
+                if (!filename) {
+                    const pdfContainer = document.getElementById("pdfDropdownContainer");
+                    const rawTitle = (pdfContainer?.getAttribute("data-misa-title") || "Misa").trim();
+                    const rawDate = pdfContainer?.getAttribute("data-misa-date") || "";
+                    const hasMisaPrefix = /^misa\b/i.test(rawTitle);
+                    const cleanTitle = rawTitle
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[^a-zA-Z0-9_\-]/g, "_")
+                        .replace(/_+/g, "_")
+                        .replace(/^_|_$/g, "");
+                    const baseName = hasMisaPrefix ? cleanTitle : `Misa_${cleanTitle}`;
+
+                    let datePart = "";
+                    if (rawDate) {
+                        const d = new Date(rawDate);
+                        if (!isNaN(d.getTime())) {
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, "0");
+                            const day = String(d.getDate()).padStart(2, "0");
+                            datePart = `${year}-${month}-${day}`;
+                        }
+                    }
+
+                    const suffix = withChords ? "acordes" : "letra";
+                    filename = datePart
+                        ? `${baseName}_${datePart}_${suffix}.pdf`
+                        : `${baseName}_${suffix}.pdf`;
                 }
 
                 const blob = await res.blob();
@@ -610,12 +658,20 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
             // Chords toggle
             const toggleChordsBtn = document.getElementById("toggleChordsBtn");
             if (toggleChordsBtn) {
-                isChordsActive = false;
-                updateChordsBtnUI(toggleChordsBtn, false);
+                isChordsActive = getChordsPreference(false);
+                updateChordsBtnUI(toggleChordsBtn, isChordsActive);
+                if (isChordsActive) {
+                    window.dispatchEvent(
+                        new CustomEvent("song-toggle-chords", {
+                            detail: { show: true },
+                        })
+                    );
+                }
 
                 toggleChordsBtn.onclick = () => {
                     isChordsActive = !isChordsActive;
                     updateChordsBtnUI(toggleChordsBtn, isChordsActive);
+                    setChordsPreference(isChordsActive);
                     window.dispatchEvent(
                         new CustomEvent("song-toggle-chords", {
                             detail: { show: isChordsActive },
