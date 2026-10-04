@@ -1,4 +1,6 @@
 ---
+import AiButton from "./AiButton.astro";
+
 interface Props {
     titleElementId?: string;
     keyElementId?: string;
@@ -15,28 +17,24 @@ const {
     contentElementName = "content",
     token,
     apiUrl,
-    class: className,
+    class: className = "",
     showIconOnly = false,
 } = Astro.props;
 ---
 
-<button
-    type="button"
+<AiButton
     id="btn-ai-autocomplete"
-    class:list={[
-        "text-xs bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold py-1.5 px-3 rounded-md transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 border border-white/10",
-        className,
-    ]}
+    icon="wand"
+    text={showIconOnly ? undefined : "Generar Acordes IA"}
+    mobileText={showIconOnly ? undefined : "Acordes IA"}
     title="Generar acordes con Inteligencia Artificial"
     data-title-id={titleElementId}
     data-key-id={keyElementId}
     data-content-name={contentElementName}
     data-token={token}
     data-api-url={apiUrl}
->
-    <i class="fa-solid fa-wand-magic-sparkles"></i>
-    {!showIconOnly && <span class="hidden md:inline">Generar Acordes IA</span>}
-</button>
+    class={className}
+/>
 
 <script>
     import {

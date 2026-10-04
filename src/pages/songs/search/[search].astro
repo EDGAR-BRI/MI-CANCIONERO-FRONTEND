@@ -2,100 +2,45 @@
 const { search } = Astro.params;
 const decodedSearch = search ? decodeURIComponent(search) : "";
 const token = Astro.cookies.get("token")?.value;
-// export const prerender = false;
 import Layout from "@/layouts/Layout.astro";
-import { getUserFromToken } from "@/utils/auth";
+import { getUserFromToken, hasPermission } from "@/utils/auth";
 import { API_URL } from "@/services/songs";
-import GridSongs from "@/components/GridSongs";
-import CategoryFilter from "@/components/CategoryFilter";
-
-// let songs: Song[] = [];
-// let error: string | null = null;
-
-// try {
-//     const q = decodedSearch === "all" ? "" : decodedSearch || "";
-//     // If q is present in URL (e.g. from ?q=...), it might override params.search?
-//     // Actually, Layout Header redirects to /search/[term]. So [term] IS the query.
-//     // We can also check if there is a ?q param for legacy or direct access, but let's stick to using `q` variable from params.
-//     // However, the backend expects `q` query param.
-
-//     // Logic:
-//     // If search param is "all", we treat it as empty query for backend.
-
-//     // Get category filter if present
-//     const categoryId = Astro.url.searchParams.get("categoryId") || "";
-//     const activeParam = Astro.url.searchParams.get("active");
-
-//     // Fetch songs
-//     // Fetch songs
-//     const headers: Record<string, string> = token
-//         ? { Authorization: `Bearer ${token}` }
-//         : {};
-
-//     const res = await fetch(
-//         `${API_URL}/songs?q=${encodeURIComponent(q)}&categoryId=${categoryId}&active=${activeParam || ""}`,
-//         { headers },
-//     );
-//     if (!res.ok) throw new Error("Failed to fetch songs");
-//     songs = await res.json();
-//     songs.reverse();
-// } catch (e) {
-//     if (e instanceof Error) {
-//         error = e.message;
-//     } else {
-//         error = String(e);
-//         console.error("Error fetching songs:", error);
-//     }
-// }
+import SearchResultsViewReact from "@/components/SearchResultsViewReact";
+import type { Category } from "@/types/category";
 
 const user = getUserFromToken(token);
+const canCreate = hasPermission(user, "song.create");
+const isMusician = Boolean(canCreate || user?.role === "MUSICO" || user?.role === "ADMIN");
 
-// Construct endpoint for GridSongs
-const params = new URLSearchParams();
-
-// Handle search query
-// If decodedSearch is "all", we treat it as empty search (show all songs)
-// Otherwise, add the q parameter
-if (decodedSearch && decodedSearch !== "all") {
-    params.append("q", decodedSearch);
+let categories: Category[] = [];
+try {
+    const res = await fetch(`${API_URL}/categories`);
+    if (res.ok) {
+        categories = await res.json();
+    }
+} catch (e) {
+    console.error("Error fetching categories in search page:", e);
 }
 
-// Add category filter if present
 const currentCategoryId = Astro.url.searchParams.get("categoryId");
-if (currentCategoryId) {
-    params.append("categoryId", currentCategoryId);
-}
-
-// Add active filter if present
-const activeParam = Astro.url.searchParams.get("active");
-if (activeParam) {
-    params.append("active", activeParam);
-}
-
-// Always target the /songs endpoint
-const endpoint = `${API_URL}/songs?${params.toString()}`;
+const initialTab = (isMusician && Astro.url.searchParams.get("tab") === "external") ? "external" : "local";
 ---
 
-<Layout title={`CancioneroDigital - Buscando: ${decodedSearch}`}>
-    <div class="flex flex-col min-h-screen bg-bg-main text-text-main">
-        <main class="flex-1 max-w-6xl mx-auto w-full px-3 py-4 sm:p-6 md:p-10">
-            <h1 class="text-3xl font-bold text-accent-main mb-8">
-                {
-                    decodedSearch === "all"
-                        ? "Todas las canciones"
-                        : `Resultados para: "${decodedSearch}"`
-                }
-            </h1>
-
-            <CategoryFilter
+<Layout title={`CancioneroDigital - ${decodedSearch === "all" ? "Explorar Canciones" : `Buscando: ${decodedSearch}`}`}>
+    <div class="flex flex-col min-h-screen bg-bg-main text-text-main pb-24 md:pb-12">
+        <main class="flex-1 max-w-6xl mx-auto w-full px-3 py-4 sm:p-6 md:p-8">
+            <SearchResultsViewReact
                 client:load
-                isAdmin={user?.role === "ADMIN"}
-                currentCategoryId={currentCategoryId as any}
+                initialQuery={decodedSearch}
+                initialCategoryId={currentCategoryId}
+                initialTab={initialTab}
+                categories={categories}
+                token={token}
+                user={user}
+                canCreate={canCreate}
+                isMusician={isMusician}
+                apiUrl={API_URL}
             />
-
-            <div class="mt-4">
-                <GridSongs client:load endpoint={endpoint} />
-            </div>
         </main>
     </div>
 </Layout>
