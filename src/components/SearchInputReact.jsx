@@ -18,11 +18,12 @@ export default function SearchInputReact({ className = "" }) {
         setMounted(true);
     }, []);
 
-    // Sincroniza clases en <header> y bloqueo de scroll al expandir/colapsar
+    // Sincroniza clases en <header> y bloqueo de scroll al expandir/colapsar (oculta BottomNav)
     useEffect(() => {
         const header = document.querySelector('header');
         if (isExpanded) {
             header?.classList.add('search-expanded');
+            document.body.classList.add('modal-open', 'search-open');
             const originalOverflow = document.body.style.overflow;
             document.body.style.overflow = 'hidden';
 
@@ -32,11 +33,13 @@ export default function SearchInputReact({ className = "" }) {
 
             return () => {
                 header?.classList.remove('search-expanded');
+                document.body.classList.remove('modal-open', 'search-open');
                 document.body.style.overflow = originalOverflow;
                 clearTimeout(timer);
             };
         } else {
             header?.classList.remove('search-expanded');
+            document.body.classList.remove('modal-open', 'search-open');
             document.body.style.overflow = '';
             setSuggestions([]);
             setIsLoading(false);
@@ -141,6 +144,7 @@ export default function SearchInputReact({ className = "" }) {
     useEffect(() => {
         const handleBeforeSwap = () => {
             document.querySelector('header')?.classList.remove('search-expanded');
+            document.body.classList.remove('modal-open', 'search-open');
             document.body.style.overflow = '';
             setIsExpanded(false);
         };
@@ -185,6 +189,7 @@ export default function SearchInputReact({ className = "" }) {
             {/* Contenedor Unificado (agrupa buscador y sugerencias en columna vertical cuando está expandido) */}
             <div
                 ref={containerRef}
+                data-modal-open={isExpanded ? "true" : undefined}
                 className={`
                     transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
                     ${isExpanded
@@ -402,6 +407,7 @@ export default function SearchInputReact({ className = "" }) {
             {/* Backdrop Blur de pantalla completa montado directamente en document.body */}
             {mounted && createPortal(
                 <div
+                    data-modal-open={isExpanded ? "true" : undefined}
                     className={`
                         fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity duration-300 z-[45]
                         ${isExpanded ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'}

@@ -1,4 +1,5 @@
 import AppIcon from "@/components/Ui/AppIcon";
+import { useBodyScrollLock } from "@/utils/useBodyScrollLock";
 import React, { useState, useEffect } from "react";
 import SongView from "./SongView";
 import {
@@ -19,6 +20,8 @@ export default function OfflineCenterReact() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedSongPreview, setSelectedSongPreview] = useState<OfflineSong | null>(null);
     const [selectedMisaPreview, setSelectedMisaPreview] = useState<OfflineMisa | null>(null);
+
+    useBodyScrollLock(!!selectedSongPreview || !!selectedMisaPreview);
 
     const loadData = async () => {
         try {
@@ -48,6 +51,18 @@ export default function OfflineCenterReact() {
             window.removeEventListener("cancionero-offline-change", handleOfflineChange);
         };
     }, []);
+
+    const isAnyOfflineModalOpen = !!selectedSongPreview || !!selectedMisaPreview;
+    useEffect(() => {
+        if (!isAnyOfflineModalOpen) return;
+        document.body.classList.add("modal-open");
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.classList.remove("modal-open");
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isAnyOfflineModalOpen]);
 
     const handleDeleteMisa = async (misa: OfflineMisa, e: React.MouseEvent) => {
         e.preventDefault();
@@ -407,11 +422,14 @@ export default function OfflineCenterReact() {
             {/* Modal: Vista Rápida de Canción Offline */}
             {selectedSongPreview && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+                    data-modal-open="true"
+                    className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn overscroll-contain"
                     onClick={() => setSelectedSongPreview(null)}
                 >
                     <div
-                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto"
+                        role="dialog"
+                        aria-modal="true"
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-3xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col shadow-2xl overflow-hidden overscroll-contain my-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/5 bg-bg-main/50">
@@ -467,11 +485,14 @@ export default function OfflineCenterReact() {
             {/* Modal: Vista Rápida de Misa Offline */}
             {selectedMisaPreview && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+                    data-modal-open="true"
+                    className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn overscroll-contain"
                     onClick={() => setSelectedMisaPreview(null)}
                 >
                     <div
-                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto"
+                        role="dialog"
+                        aria-modal="true"
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-3xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col shadow-2xl overflow-hidden overscroll-contain my-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/5 bg-bg-main/50">

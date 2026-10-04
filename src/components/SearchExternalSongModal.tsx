@@ -4,6 +4,7 @@ import { showSuccessToast, showError, showLoginPrompt } from '../utils/alerts';
 import ExternalSongPreviewModal from './ExternalSongPreviewModal';
 import type { Category } from '../types/category';
 import AppIcon from './Ui/AppIcon';
+import { useBodyScrollLock } from '@/utils/useBodyScrollLock';
 
 interface SearchExternalSongModalProps {
     isOpen?: boolean;
@@ -27,6 +28,8 @@ export default function SearchExternalSongModal({
     const [internalOpen, setInternalOpen] = useState(false);
     const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalOpen;
     const isAdmin = user?.role === 'ADMIN';
+
+    useBodyScrollLock(isOpen);
 
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<ExternalSongSearchResult[]>([]);
@@ -59,6 +62,18 @@ export default function SearchExternalSongModal({
             window.removeEventListener('close-external-search-modal' as any, handleClose);
         };
     }, [controlledOnClose]);
+
+    // Scroll lock y estado modal para ocultar BottomNav
+    useEffect(() => {
+        if (!isOpen) return;
+        document.body.classList.add('modal-open');
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isOpen]);
 
     // Focus automático al abrir
     useEffect(() => {
@@ -229,10 +244,16 @@ export default function SearchExternalSongModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div
+            data-modal-open="true"
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[120] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in overscroll-contain"
+            onClick={closeModal}
+        >
             {/* Modal Card */}
             <div
-                className="w-full max-w-2xl bg-bg-secondary border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden"
+                className="w-full max-w-2xl bg-bg-secondary border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden my-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}

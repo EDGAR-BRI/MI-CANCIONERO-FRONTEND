@@ -1,4 +1,5 @@
 import AppIcon from "@/components/Ui/AppIcon";
+import { useBodyScrollLock } from "@/utils/useBodyScrollLock";
 import React, { useState, useEffect } from 'react';
 import {
     getMinistryById,
@@ -61,6 +62,8 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
         if (token) setMinistriesAuthToken(token);
         loadMinistry();
     }, [ministryId, token]);
+
+    useBodyScrollLock(showAddMemberModal);
 
     // Handle user search in add member modal
     useEffect(() => {
@@ -808,18 +811,30 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
 
             {/* MODAL: AGREGAR INTEGRANTE DIRECTAMENTE */}
             {showAddMemberModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-4">
-                        <div className="flex items-center justify-between">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overscroll-contain"
+                    onClick={() => setShowAddMemberModal(false)}
+                >
+                    <div
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl relative space-y-4 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <AppIcon name="user-plus" className="text-accent-main" />
                                 <span>Agregar Integrante al Ministerio</span>
                             </h3>
                             <button
+                                type="button"
                                 onClick={() => setShowAddMemberModal(false)}
-                                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                <AppIcon name="xmark" />
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 

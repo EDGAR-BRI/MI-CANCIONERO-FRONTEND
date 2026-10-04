@@ -1,4 +1,5 @@
 import AppIcon from "@/components/Ui/AppIcon";
+import { useBodyScrollLock } from "@/utils/useBodyScrollLock";
 import React, { useState, useEffect } from 'react';
 import {
     getMyMinistries,
@@ -48,6 +49,8 @@ export default function MinistriesViewReact({
     useEffect(() => {
         if (token) setMinistriesAuthToken(token);
     }, [token]);
+
+    useBodyScrollLock(showCreateModal || showJoinModal);
 
     const reloadData = async () => {
         setLoading(true);
@@ -289,22 +292,35 @@ export default function MinistriesViewReact({
 
             {/* Modal: Crear Ministerio */}
             {showCreateModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pb-20 sm:pb-6 bg-black/85 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-5">
-                        <div className="flex items-center justify-between">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn overscroll-contain"
+                    onClick={() => !creating && setShowCreateModal(false)}
+                >
+                    <div
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden my-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-white/10 shrink-0 bg-bg-secondary">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <AppIcon name="plus" className="text-accent-main" />
                                 <span>Nuevo Ministerio de Música</span>
                             </h3>
                             <button
-                                onClick={() => setShowCreateModal(false)}
-                                className="text-zinc-400 hover:text-white p-1 text-lg"
+                                type="button"
+                                onClick={() => !creating && setShowCreateModal(false)}
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                <AppIcon name="xmark" />
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreateSubmit} className="space-y-4">
+                        <form onSubmit={handleCreateSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            <div className="p-5 sm:p-6 overflow-y-auto overscroll-contain flex-1 space-y-4 scrollbar-thin">
                             <div>
                                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
                                     Nombre del Ministerio / Coro *
@@ -379,12 +395,13 @@ export default function MinistriesViewReact({
                                     </div>
                                 </label>
                             </div>
+                        </div>
 
-                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                        <div className="flex items-center justify-end gap-3 px-5 sm:px-6 py-3.5 border-t border-white/10 shrink-0 bg-[#171717]/95">
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors"
+                                    className="px-4 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer"
                                 >
                                     Cancelar
                                 </button>
@@ -413,18 +430,30 @@ export default function MinistriesViewReact({
 
             {/* Modal: Unirse con Código */}
             {showJoinModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pb-20 sm:pb-6 bg-black/85 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-5">
-                        <div className="flex items-center justify-between">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn overscroll-contain"
+                    onClick={() => !joining && setShowJoinModal(false)}
+                >
+                    <div
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative space-y-5 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between pb-3 border-b border-white/10">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <AppIcon name="key" className="text-accent-main" />
                                 <span>Unirme a un Ministerio</span>
                             </h3>
                             <button
-                                onClick={() => setShowJoinModal(false)}
-                                className="text-zinc-400 hover:text-white p-1 text-lg"
+                                type="button"
+                                onClick={() => !joining && setShowJoinModal(false)}
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                <AppIcon name="xmark" />
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 

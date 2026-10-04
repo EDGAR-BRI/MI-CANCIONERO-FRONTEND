@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { searchSongs } from "../services/songs";
 import { addSongToMisa } from "../services/misas";
+import Modal from "@/components/Ui/Modal";
+import AppIcon from "@/components/Ui/AppIcon";
 
 export default function MisaSongManager({ misaId, moments, token, editToken }) {
     const [searchTerm, setSearchTerm] = useState("");
@@ -22,6 +24,17 @@ export default function MisaSongManager({ misaId, moments, token, editToken }) {
         setSearchResults([]);
         setSearchTerm("");
     };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        document.body.classList.add("modal-open");
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            document.body.classList.remove("modal-open");
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isOpen]);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -165,35 +178,26 @@ export default function MisaSongManager({ misaId, moments, token, editToken }) {
                 + Agregar Canción Manualmente
             </button>
 
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 mx-4">
-                        <div className="p-6">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                                    Agregar Canción
-                                </h3>
-                                <button
-                                    onClick={closeModal}
-                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-
-                            {selectedMoment && !selectedSong && (
-                                <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-4 border border-blue-100 dark:border-blue-800">
-                                    <span className="text-blue-700 dark:text-blue-300 font-medium">
-                                        Agregando a: <strong>{selectedMoment.nombre}</strong>
-                                    </span>
-                                    <button
-                                        onClick={() => setSelectedMomentId("")}
-                                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                                    >
-                                        Cancelar
-                                    </button>
-                                </div>
-                            )}
+            <Modal
+                isOpen={isOpen}
+                onClose={closeModal}
+                title="Agregar Canción"
+                maxWidthClass="max-w-lg"
+                bodyClassName="p-5 sm:p-6"
+            >
+                {selectedMoment && !selectedSong && (
+                    <div className="flex justify-between items-center bg-accent-main/15 text-accent-main p-3 rounded-xl mb-4 border border-accent-main/20">
+                        <span className="font-medium text-xs sm:text-sm">
+                            Agregando a: <strong>{selectedMoment.nombre}</strong>
+                        </span>
+                        <button
+                            onClick={() => setSelectedMomentId("")}
+                            className="text-xs hover:underline cursor-pointer"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                )}
 
                             {message.text && (
                                 <div
@@ -340,10 +344,7 @@ export default function MisaSongManager({ misaId, moments, token, editToken }) {
                                     </div>
                                 </div>
                             )}
-                        </div>
-                    </div>
-                </div>
-            )}
+            </Modal>
         </>
     );
 }

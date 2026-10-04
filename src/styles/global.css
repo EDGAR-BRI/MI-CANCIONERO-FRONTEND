@@ -739,3 +739,42 @@ svg[width="1em"] {
     vertical-align: -0.125em;
     flex-shrink: 0;
 }
+
+/* ==========================================================================
+   GESTIÓN DE MODALES Y OCULTAMIENTO DE BARRA INFERIOR MÓVIL
+   ========================================================================== */
+html:has(body.modal-open),
+html:has(body.search-open),
+html:has(body:has([data-modal-open="true"]:not(.hidden))),
+html:has(body:has(dialog[open])) {
+    overflow: hidden !important;
+}
+
+body.modal-open #bottom-nav,
+body.search-open #bottom-nav,
+body:has([data-modal-open="true"]:not(.hidden)) #bottom-nav,
+body:has(dialog[open]) #bottom-nav,
+body:has(header.search-expanded) #bottom-nav,
+body.modal-open #navigation-progress-mobile,
+body.search-open #navigation-progress-mobile,
+body:has([data-modal-open="true"]:not(.hidden)) #navigation-progress-mobile,
+body:has(dialog[open]) #navigation-progress-mobile,
+body:has(header.search-expanded) #navigation-progress-mobile {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(100%) !important;
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+body.modal-open,
+body.search-open,
+body:has([data-modal-open="true"]:not(.hidden)),
+body:has(dialog[open]) {
+    overflow: hidden !important;
+    overscroll-behavior: contain !important;
+}
+
+[data-modal-open="true"],
+dialog[open] {
+    overscroll-behavior: contain !important;
+}

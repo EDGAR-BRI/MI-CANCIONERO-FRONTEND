@@ -1,4 +1,5 @@
 import AppIcon from "@/components/Ui/AppIcon";
+import { useBodyScrollLock } from "@/utils/useBodyScrollLock";
 import React, { useState, useEffect } from 'react';
 import { getMyMinistries, createMinistry, joinMinistryByCode, setMinistriesAuthToken } from '../services/ministries';
 import { updateProfile } from '../services/auth';
@@ -232,6 +233,9 @@ export default function ProfileReact({ user, token }) {
         if (token) setMinistriesAuthToken(token);
         loadData();
     }, [token]);
+
+    const isAnyProfileModalOpen = showCreateModal || showJoinModal || showAvatarModal || showEditProfileModal;
+    useBodyScrollLock(isAnyProfileModalOpen);
 
     const handleCreateSubmit = async (e) => {
         e.preventDefault();
@@ -534,18 +538,30 @@ export default function ProfileReact({ user, token }) {
 
             {/* Modal: Crear Ministerio */}
             {showCreateModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pb-20 sm:pb-6 bg-black/85 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-5">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn overscroll-contain"
+                    onClick={() => setShowCreateModal(false)}
+                >
+                    <div
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl relative space-y-5 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <AppIcon name="plus-circle" className="text-accent-main" />
                                 <span>Crear Nuevo Ministerio</span>
                             </h3>
                             <button
+                                type="button"
                                 onClick={() => setShowCreateModal(false)}
-                                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                <AppIcon name="xmark" />
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -641,18 +657,30 @@ export default function ProfileReact({ user, token }) {
 
             {/* Modal: Unirse con Código */}
             {showJoinModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pb-20 sm:pb-6 bg-black/85 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-5">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn overscroll-contain"
+                    onClick={() => setShowJoinModal(false)}
+                >
+                    <div
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-md p-5 sm:p-6 shadow-2xl relative space-y-5 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <AppIcon name="key" className="text-accent-main" />
                                 <span>Unirse a un Ministerio</span>
                             </h3>
                             <button
+                                type="button"
                                 onClick={() => setShowJoinModal(false)}
-                                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                <AppIcon name="xmark" />
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -697,10 +725,19 @@ export default function ProfileReact({ user, token }) {
 
             {/* Modal: Personalizar Avatar */}
             {showAvatarModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 pb-20 sm:pb-6 bg-black/85 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-[#171717] border border-white/15 rounded-3xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[82vh] sm:max-h-[88vh] overflow-hidden">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn overscroll-contain"
+                    onClick={() => setShowAvatarModal(false)}
+                >
+                    <div
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden my-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         {/* Fixed Top: Header & Live Preview (Solid background, takes 100% top width) */}
-                        <div className="bg-[#171717] border-b border-white/10 px-5 pt-5 pb-3.5 sm:px-7 sm:pt-6 space-y-3 shrink-0 z-10">
+                        <div className="bg-bg-secondary border-b border-white/10 px-5 pt-5 pb-3.5 sm:px-7 sm:pt-6 space-y-3 shrink-0 z-10">
                             {/* Header */}
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2.5">
@@ -713,10 +750,13 @@ export default function ProfileReact({ user, token }) {
                                     </div>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => setShowAvatarModal(false)}
-                                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                    className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                                    title="Cerrar (Esc)"
+                                    aria-label="Cerrar modal"
                                 >
-                                    <AppIcon name="xmark" />
+                                    <AppIcon name="xmark" className="w-5 h-5" />
                                 </button>
                             </div>
 
@@ -1075,10 +1115,19 @@ export default function ProfileReact({ user, token }) {
 
             {/* Modal: Editar Datos de Perfil */}
             {showEditProfileModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
-                    <div className="bg-[#171717] border border-white/15 rounded-3xl w-full max-w-md shadow-2xl relative overflow-hidden">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-sm animate-fadeIn overscroll-contain"
+                    onClick={() => setShowEditProfileModal(false)}
+                >
+                    <div
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden my-auto max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         {/* Header */}
-                        <div className="bg-[#171717] border-b border-white/10 px-5 py-4 sm:px-6 flex items-center justify-between">
+                        <div className="bg-bg-secondary border-b border-white/10 px-5 py-4 sm:px-6 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-xl bg-accent-main/10 text-accent-main flex items-center justify-center text-sm">
                                     <AppIcon name="user-pen" />
@@ -1091,9 +1140,11 @@ export default function ProfileReact({ user, token }) {
                             <button
                                 type="button"
                                 onClick={() => setShowEditProfileModal(false)}
-                                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-0.5"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                <AppIcon name="xmark" />
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 

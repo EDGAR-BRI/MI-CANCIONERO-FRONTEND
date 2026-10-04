@@ -2,6 +2,7 @@ import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect, useRef } from 'react';
 import { showSuccessToast } from '../utils/alerts';
 import { getChordsPreference, setChordsPreference } from '../utils/preferences';
+import { useBodyScrollLock } from '../utils/useBodyScrollLock';
 
 const FONT_SIZES = [14, 16, 18, 20, 24, 28];
 const SCROLL_SPEEDS = [
@@ -50,6 +51,7 @@ export default function MisaAutoScrollReact() {
     // Minimized toolbar state (collapsed to bubble)
     const [isMinimized, setIsMinimized] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    useBodyScrollLock(isDrawerOpen);
 
     const animFrameRef = useRef(null);
     const lastScrollTimeRef = useRef(null);
@@ -102,37 +104,19 @@ export default function MisaAutoScrollReact() {
         };
     }, []);
 
-    // Toggle chords and sync with top button & all songs
+    // Broadcast initial chords preference on mount
+    useEffect(() => {
+        if (showChords) {
+            window.dispatchEvent(new CustomEvent('song-toggle-chords', { detail: { show: true } }));
+        }
+    }, []);
+
+    // Toggle chords and sync with all songs
     const handleToggleChords = () => {
         const nextVal = !showChords;
         setShowChords(nextVal);
         setChordsPreference(nextVal);
         window.dispatchEvent(new CustomEvent('song-toggle-chords', { detail: { show: nextVal } }));
-
-        // Sync static header button in misas/view/[id]
-        if (typeof document !== 'undefined') {
-            const toggleChordsBtn = document.getElementById('toggleChordsBtn');
-            if (toggleChordsBtn) {
-                const icon = toggleChordsBtn.querySelector('i');
-                if (nextVal) {
-                    toggleChordsBtn.classList.remove('bg-white/5', 'hover:bg-white/10', 'text-text-secondary', 'border-white/10');
-                    toggleChordsBtn.classList.add('bg-accent-main', 'hover:bg-accent-main/90', 'text-white', 'border-transparent', 'shadow-md');
-                    toggleChordsBtn.setAttribute('aria-pressed', 'true');
-                    if (icon) {
-                        icon.classList.remove('text-text-secondary', 'group-hover:text-white');
-                        icon.classList.add('text-white');
-                    }
-                } else {
-                    toggleChordsBtn.classList.remove('bg-accent-main', 'hover:bg-accent-main/90', 'border-transparent', 'shadow-md');
-                    toggleChordsBtn.classList.add('bg-white/5', 'hover:bg-white/10', 'text-text-secondary', 'border-white/10');
-                    toggleChordsBtn.setAttribute('aria-pressed', 'false');
-                    if (icon) {
-                        icon.classList.remove('text-white');
-                        icon.classList.add('text-text-secondary', 'group-hover:text-white');
-                    }
-                }
-            }
-        }
     };
 
     // Modo Atril / Focus Mode toggle
@@ -322,49 +306,7 @@ export default function MisaAutoScrollReact() {
 
     return (
         <>
-            {/* 1. BOTÓN EN LA CABECERA DE LA MISA */}
-            <button
-                type="button"
-                onClick={handleToggleAutoScroll}
-                title={isAutoScrolling ? "Pausar auto-scroll" : "Iniciar auto-scroll"}
-                className={`w-full sm:w-auto h-9 px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 group focus:outline-none whitespace-nowrap border ${
-                    isAutoScrolling
-                        ? "bg-accent-main hover:bg-accent-main/90 text-white border-transparent shadow-md"
-                        : showScrollWidget
-                            ? "bg-accent-main/15 text-accent-main border-accent-main/30 hover:bg-accent-main/25"
-                            : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border-white/10"
-                }`}
-            >
-                <AppIcon name={isAutoScrolling ? 'pause' : 'angles-down'} className="text-[11px] ${isAutoScrolling ? 'text-white' : 'text-text-secondary group-hover:text-white'} transition-colors" />
-                <span>{isAutoScrolling ? "Pausar" : "Auto-scroll"}</span>
-            </button>
-
-            {/* Control de tamaño de letra en cabecera desktop */}
-            <div className="hidden sm:flex items-center gap-1.5 h-9 px-2.5 bg-white/5 border border-white/10 rounded-xl text-xs font-mono text-text-secondary">
-                <button
-                    type="button"
-                    onClick={() => handleFontSizeChange(-1)}
-                    disabled={fontSize <= FONT_SIZES[0]}
-                    className="w-6 h-6 rounded-lg hover:bg-white/10 hover:text-white text-text-secondary flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer active:scale-95 transition-colors"
-                    title="Disminuir tamaño de letra"
-                >
-                    <span className="text-[11px]">A-</span>
-                </button>
-                <span className="text-white font-bold px-1 select-none text-[11px]">
-                    {fontSize}px
-                </span>
-                <button
-                    type="button"
-                    onClick={() => handleFontSizeChange(1)}
-                    disabled={fontSize >= FONT_SIZES[FONT_SIZES.length - 1]}
-                    className="w-6 h-6 rounded-lg hover:bg-white/10 hover:text-white text-text-secondary flex items-center justify-center font-bold disabled:opacity-30 cursor-pointer active:scale-95 transition-colors"
-                    title="Aumentar tamaño de letra"
-                >
-                    <span className="text-[11px]">A+</span>
-                </button>
-            </div>
-
-            {/* 2. BARRA FLOTANTE DE AJUSTES REDUCIDA (Visible en cualquier parte del scroll de la página) */}
+            {/* 1. BARRA FLOTANTE DE AJUSTES REDUCIDA (Visible en cualquier parte del scroll de la página) */}
             {!isFocusMode && (
                 <div
                     className={`fixed bottom-20 left-1/2 -translate-x-1/2 md:bottom-8 md:left-1/2 md:-translate-x-1/2 z-40 bg-bg-secondary/95 backdrop-blur-md border border-white/10 rounded-full shadow-2xl px-2.5 py-1.5 flex items-center gap-1.5 max-w-[95vw] no-print transition-all duration-300 ease-fluid origin-bottom ${
@@ -486,12 +428,17 @@ export default function MisaAutoScrollReact() {
 
             {/* 4. MODAL / DRAWER RÁPIDO AL TOCAR LA BURBUJA DURANTE EL SCROLL */}
             {isDrawerOpen && (
-                <div className="fixed inset-0 z-[70] flex flex-col justify-end bg-black/60 backdrop-blur-sm no-print animate-in fade-in duration-200">
+                <div
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[70] flex flex-col justify-end bg-black/60 backdrop-blur-sm no-print animate-in fade-in duration-200 overscroll-contain"
+                >
                     <div
                         className="fixed inset-0"
                         onClick={() => setIsDrawerOpen(false)}
                     ></div>
-                    <div className="relative bg-bg-secondary border-t border-white/10 rounded-t-2xl p-4 pb-12 space-y-3 z-10 max-w-md mx-auto w-full shadow-2xl">
+                    <div className="relative bg-bg-secondary border-t border-white/10 rounded-t-2xl p-4 pb-12 space-y-3 z-10 max-w-md mx-auto w-full shadow-2xl overscroll-contain">
                         <div className="flex items-center justify-between pb-2 border-b border-white/10">
                             <span className="text-sm font-bold text-white flex items-center gap-2">
                                 <AppIcon name="sliders" className="text-accent-main" />
@@ -627,7 +574,7 @@ export default function MisaAutoScrollReact() {
                         className="w-8 h-8 rounded-full bg-accent-main text-white flex items-center justify-center hover:bg-accent-main/90 transition-colors shadow-md cursor-pointer active:scale-95"
                         title={isAutoScrolling ? "Pausar scroll" : "Reanudar scroll"}
                     >
-                        <AppIcon name={isAutoScrolling ? 'pause' : 'play'} className="text-xs" />
+                        <AppIcon name={isAutoScrolling ? 'pause' : 'play'} className={`text-xs ${isAutoScrolling ? '' : 'translate-x-0.5'}`} />
                     </button>
 
                     <div className="flex items-center gap-1.5 text-xs font-mono text-text-secondary">

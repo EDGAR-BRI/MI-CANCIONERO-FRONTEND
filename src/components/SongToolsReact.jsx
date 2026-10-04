@@ -18,6 +18,7 @@ import {
     getSongOffline
 } from '../utils/offlineStorage';
 import { getSongById } from '../services/songs';
+import { useBodyScrollLock } from '../utils/useBodyScrollLock';
 
 const FONT_SIZES = [14, 16, 18, 20, 24, 28];
 const SCROLL_SPEEDS = [
@@ -129,6 +130,7 @@ export const SongToolsReact = ({
     // Minimized state: when true, collapses toolbar into a floating circular bubble at bottom-right
     const [isMinimized, setIsMinimized] = useState(() => getToolsMinimizedPreference(false));
     const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+    useBodyScrollLock(isMobileDrawerOpen);
     const [showDownloadOptions, setShowDownloadOptions] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const downloadContainerRef = useRef(null);
@@ -1327,6 +1329,7 @@ export const SongToolsReact = ({
                 4. MOBILE BOTTOM SHEET (DRAWER)
                ========================================================================= */}
             <div
+                data-modal-open={isMobileDrawerOpen ? "true" : undefined}
                 className={`md:hidden fixed inset-0 z-[70] flex flex-col justify-end no-print transition-all duration-300 ${
                     isMobileDrawerOpen ? 'pointer-events-auto visible' : 'pointer-events-none invisible delay-300'
                 }`}
@@ -1636,7 +1639,7 @@ export const SongToolsReact = ({
                         className="w-8 h-8 rounded-full bg-accent-main text-white flex items-center justify-center hover:bg-accent-main/90 transition-colors shadow-md cursor-pointer active:scale-95"
                         title={isAutoScrolling ? "Pausar scroll" : "Reanudar scroll"}
                     >
-                        <AppIcon name={isAutoScrolling ? 'pause' : 'play'} className="text-xs" />
+                        <AppIcon name={isAutoScrolling ? 'pause' : 'play'} className={`text-xs ${isAutoScrolling ? '' : 'translate-x-0.5'}`} />
                     </button>
 
                     <div className="flex items-center gap-1.5 text-xs font-mono text-text-secondary">

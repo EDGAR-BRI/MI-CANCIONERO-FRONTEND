@@ -1,4 +1,5 @@
 import AppIcon from "@/components/Ui/AppIcon";
+import { useBodyScrollLock } from "@/utils/useBodyScrollLock";
 import React, { useState, useRef, useEffect } from "react";
 import type { Misa, MisaSong, Moment, MisaMoment } from "../types/misa";
 import type { Song } from "../types/song";
@@ -180,6 +181,9 @@ export default function MisaDetailReact({
         misa.ministryId ? String(misa.ministryId) : ""
     );
     const [cloneVisibility, setCloneVisibility] = useState<"PUBLIC" | "PRIVATE">("PRIVATE");
+
+    const isAnyModalOpen = showAddMomentModal || showAddSongModal || showToneModal || showEditMisaModal || showCloneModal;
+    useBodyScrollLock(isAnyModalOpen);
 
     useEffect(() => {
         if ((showEditMisaModal || showCloneModal) && token && userMinistries.length === 0) {
@@ -1548,12 +1552,15 @@ export default function MisaDetailReact({
             {/* ================= MODAL: ADD / MANAGE MOMENTS ================= */}
             {showAddMomentModal && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overscroll-contain"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) setShowAddMomentModal(false);
                     }}
                 >
-                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-6 shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto">
                         <div className="flex items-center justify-between pb-3 border-b border-white/5">
                             <div>
                                 <h3 className="text-lg font-bold text-white tracking-tight">
@@ -1566,9 +1573,11 @@ export default function MisaDetailReact({
                             <button
                                 type="button"
                                 onClick={() => setShowAddMomentModal(false)}
-                                className="text-text-secondary hover:text-white p-1 text-sm"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-1"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                ✕
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -1659,12 +1668,15 @@ export default function MisaDetailReact({
             {/* ================= MODAL: ADD SONG ================= */}
             {showAddSongModal && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overscroll-contain"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) setShowAddSongModal(false);
                     }}
                 >
-                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto">
                         <div className="flex items-center justify-between pb-3 border-b border-white/5">
                             <div>
                                 <h3 className="text-lg font-bold text-white tracking-tight">
@@ -1677,9 +1689,11 @@ export default function MisaDetailReact({
                             <button
                                 type="button"
                                 onClick={() => setShowAddSongModal(false)}
-                                className="text-text-secondary hover:text-white p-1 text-sm"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-1"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                ✕
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -1842,12 +1856,15 @@ export default function MisaDetailReact({
             {/* ================= MODAL: EDIT TONE ================= */}
             {showToneModal && editingSong && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overscroll-contain"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) setShowToneModal(false);
                     }}
                 >
-                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-md p-6 space-y-5 shadow-2xl">
+                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-md p-5 sm:p-6 space-y-5 shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto">
                         <div className="flex items-center justify-between pb-3 border-b border-white/5">
                             <div>
                                 <h3 className="text-lg font-bold text-white tracking-tight">
@@ -1860,9 +1877,11 @@ export default function MisaDetailReact({
                             <button
                                 type="button"
                                 onClick={() => setShowToneModal(false)}
-                                className="text-text-secondary hover:text-white p-1 text-sm"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-1"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                ✕
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -1948,12 +1967,15 @@ export default function MisaDetailReact({
             {/* ================= MODAL: EDIT MISA INFO ================= */}
             {showEditMisaModal && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overscroll-contain"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) setShowEditMisaModal(false);
                     }}
                 >
-                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto scrollbar-thin my-auto">
                         <div className="flex items-center justify-between pb-3 border-b border-white/5">
                             <h3 className="text-lg font-bold text-white tracking-tight">
                                 Editar Información de la Misa
@@ -1961,9 +1983,11 @@ export default function MisaDetailReact({
                             <button
                                 type="button"
                                 onClick={() => setShowEditMisaModal(false)}
-                                className="text-text-secondary hover:text-white p-1 text-sm"
+                                className="p-1.5 sm:p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0 -mr-1 -mt-1"
+                                title="Cerrar (Esc)"
+                                aria-label="Cerrar modal"
                             >
-                                ✕
+                                <AppIcon name="xmark" className="w-5 h-5" />
                             </button>
                         </div>
 
@@ -2135,15 +2159,18 @@ export default function MisaDetailReact({
             {/* ================= MODAL: CLONAR MISA ================= */}
             {showCloneModal && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+                    data-modal-open="true"
+                    role="dialog"
+                    aria-modal="true"
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overscroll-contain"
                     onClick={() => !isCloning && setShowCloneModal(false)}
                 >
                     <div
-                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg p-6 sm:p-7 shadow-2xl relative space-y-5"
+                        className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden my-auto"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header Modal */}
-                        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-white/10 shrink-0 bg-bg-secondary">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-accent-main/10 border border-accent-main/20 text-accent-main flex items-center justify-center shrink-0">
                                     <AppIcon name="copy" className="text-base" />
@@ -2167,101 +2194,104 @@ export default function MisaDetailReact({
                             </button>
                         </div>
 
-                        <form onSubmit={handleConfirmClone} className="space-y-4">
-                            {/* Título de la copia */}
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                                    Título de la nueva copia <span className="text-accent-main">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    value={cloneTitle}
-                                    onChange={(e) => setCloneTitle(e.target.value)}
-                                    className="w-full pl-4 pr-4 py-2.5 bg-bg-main border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
-                                />
-                            </div>
-
-                            {/* Propietario de la nueva copia */}
-                            {userMinistries.length > 0 && (
+                        <form onSubmit={handleConfirmClone} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            {/* Cuerpo scrolleable */}
+                            <div className="p-5 sm:p-6 overflow-y-auto overscroll-contain flex-1 space-y-4 scrollbar-thin">
+                                {/* Título de la copia */}
                                 <div className="space-y-1.5">
                                     <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                                        Propietario de la copia
+                                        Título de la nueva copia <span className="text-accent-main">*</span>
                                     </label>
-                                    <div className="relative">
-                                        <AppIcon name="users" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
-                                        <select
-                                            value={cloneMinistryId}
-                                            onChange={(e) => setCloneMinistryId(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-bg-main border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors cursor-pointer"
-                                        >
-                                            <option value="">👤 Personal (Solo para mí)</option>
-                                            {userMinistries.map((m) => (
-                                                <option key={m.id} value={m.id}>
-                                                    👥 {m.name} (Propietario: Grupo) {m.myRole === "ADMIN" ? "· Admin" : ""}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {cloneMinistryId && (
-                                        <p className="text-[11px] text-zinc-400 flex items-center gap-1.5 pt-0.5">
-                                            <AppIcon name="circle-info" className="text-accent-main text-[10px]" />
-                                            <span>Los integrantes de tu grupo podrán colaborar y editar la copia.</span>
-                                        </p>
-                                    )}
+                                    <input
+                                        type="text"
+                                        required
+                                        autoFocus
+                                        value={cloneTitle}
+                                        onChange={(e) => setCloneTitle(e.target.value)}
+                                        className="w-full pl-4 pr-4 py-2.5 bg-bg-main border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
+                                    />
                                 </div>
-                            )}
 
-                            {/* Visibilidad de la copia */}
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                                    Privacidad de la copia
-                                </label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setCloneVisibility("PRIVATE")}
-                                        className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1 ${
-                                            cloneVisibility === "PRIVATE"
-                                                ? "border-accent-main bg-accent-main/10 text-white ring-1 ring-accent-main/30"
-                                                : "border-white/10 bg-bg-main text-text-secondary hover:text-white"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-1.5 font-bold text-xs">
-                                            <AppIcon name="lock" className="text-accent-main" />
-                                            <span>Privada</span>
+                                {/* Propietario de la nueva copia */}
+                                {userMinistries.length > 0 && (
+                                    <div className="space-y-1.5">
+                                        <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                                            Propietario de la copia
+                                        </label>
+                                        <div className="relative">
+                                            <AppIcon name="users" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
+                                            <select
+                                                value={cloneMinistryId}
+                                                onChange={(e) => setCloneMinistryId(e.target.value)}
+                                                className="w-full pl-10 pr-4 py-2.5 bg-bg-main border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors cursor-pointer"
+                                            >
+                                                <option value="">👤 Personal (Solo para mí)</option>
+                                                {userMinistries.map((m) => (
+                                                    <option key={m.id} value={m.id}>
+                                                        👥 {m.name} (Propietario: Grupo) {m.myRole === "ADMIN" ? "· Admin" : ""}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
-                                        <span className="text-[10px] text-text-secondary leading-tight">
-                                            {cloneMinistryId
-                                                ? `Solo para miembros de ${userMinistries.find(m => String(m.id) === cloneMinistryId)?.name || "tu grupo"}`
-                                                : "Solo tú podrás verla"}
-                                        </span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setCloneVisibility("PUBLIC")}
-                                        className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1 ${
-                                            cloneVisibility === "PUBLIC"
-                                                ? "border-accent-main bg-accent-main/10 text-white ring-1 ring-accent-main/30"
-                                                : "border-white/10 bg-bg-main text-text-secondary hover:text-white"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-1.5 font-bold text-xs">
-                                            <AppIcon name="globe" className="text-emerald-400" />
-                                            <span>Pública</span>
-                                        </div>
-                                        <span className="text-[10px] text-text-secondary leading-tight">
-                                            {cloneMinistryId
-                                                ? "Visible a todos en cartelera"
-                                                : "Visible para toda la comunidad"}
-                                        </span>
-                                    </button>
+                                        {cloneMinistryId && (
+                                            <p className="text-[11px] text-zinc-400 flex items-center gap-1.5 pt-0.5">
+                                                <AppIcon name="circle-info" className="text-accent-main text-[10px]" />
+                                                <span>Los integrantes de tu grupo podrán colaborar y editar la copia.</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Visibilidad de la copia */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                                        Privacidad de la copia
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setCloneVisibility("PRIVATE")}
+                                            className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1 ${
+                                                cloneVisibility === "PRIVATE"
+                                                    ? "border-accent-main bg-accent-main/10 text-white ring-1 ring-accent-main/30"
+                                                    : "border-white/10 bg-bg-main text-text-secondary hover:text-white"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-1.5 font-bold text-xs">
+                                                <AppIcon name="lock" className="text-accent-main" />
+                                                <span>Privada</span>
+                                            </div>
+                                            <span className="text-[10px] text-text-secondary leading-tight">
+                                                {cloneMinistryId
+                                                    ? `Solo para miembros de ${userMinistries.find(m => String(m.id) === cloneMinistryId)?.name || "tu grupo"}`
+                                                    : "Solo tú podrás verla"}
+                                            </span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCloneVisibility("PUBLIC")}
+                                            className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1 ${
+                                                cloneVisibility === "PUBLIC"
+                                                    ? "border-accent-main bg-accent-main/10 text-white ring-1 ring-accent-main/30"
+                                                    : "border-white/10 bg-bg-main text-text-secondary hover:text-white"
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-1.5 font-bold text-xs">
+                                                <AppIcon name="globe" className="text-emerald-400" />
+                                                <span>Pública</span>
+                                            </div>
+                                            <span className="text-[10px] text-text-secondary leading-tight">
+                                                {cloneMinistryId
+                                                    ? "Visible a todos en cartelera"
+                                                    : "Visible para toda la comunidad"}
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Botones de acción */}
-                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                            <div className="px-5 sm:px-6 py-3.5 border-t border-white/10 flex items-center justify-end gap-3 shrink-0 bg-bg-secondary/95 backdrop-blur-xs">
                                 <button
                                     type="button"
                                     onClick={() => setShowCloneModal(false)}

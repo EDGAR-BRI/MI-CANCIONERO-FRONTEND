@@ -8,6 +8,7 @@ import { sanitizeSongContent } from '../utils/songSanitizer';
 import { showSuccessToast, showError, showLoading, showLoginPrompt } from '../utils/alerts';
 import Swal from 'sweetalert2';
 import AppIcon from './Ui/AppIcon';
+import { useBodyScrollLock } from '@/utils/useBodyScrollLock';
 
 interface ExternalSongPreviewModalProps {
     isOpen: boolean;
@@ -38,6 +39,8 @@ export default function ExternalSongPreviewModal({
     onSongImported,
     onApplyToForm
 }: ExternalSongPreviewModalProps) {
+    useBodyScrollLock(isOpen);
+
     const [loading, setLoading] = useState(false);
     const [songData, setSongData] = useState<ExternalSongData | null>(null);
     const [showChords, setShowChords] = useState(true);
@@ -102,6 +105,18 @@ export default function ExternalSongPreviewModal({
             isMounted = false;
         };
     }, [isOpen, song, apiUrl, enrichWithAi, token, user]);
+
+    // Scroll lock y estado modal para ocultar BottomNav
+    useEffect(() => {
+        if (!isOpen || !song) return;
+        document.body.classList.add('modal-open');
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isOpen, song]);
 
     // Cerrar con tecla Escape
     useEffect(() => {
@@ -192,11 +207,14 @@ export default function ExternalSongPreviewModal({
 
     return (
         <div
-            className={`fixed inset-0 ${zIndexClass || 'z-[130]'} flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fade-in`}
+            data-modal-open="true"
+            role="dialog"
+            aria-modal="true"
+            className={`fixed inset-0 ${zIndexClass || 'z-[130]'} flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fade-in overscroll-contain`}
             onClick={onClose}
         >
             <div
-                className="w-full max-w-3xl bg-bg-secondary border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
+                className="w-full max-w-3xl bg-bg-secondary border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden my-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
