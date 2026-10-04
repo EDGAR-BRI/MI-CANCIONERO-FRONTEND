@@ -3,6 +3,7 @@ import { searchExternalSongs, importExternalSong, type ExternalSongSearchResult,
 import { showSuccessToast, showError, showLoginPrompt } from '../utils/alerts';
 import ExternalSongPreviewModal from './ExternalSongPreviewModal';
 import type { Category } from '../types/category';
+import AppIcon from './Ui/AppIcon';
 
 interface SearchExternalSongModalProps {
     isOpen?: boolean;
@@ -256,23 +257,17 @@ export default function SearchExternalSongModal({
                         title="Cerrar (Esc)"
                         aria-label="Cerrar modal"
                     >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <AppIcon name="xmark" className="w-5 h-5" />
                     </button>
                 </div>
 
                 {/* Search Bar & Filters */}
                 <div className="p-3.5 sm:p-5 border-b border-white/5 space-y-3 bg-bg-main/40 shrink-0">
                     <div className="relative flex items-center">
-                        <svg
+                        <AppIcon
+                            name="magnifying-glass"
                             className="absolute left-3.5 h-4.5 w-4.5 text-text-secondary pointer-events-none"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        />
                         <input
                             ref={inputRef}
                             type="text"
@@ -296,9 +291,7 @@ export default function SearchExternalSongModal({
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5 text-xs">
                         <div className="flex items-center gap-2">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium border border-white/10 bg-bg-secondary text-text-secondary text-xs">
-                                <svg className="w-3.5 h-3.5 text-accent-main" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                </svg>
+                                <AppIcon name="globe" className="w-3.5 h-3.5 text-accent-main" />
                                 <span>Resultados de internet</span>
                                 <span className="font-mono text-[11px] text-white bg-white/10 px-1.5 py-0.2 rounded-full">
                                     {results.length}
@@ -383,10 +376,7 @@ export default function SearchExternalSongModal({
 
                                             {isImporting ? (
                                                 <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-accent-main/20 text-accent-main text-xs font-semibold">
-                                                    <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
+                                                    <AppIcon name="spinner" spin className="h-3.5 w-3.5" />
                                                     <span className="hidden xs:inline">Importando...</span>
                                                 </div>
                                             ) : (
@@ -419,9 +409,7 @@ export default function SearchExternalSongModal({
                     ) : (
                         <div className="text-center py-10 px-4">
                             <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-accent-main">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                </svg>
+                                <AppIcon name="music" className="w-6 h-6" />
                             </div>
                             <h3 className="text-sm font-semibold text-white mb-1">
                                 Explora canciones y acordes en internet

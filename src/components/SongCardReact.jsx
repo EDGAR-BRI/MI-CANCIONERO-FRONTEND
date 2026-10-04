@@ -1,6 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import AppIcon from './Ui/AppIcon';
 
 const SongCardReact = ({ song }) => {
+    const [isOffline, setIsOffline] = useState(Boolean(song.isOfflineAvailable));
+
+    useEffect(() => {
+        if (song.isOfflineAvailable) {
+            setIsOffline(true);
+            return;
+        }
+        let mounted = true;
+        import('../utils/offlineStorage').then(({ isSongOffline }) => {
+            if (song.id) {
+                isSongOffline(song.id).then((saved) => {
+                    if (mounted && saved) setIsOffline(true);
+                }).catch(() => {});
+            }
+        });
+        return () => { mounted = false; };
+    }, [song.id, song.isOfflineAvailable]);
+
     const categories = song.categories && song.categories.length > 0
         ? song.categories
         : (song.category ? [song.category] : []);
@@ -31,6 +50,14 @@ const SongCardReact = ({ song }) => {
                     >
                         Ton: {song.key}
                     </span>
+                    {isOffline && (
+                        <span
+                            title="Disponible sin conexión"
+                            className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-1 rounded inline-flex items-center gap-1 font-mono"
+                        >
+                            <AppIcon name="check" className="text-[10px]" />
+                        </span>
+                    )}
                     {categories.slice(0, 2).map((cat) => (
                         <span
                             key={cat.id}

@@ -1,4 +1,5 @@
 ---
+import AppIcon from "@/components/Ui/AppIcon.astro";
 import Layout from "@/layouts/Layout.astro";
 import { getUserFromToken } from "@/utils/auth";
 import MinistryWorkspaceReact from "@/components/MinistryWorkspaceReact.jsx";
@@ -24,7 +25,7 @@ if (!id) {
                 href="/ministerios?all=true"
                 class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-accent-main transition-colors"
             >
-                <i class="fa-solid fa-arrow-left"></i>
+                <AppIcon name="arrow-left" />
                 <span>Volver a mis ministerios</span>
             </a>
         </div>

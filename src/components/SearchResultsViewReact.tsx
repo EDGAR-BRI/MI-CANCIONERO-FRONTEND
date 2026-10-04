@@ -10,6 +10,7 @@ import SongCardReact from './SongCardReact';
 import ExternalSongPreviewModal from './ExternalSongPreviewModal';
 import { showSuccessToast, showError, showLoading, showLoginPrompt } from '../utils/alerts';
 import Swal from 'sweetalert2';
+import AppIcon from './Ui/AppIcon';
 
 interface SearchResultsViewProps {
     initialQuery?: string;
@@ -320,9 +321,7 @@ export default function SearchResultsViewReact({
                             href="/songs/add"
                             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-sm shadow-md transition-colors shrink-0"
                         >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 4v16m8-8H4" />
-                            </svg>
+                            <AppIcon name="plus" className="w-4 h-4" />
                             <span>Nueva Canción</span>
                         </a>
                     )}
@@ -331,9 +330,7 @@ export default function SearchResultsViewReact({
                 {/* Input de Búsqueda en la Vista */}
                 <form onSubmit={handleSearchSubmit} className="relative flex items-center">
                     <div className="absolute left-3.5 flex items-center pointer-events-none text-accent-main">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <AppIcon name="magnifying-glass" className="w-5 h-5" />
                     </div>
 
                     <input
@@ -376,9 +373,7 @@ export default function SearchResultsViewReact({
                                     : 'bg-bg-main text-text-secondary hover:text-white hover:bg-white/5 border-white/10'
                             }`}
                         >
-                            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                            </svg>
+                            <AppIcon name="book" className="w-4 h-4 shrink-0" />
                             <span className="hidden sm:inline leading-none">En tu Cancionero</span>
                             <span className="sm:hidden truncate leading-none">Cancionero</span>
                             <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-mono leading-none shrink-0 ${
@@ -397,9 +392,7 @@ export default function SearchResultsViewReact({
                                     : 'bg-bg-main text-text-secondary hover:text-white hover:bg-white/5 border-white/10'
                             }`}
                         >
-                            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                            </svg>
+                            <AppIcon name="globe" className="w-4 h-4 shrink-0" />
                             <span className="hidden sm:inline leading-none">Buscar en internet</span>
                             <span className="sm:hidden truncate leading-none">En internet</span>
                             <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-mono leading-none shrink-0 ${
@@ -507,9 +500,7 @@ export default function SearchResultsViewReact({
                                                 onClick={() => setActiveTab('external')}
                                                 className="px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-sm shadow-md transition-all inline-flex items-center gap-2 cursor-pointer"
                                             >
-                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                                </svg>
+                                                <AppIcon name="globe" className="w-4 h-4" />
                                                 <span>Buscar en internet</span>
                                             </button>
                                         )}
@@ -600,10 +591,7 @@ export default function SearchResultsViewReact({
                                                         >
                                                             {isImporting ? (
                                                                 <>
-                                                                    <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                                    </svg>
+                                                                    <AppIcon name="spinner" spin className="h-3.5 w-3.5" />
                                                                     <span className="hidden sm:inline">Importando...</span>
                                                                 </>
                                                             ) : (
@@ -629,9 +617,7 @@ export default function SearchResultsViewReact({
                     <div className="flex flex-wrap items-center justify-between gap-3 bg-bg-secondary border border-white/5 rounded-xl p-3.5">
                         <div className="flex items-center gap-2">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-bg-main text-text-main border border-white/10">
-                                <svg className="w-3.5 h-3.5 text-accent-main" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                </svg>
+                                <AppIcon name="globe" className="w-3.5 h-3.5 text-accent-main" />
                                 <span>Resultados en internet ({externalResults.length})</span>
                             </span>
                         </div>
@@ -651,9 +637,7 @@ export default function SearchResultsViewReact({
                             )}
 
                             <div className="text-xs text-text-secondary flex items-center gap-1.5 shrink-0">
-                                <svg className="w-3.5 h-3.5 text-accent-main" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                                </svg>
+                                <AppIcon name="wand-magic-sparkles" className="w-3.5 h-3.5 text-accent-main" />
                                 <span>Armonización con IA activa</span>
                             </div>
                         </div>
@@ -662,9 +646,7 @@ export default function SearchResultsViewReact({
                     {!user && (
                         <div className="bg-bg-secondary border border-white/5 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                             <div className="flex items-center gap-2.5 text-zinc-300">
-                                <svg className="w-4 h-4 text-accent-main shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg>
+                                <AppIcon name="lock" className="w-4 h-4 text-accent-main shrink-0" />
                                 <span>Inicia sesión para previsualizar canciones con acordes e importarlas con armonización IA.</span>
                             </div>
                             <a
@@ -747,10 +729,7 @@ export default function SearchResultsViewReact({
                                             >
                                                 {isImporting ? (
                                                     <>
-                                                        <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                        </svg>
+                                                        <AppIcon name="spinner" spin className="h-3.5 w-3.5" />
                                                         <span className="hidden sm:inline">Importando...</span>
                                                     </>
                                                 ) : (
@@ -765,9 +744,7 @@ export default function SearchResultsViewReact({
                     ) : (
                         <div className="bg-bg-secondary border border-white/5 rounded-2xl p-8 text-center max-w-lg mx-auto space-y-3">
                             <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-accent-main mx-auto">
-                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                                <AppIcon name="magnifying-glass" className="w-6 h-6" />
                             </div>
                             <h3 className="text-base font-bold text-white">
                                 {query ? 'No se encontraron resultados externos' : 'Escribe para buscar'}

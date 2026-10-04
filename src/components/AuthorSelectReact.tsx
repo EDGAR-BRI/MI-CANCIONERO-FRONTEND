@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type { Author } from '../types/author';
 import { API_URL } from '../services/songs';
 import { showSuccessToast, showError } from '../utils/alerts';
+import AppIcon from './Ui/AppIcon';
 
 interface AuthorSelectProps {
     authors?: Author[];
@@ -191,35 +192,15 @@ export default function AuthorSelectReact({
                 }`}
             >
                 <div className="flex items-center gap-2 truncate">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-4 h-4 text-accent-main shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                    </svg>
+                    <AppIcon name="user" className="w-4 h-4 text-accent-main shrink-0" />
                     <span className="truncate font-medium">
                         {selectedAuthor ? selectedAuthor.name : 'Selecciona un autor'}
                     </span>
                 </div>
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
+                <AppIcon
+                    name="chevron-down"
                     className={`w-4 h-4 text-text-secondary shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                >
-                    <polyline points="6 9 12 15 18 9" />
-                </svg>
+                />
             </button>
 
             {/* Dropdown Menu */}
@@ -246,19 +227,10 @@ export default function AuthorSelectReact({
                                 placeholder="Buscar o crear autor..."
                                 className="w-full px-2.5 py-1.5 pl-8 bg-bg-main border border-white/10 rounded text-xs text-text-main placeholder-text-secondary/50 focus:outline-none focus:border-accent-main"
                             />
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
+                            <AppIcon
+                                name="magnifying-glass"
                                 className="w-3.5 h-3.5 text-text-secondary absolute left-2.5 top-1/2 -translate-y-1/2"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <circle cx="11" cy="11" r="8" />
-                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                            </svg>
+                            />
                         </div>
                     </div>
 
@@ -281,18 +253,7 @@ export default function AuthorSelectReact({
                                         <span>{author.name}</span>
                                     </div>
                                     {isSelected && (
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="w-4 h-4 text-accent-main shrink-0"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2.5"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        >
-                                            <polyline points="20 6 9 17 4 12" />
-                                        </svg>
+                                        <AppIcon name="check" className="w-4 h-4 text-accent-main shrink-0" />
                                     )}
                                 </button>
                             );
@@ -311,19 +272,7 @@ export default function AuthorSelectReact({
                                         <span>Creando...</span>
                                     ) : (
                                         <>
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="w-3.5 h-3.5"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            >
-                                                <line x1="12" y1="5" x2="12" y2="19" />
-                                                <line x1="5" y1="12" x2="19" y2="12" />
-                                            </svg>
+                                            <AppIcon name="plus" className="w-3.5 h-3.5" />
                                             <span>Crear autor "{search.trim()}"</span>
                                         </>
                                     )}

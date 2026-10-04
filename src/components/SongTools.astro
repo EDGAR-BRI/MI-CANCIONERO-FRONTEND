@@ -1,5 +1,6 @@
 ---
 import { getUserFromToken, hasPermission } from "../utils/auth";
+import AppIcon from "@/components/Ui/AppIcon.astro";
 const { id } = Astro.props;
 const token = Astro.cookies.get("token")?.value;
 const user = getUserFromToken(token);
@@ -16,9 +17,11 @@ const canEditSong = hasPermission(user, "song.edit");
         class="p-2 text-text-secondary hover:text-accent-main transition-all duration-300 absolute right-1/2 translate-x-1/2 top-4 z-50 bg-bg-main rounded-full"
         title="Ocultar herramientas"
     >
-        <i
-            class="fa-solid fa-arrow-left transition-transform duration-300"
-            id="icon-toggle"></i>
+        <AppIcon
+            name="arrow-left"
+            id="icon-toggle"
+            class="transition-transform duration-300 w-4 h-4"
+        />
     </button>
 
     <!-- Tools Container -->
@@ -35,9 +38,7 @@ const canEditSong = hasPermission(user, "song.edit");
                 class="flex items-center justify-center md:justify-start gap-3 p-2 text-text-secondary hover:text-accent-main transition font-bold rounded-lg hover:bg-white/5 w-full"
                 title="Subir Tono"
             >
-                <i
-                    class="fa-solid fa-plus w-5 h-5 flex items-center justify-center"
-                ></i>
+                <AppIcon name="plus" class="w-5 h-5 flex items-center justify-center" />
                 <span
                     class="tool-label hidden md:block whitespace-nowrap opacity-0 w-0 overflow-hidden transition-all duration-300"
                     >Subir Tono</span
@@ -51,9 +52,7 @@ const canEditSong = hasPermission(user, "song.edit");
                 class="flex items-center justify-center md:justify-start gap-3 p-2 text-text-secondary hover:text-accent-main transition font-bold rounded-lg hover:bg-white/5 w-full"
                 title="Bajar Tono"
             >
-                <i
-                    class="fa-solid fa-minus w-5 h-5 flex items-center justify-center"
-                ></i>
+                <AppIcon name="minus" class="w-5 h-5 flex items-center justify-center" />
                 <span
                     class="tool-label hidden md:block whitespace-nowrap opacity-0 w-0 overflow-hidden transition-all duration-300"
                     >Bajar Tono</span
@@ -68,9 +67,7 @@ const canEditSong = hasPermission(user, "song.edit");
             class="flex items-center justify-center md:justify-start gap-3 p-2 text-text-secondary hover:text-accent-main transition rounded-lg hover:bg-white/5 w-[calc(100%-1rem)]"
             title="Alternar Acordes"
         >
-            <i
-                class="fa-solid fa-music w-5 h-5 flex items-center justify-center"
-            ></i>
+            <AppIcon name="music" class="w-5 h-5 flex items-center justify-center" />
             <span
                 class="tool-label hidden md:block whitespace-nowrap opacity-0 w-0 overflow-hidden transition-all duration-300"
                 >Acordes</span
@@ -83,9 +80,7 @@ const canEditSong = hasPermission(user, "song.edit");
             class="flex items-center justify-center md:justify-start gap-3 p-2 text-text-secondary hover:text-accent-main transition rounded-lg hover:bg-white/5 w-[calc(100%-1rem)]"
             title="Descargar"
         >
-            <i
-                class="fa-solid fa-download w-5 h-5 flex items-center justify-center"
-            ></i>
+            <AppIcon name="download" class="w-5 h-5 flex items-center justify-center" />
             <span
                 class="tool-label hidden md:block whitespace-nowrap opacity-0 w-0 overflow-hidden transition-all duration-300"
                 >Descargar</span
@@ -99,20 +94,7 @@ const canEditSong = hasPermission(user, "song.edit");
                     class="flex items-center justify-center md:justify-start gap-3 p-2 text-text-secondary hover:text-accent-main transition rounded-lg hover:bg-white/5 w-[calc(100%-1rem)]"
                     title="Editar"
                 >
-                    <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="lucide lucide-pencil"
-                    >
-                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                        <path d="m15 5 4 4" />
-                    </svg>
+                    <AppIcon name="pencil" class="w-5 h-5 flex items-center justify-center" />
                     <span class="tool-label hidden md:block whitespace-nowrap opacity-0 w-0 overflow-hidden transition-all duration-300">
                         Editar
                     </span>

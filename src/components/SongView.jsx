@@ -9,7 +9,8 @@ export default function SongView({
     initialKey = 'C',
     originalKey = 'C',
     initialShowChords = false,
-    className = "pb-20"
+    className = "pb-20",
+    songId = null
 }) {
     const [content, setContent] = useState(() => {
         const safeContent = sanitizeSongContent(initialContent || "");
@@ -23,6 +24,21 @@ export default function SongView({
         }
         return safeContent;
     });
+
+    useEffect(() => {
+        if (!content && songId) {
+            import('../utils/offlineStorage').then(({ getSongOffline }) => {
+                getSongOffline(songId).then((offlineSong) => {
+                    if (offlineSong && offlineSong.content) {
+                        setContent(sanitizeSongContent(offlineSong.content));
+                        if (offlineSong.key) {
+                            setCurrentKey(offlineSong.key);
+                        }
+                    }
+                }).catch(() => {});
+            });
+        }
+    }, [songId, content]);
     const [currentKey, setCurrentKey] = useState(initialKey || originalKey);
     const [showChords, setShowChords] = useState(() => {
         return getChordsPreference(initialShowChords);

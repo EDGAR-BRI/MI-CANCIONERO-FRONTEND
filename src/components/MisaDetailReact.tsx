@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useRef, useEffect } from "react";
 import type { Misa, MisaSong, Moment, MisaMoment } from "../types/misa";
 import type { Song } from "../types/song";
@@ -22,6 +23,17 @@ import {
     showConfirm,
     showLoading,
 } from "../utils/alerts";
+import MisaOfflineDownloadButtonReact from "./MisaOfflineDownloadButtonReact";
+import {
+    saveMisaOffline,
+    getMisaOffline,
+    saveSongOffline,
+    getDownloadedSongs,
+    addOfflineAction,
+    getPendingOfflineActions,
+} from "../utils/offlineStorage";
+import { syncOfflineQueue } from "../services/offlineSync";
+import { isDeviceOnline } from "../utils/networkStatus";
 
 interface Props {
     initialMisa: Misa;
@@ -40,6 +52,65 @@ export default function MisaDetailReact({
 }: Props) {
     const [misa, setMisa] = useState<Misa>(initialMisa);
     const [allMoments, setAllMoments] = useState<Moment[]>(initialAllMoments);
+
+    // Offline sync state
+    const [pendingSyncCount, setPendingSyncCount] = useState(0);
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const refreshPendingActions = async () => {
+        try {
+            const actions = await getPendingOfflineActions(misa.id);
+            setPendingSyncCount(actions.length);
+        } catch {}
+    };
+
+    useEffect(() => {
+        refreshPendingActions();
+
+        const checkOfflineCache = async () => {
+            try {
+                const localMisa = await getMisaOffline(initialMisa.id);
+                if (localMisa && (localMisa.isDirty || !navigator.onLine)) {
+                    setMisa(localMisa);
+                }
+            } catch {}
+        };
+        checkOfflineCache();
+
+        const handleSyncEvent = () => {
+            refreshPendingActions();
+            checkOfflineCache();
+        };
+        const handleOfflineChange = () => {
+            refreshPendingActions();
+            checkOfflineCache();
+        };
+
+        window.addEventListener("cancionero-sync-complete", handleSyncEvent);
+        window.addEventListener("cancionero-offline-change", handleOfflineChange);
+        return () => {
+            window.removeEventListener("cancionero-sync-complete", handleSyncEvent);
+            window.removeEventListener("cancionero-offline-change", handleOfflineChange);
+        };
+    }, [initialMisa.id]);
+
+    const handleManualSync = async () => {
+        if (isSyncing) return;
+        setIsSyncing(true);
+        try {
+            const res = await syncOfflineQueue(token);
+            if (res.syncedCount > 0) {
+                await showSuccessToast("Sincronización completada", `Se aplicaron ${res.syncedCount} cambios en el servidor.`);
+            } else if (res.failedCount > 0) {
+                showError("Sincronización incompleta", "Algunos cambios no se pudieron sincronizar. Verifica tu conexión.");
+            }
+        } catch {
+            showError("Error", "Error al intentar sincronizar.");
+        } finally {
+            setIsSyncing(false);
+            refreshPendingActions();
+        }
+    };
 
     const isOwner = Boolean(
         misa.isOwner ||
@@ -264,19 +335,22 @@ export default function MisaDetailReact({
         const ministryIdNum = editMinistryId ? parseInt(editMinistryId) : null;
         setSavingMisaInfo(true);
         try {
-            const res = await updateMisa(
-                misa.id,
-                editTitle.trim(),
-                combinedDateTime,
-                editVisibility,
-                token,
-                editToken,
-                ministryIdNum
-            );
+            let res = { success: false, data: undefined as any, error: undefined as any };
+            if (isDeviceOnline()) {
+                res = await updateMisa(
+                    misa.id,
+                    editTitle.trim(),
+                    combinedDateTime,
+                    editVisibility,
+                    token,
+                    editToken,
+                    ministryIdNum
+                );
+            }
 
             if (res.success && res.data) {
-                setMisa((prev) => ({
-                    ...prev,
+                const updated = {
+                    ...misa,
                     title: editTitle.trim(),
                     dateMisa: combinedDateTime,
                     visibility: editVisibility,
@@ -286,14 +360,64 @@ export default function MisaDetailReact({
                         (ministryIdNum
                             ? (userMinistries.find((m) => m.id === ministryIdNum) as any)
                             : null),
-                }));
+                };
+                setMisa(updated);
+                await saveMisaOffline(updated);
                 setShowEditMisaModal(false);
                 await showSuccessToast("Información actualizada");
             } else {
-                showError("Error al guardar", res.error || "No se pudo actualizar la misa.");
+                const updated = {
+                    ...misa,
+                    title: editTitle.trim(),
+                    dateMisa: combinedDateTime,
+                    visibility: editVisibility,
+                    ministryId: ministryIdNum,
+                    isDirty: true,
+                };
+                setMisa(updated);
+                await saveMisaOffline(updated);
+                await addOfflineAction({
+                    misaId: misa.id,
+                    actionType: "UPDATE_MISA_INFO",
+                    payload: {
+                        id: misa.id,
+                        title: editTitle.trim(),
+                        dateMisa: combinedDateTime,
+                        visibility: editVisibility,
+                        editToken,
+                        ministryId: ministryIdNum,
+                    },
+                });
+                setShowEditMisaModal(false);
+                await showSuccessToast("Guardado sin conexión", "Se sincronizará cuando vuelvas a tener internet.");
+                refreshPendingActions();
             }
         } catch {
-            showError("Error", "Error al conectar con el servidor.");
+            const updated = {
+                ...misa,
+                title: editTitle.trim(),
+                dateMisa: combinedDateTime,
+                visibility: editVisibility,
+                ministryId: ministryIdNum,
+                isDirty: true,
+            };
+            setMisa(updated);
+            await saveMisaOffline(updated);
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "UPDATE_MISA_INFO",
+                payload: {
+                    id: misa.id,
+                    title: editTitle.trim(),
+                    dateMisa: combinedDateTime,
+                    visibility: editVisibility,
+                    editToken,
+                    ministryId: ministryIdNum,
+                },
+            });
+            setShowEditMisaModal(false);
+            await showSuccessToast("Guardado sin conexión", "Se sincronizará cuando vuelvas a tener internet.");
+            refreshPendingActions();
         } finally {
             setSavingMisaInfo(false);
         }
@@ -326,27 +450,25 @@ export default function MisaDetailReact({
     const handleAddMoment = async (momentId?: number, name?: string) => {
         setAddingMoment(true);
         try {
-            const res = await addMomentToMisa(
-                misa.id,
-                { momentId, name },
-                token,
-                editToken
-            );
+            let res = { success: false, data: undefined as any };
+            if (isDeviceOnline()) {
+                res = await addMomentToMisa(
+                    misa.id,
+                    { momentId, name },
+                    token,
+                    editToken
+                );
+            }
 
             if (res.success && res.data) {
                 const newMisaMoment: MisaMoment = res.data;
-                setMisa((prev) => {
-                    const currentMoments = prev.misaMoments || [];
-                    if (currentMoments.some((mm) => mm.momentId === newMisaMoment.momentId)) {
-                        return prev;
-                    }
-                    return {
-                        ...prev,
-                        misaMoments: [...currentMoments, newMisaMoment],
-                    };
-                });
+                const updatedMisa = {
+                    ...misa,
+                    misaMoments: [...(misa.misaMoments || []), newMisaMoment],
+                };
+                setMisa(updatedMisa);
+                await saveMisaOffline(updatedMisa);
 
-                // Add to allMoments list if it was a new moment
                 if (newMisaMoment.moment) {
                     setAllMoments((prev) => {
                         if (!prev.some((m) => m.id === newMisaMoment.moment.id)) {
@@ -363,10 +485,59 @@ export default function MisaDetailReact({
                     `Se añadió "${newMisaMoment.moment.nombre}" a la misa`
                 );
             } else {
-                showError("Error al agregar", res.error || "No se pudo agregar el momento.");
+                // Fallback offline
+                const targetMomentObj = momentId ? allMoments.find((m) => m.id === momentId) : null;
+                const newId = momentId || -Date.now();
+                const newMisaMoment: MisaMoment = {
+                    id: -Date.now(),
+                    misaId: misa.id,
+                    momentId: newId,
+                    order: (misa.misaMoments || []).length + 1,
+                    moment: targetMomentObj || { id: newId, nombre: name || "Nuevo Momento" },
+                };
+                const updatedMisa = {
+                    ...misa,
+                    misaMoments: [...(misa.misaMoments || []), newMisaMoment],
+                    isDirty: true,
+                };
+                setMisa(updatedMisa);
+                await saveMisaOffline(updatedMisa);
+                await addOfflineAction({
+                    misaId: misa.id,
+                    actionType: "ADD_MOMENT",
+                    payload: { misaId: misa.id, momentId, name, editToken },
+                });
+                setShowAddMomentModal(false);
+                setCustomMomentName("");
+                await showSuccessToast("Momento guardado sin conexión", "Se sincronizará al conectar a internet.");
+                refreshPendingActions();
             }
         } catch {
-            showError("Error", "Error de conexión al agregar momento.");
+            const targetMomentObj = momentId ? allMoments.find((m) => m.id === momentId) : null;
+            const newId = momentId || -Date.now();
+            const newMisaMoment: MisaMoment = {
+                id: -Date.now(),
+                misaId: misa.id,
+                momentId: newId,
+                order: (misa.misaMoments || []).length + 1,
+                moment: targetMomentObj || { id: newId, nombre: name || "Nuevo Momento" },
+            };
+            const updatedMisa = {
+                ...misa,
+                misaMoments: [...(misa.misaMoments || []), newMisaMoment],
+                isDirty: true,
+            };
+            setMisa(updatedMisa);
+            await saveMisaOffline(updatedMisa);
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "ADD_MOMENT",
+                payload: { misaId: misa.id, momentId, name, editToken },
+            });
+            setShowAddMomentModal(false);
+            setCustomMomentName("");
+            await showSuccessToast("Momento guardado sin conexión", "Se sincronizará al conectar a internet.");
+            refreshPendingActions();
         } finally {
             setAddingMoment(false);
         }
@@ -388,29 +559,60 @@ export default function MisaDetailReact({
         if (!confirm.isConfirmed) return;
 
         try {
-            const res = await removeMomentFromMisa(
-                misa.id,
-                momentId,
-                token,
-                editToken
-            );
+            let res = { success: false };
+            if (isDeviceOnline()) {
+                res = await removeMomentFromMisa(
+                    misa.id,
+                    momentId,
+                    token,
+                    editToken
+                );
+            }
+
+            const updatedMisa = {
+                ...misa,
+                misaMoments: (misa.misaMoments || []).filter(
+                    (mm) => mm.momentId !== momentId
+                ),
+                misaSongs: misa.misaSongs.filter(
+                    (ms) => ms.momentId !== momentId
+                ),
+                isDirty: !res.success,
+            };
+            setMisa(updatedMisa);
+            await saveMisaOffline(updatedMisa);
 
             if (res.success) {
-                setMisa((prev) => ({
-                    ...prev,
-                    misaMoments: (prev.misaMoments || []).filter(
-                        (mm) => mm.momentId !== momentId
-                    ),
-                    misaSongs: prev.misaSongs.filter(
-                        (ms) => ms.momentId !== momentId
-                    ),
-                }));
                 await showSuccessToast("Momento eliminado", `"${momentName}" fue quitado.`);
             } else {
-                showError("Error al eliminar", res.error || "No se pudo quitar el momento.");
+                await addOfflineAction({
+                    misaId: misa.id,
+                    actionType: "REMOVE_MOMENT",
+                    payload: { misaId: misa.id, momentId, editToken },
+                });
+                await showSuccessToast("Momento quitado (sin conexión)");
+                refreshPendingActions();
             }
         } catch {
-            showError("Error", "Error de conexión al eliminar momento.");
+            const updatedMisa = {
+                ...misa,
+                misaMoments: (misa.misaMoments || []).filter(
+                    (mm) => mm.momentId !== momentId
+                ),
+                misaSongs: misa.misaSongs.filter(
+                    (ms) => ms.momentId !== momentId
+                ),
+                isDirty: true,
+            };
+            setMisa(updatedMisa);
+            await saveMisaOffline(updatedMisa);
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "REMOVE_MOMENT",
+                payload: { misaId: misa.id, momentId, editToken },
+            });
+            await showSuccessToast("Momento quitado (sin conexión)");
+            refreshPendingActions();
         }
     };
 
@@ -428,14 +630,37 @@ export default function MisaDetailReact({
         setIsSearching(true);
         searchTimerRef.current = setTimeout(async () => {
             try {
+                if (!navigator.onLine) {
+                    const localSongs = await getDownloadedSongs();
+                    const filtered = localSongs.filter(s =>
+                        s.title.toLowerCase().includes(val.toLowerCase()) ||
+                        (s.lyrics && s.lyrics.toLowerCase().includes(val.toLowerCase())) ||
+                        (s.category?.name && s.category.name.toLowerCase().includes(val.toLowerCase()))
+                    );
+                    setSearchResults(filtered);
+                    return;
+                }
+
                 const res = await searchSongs(val.trim());
                 if (res.success && Array.isArray(res.data)) {
                     setSearchResults(res.data);
                 } else {
-                    setSearchResults([]);
+                    const localSongs = await getDownloadedSongs();
+                    const filtered = localSongs.filter(s =>
+                        s.title.toLowerCase().includes(val.toLowerCase()) ||
+                        (s.lyrics && s.lyrics.toLowerCase().includes(val.toLowerCase())) ||
+                        (s.category?.name && s.category.name.toLowerCase().includes(val.toLowerCase()))
+                    );
+                    setSearchResults(filtered);
                 }
             } catch {
-                setSearchResults([]);
+                const localSongs = await getDownloadedSongs();
+                const filtered = localSongs.filter(s =>
+                    s.title.toLowerCase().includes(val.toLowerCase()) ||
+                    (s.lyrics && s.lyrics.toLowerCase().includes(val.toLowerCase())) ||
+                    (s.category?.name && s.category.name.toLowerCase().includes(val.toLowerCase()))
+                );
+                setSearchResults(filtered);
             } finally {
                 setIsSearching(false);
             }
@@ -464,6 +689,10 @@ export default function MisaDetailReact({
 
         setIsAddingSong(true);
         try {
+            if (!navigator.onLine) {
+                throw new Error("offline");
+            }
+
             const res = await addSongToMisa(
                 misa.id,
                 selectedSong.id,
@@ -475,10 +704,14 @@ export default function MisaDetailReact({
 
             if (res.success && res.data) {
                 const newMisaSong: MisaSong = res.data;
-                setMisa((prev) => ({
-                    ...prev,
-                    misaSongs: [...prev.misaSongs, newMisaSong],
-                }));
+                const updatedMisa = {
+                    ...misa,
+                    misaSongs: [...misa.misaSongs, newMisaSong],
+                };
+                setMisa(updatedMisa);
+                await saveMisaOffline(updatedMisa);
+                await saveSongOffline(selectedSong);
+
                 setShowAddSongModal(false);
                 setSelectedSong(null);
                 setSearchQuery("");
@@ -488,10 +721,53 @@ export default function MisaDetailReact({
                     `"${selectedSong.title}" añadido con tono ${selectedTone}`
                 );
             } else {
-                showError("Error al agregar", res.error || "No se pudo añadir la canción.");
+                throw new Error(res.error || "No se pudo añadir la canción.");
             }
         } catch {
-            showError("Error", "Error de conexión al agregar el canto.");
+            // Offline fallback
+            const tempId = Date.now();
+            const newMisaSong: MisaSong = {
+                id: tempId,
+                misaId: misa.id,
+                songId: selectedSong.id,
+                momentId: targetMomentId,
+                order: misa.misaSongs.filter((ms) => ms.momentId === targetMomentId).length,
+                key: selectedTone,
+                song: selectedSong,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            };
+
+            const updatedMisa = {
+                ...misa,
+                misaSongs: [...misa.misaSongs, newMisaSong],
+                isDirty: true,
+            };
+            setMisa(updatedMisa);
+            await saveMisaOffline(updatedMisa);
+            await saveSongOffline(selectedSong);
+
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "ADD_SONG",
+                payload: {
+                    misaId: misa.id,
+                    songId: selectedSong.id,
+                    momentId: targetMomentId,
+                    key: selectedTone,
+                    editToken,
+                },
+            });
+
+            setShowAddSongModal(false);
+            setSelectedSong(null);
+            setSearchQuery("");
+            setSearchResults([]);
+            await showSuccessToast(
+                "Canto agregado (sin conexión)",
+                `"${selectedSong.title}" añadido con tono ${selectedTone}`
+            );
+            refreshPendingActions();
         } finally {
             setIsAddingSong(false);
         }
@@ -507,6 +783,10 @@ export default function MisaDetailReact({
         if (!confirm.isConfirmed) return;
 
         try {
+            if (!navigator.onLine) {
+                throw new Error("offline");
+            }
+
             const res = await removeSongFromMisa(
                 misa.id,
                 misaSongId,
@@ -514,16 +794,35 @@ export default function MisaDetailReact({
                 editToken
             );
             if (res.success) {
-                setMisa((prev) => ({
-                    ...prev,
-                    misaSongs: prev.misaSongs.filter((ms) => ms.id !== misaSongId),
-                }));
+                const updatedMisa = {
+                    ...misa,
+                    misaSongs: misa.misaSongs.filter((ms) => ms.id !== misaSongId),
+                };
+                setMisa(updatedMisa);
+                await saveMisaOffline(updatedMisa);
                 await showSuccessToast("Canto eliminado", `"${songTitle}" fue retirado.`);
             } else {
-                showError("Error", res.error || "No se pudo quitar la canción.");
+                throw new Error(res.error || "No se pudo quitar la canción.");
             }
         } catch {
-            showError("Error", "Error de conexión al quitar la canción.");
+            const updatedMisa = {
+                ...misa,
+                misaSongs: misa.misaSongs.filter((ms) => ms.id !== misaSongId),
+                isDirty: true,
+            };
+            setMisa(updatedMisa);
+            await saveMisaOffline(updatedMisa);
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "REMOVE_SONG",
+                payload: {
+                    misaId: misa.id,
+                    misaSongId,
+                    editToken,
+                },
+            });
+            await showSuccessToast("Canto retirado (sin conexión)", `"${songTitle}" fue retirado.`);
+            refreshPendingActions();
         }
     };
 
@@ -539,6 +838,10 @@ export default function MisaDetailReact({
         if (!editingSong) return;
 
         try {
+            if (!navigator.onLine) {
+                throw new Error("offline");
+            }
+
             const res = await updateMisaSong(
                 misa.id,
                 editingSong.id,
@@ -548,20 +851,44 @@ export default function MisaDetailReact({
             );
 
             if (res.success) {
-                setMisa((prev) => ({
-                    ...prev,
-                    misaSongs: prev.misaSongs.map((ms) =>
+                const updatedMisa = {
+                    ...misa,
+                    misaSongs: misa.misaSongs.map((ms) =>
                         ms.id === editingSong.id ? { ...ms, key: toneToSave } : ms
                     ),
-                }));
+                };
+                setMisa(updatedMisa);
+                await saveMisaOffline(updatedMisa);
                 setShowToneModal(false);
                 setEditingSong(null);
                 await showSuccessToast("Tono actualizado", `Tono cambiado a [${toneToSave}]`);
             } else {
-                showError("Error", res.error || "No se pudo actualizar el tono.");
+                throw new Error(res.error || "No se pudo actualizar el tono.");
             }
         } catch {
-            showError("Error", "Error de conexión al actualizar el tono.");
+            const updatedMisa = {
+                ...misa,
+                misaSongs: misa.misaSongs.map((ms) =>
+                    ms.id === editingSong.id ? { ...ms, key: toneToSave } : ms
+                ),
+                isDirty: true,
+            };
+            setMisa(updatedMisa);
+            await saveMisaOffline(updatedMisa);
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "UPDATE_SONG_KEY",
+                payload: {
+                    misaId: misa.id,
+                    misaSongId: editingSong.id,
+                    key: toneToSave,
+                    editToken,
+                },
+            });
+            setShowToneModal(false);
+            setEditingSong(null);
+            await showSuccessToast("Tono actualizado (sin conexión)", `Tono cambiado a [${toneToSave}]`);
+            refreshPendingActions();
         }
     };
 
@@ -616,17 +943,31 @@ export default function MisaDetailReact({
 
         // Update local state immediately
         const newMisaSongs = [...remainingSongs, ...newMomentSongs];
-        setMisa((prev) => ({ ...prev, misaSongs: newMisaSongs }));
+        const updatedMisa = { ...misa, misaSongs: newMisaSongs };
+        setMisa(updatedMisa);
+        await saveMisaOffline(updatedMisa);
 
         setDraggedSongInfo(null);
         setDragOverSongIndex(null);
 
-        // Persist order in backend
+        // Persist order in backend or offline queue
+        const orderedSongIds = newMomentSongs.map((ms) => ms.id);
         try {
-            const orderedSongIds = newMomentSongs.map((ms) => ms.id);
-            await reorderMisaSongs(misa.id, orderedSongIds, momentId, token, editToken);
-        } catch (err) {
-            console.error("Error persisting song order:", err);
+            if (!navigator.onLine) throw new Error("offline");
+            const res = await reorderMisaSongs(misa.id, orderedSongIds, momentId, token, editToken);
+            if (!res.success) throw new Error(res.error);
+        } catch {
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "REORDER_SONGS",
+                payload: {
+                    misaId: misa.id,
+                    momentId,
+                    orderedSongIds,
+                    editToken,
+                },
+            });
+            refreshPendingActions();
         }
     };
 
@@ -651,16 +992,31 @@ export default function MisaDetailReact({
         const [moved] = newMomentSongs.splice(index, 1);
         newMomentSongs.splice(targetIndex, 0, moved);
 
-        setMisa((prev) => ({
-            ...prev,
-            misaSongs: [...remainingSongs, ...newMomentSongs],
-        }));
+        const newMisaSongs = [...remainingSongs, ...newMomentSongs];
+        const updatedMisa = {
+            ...misa,
+            misaSongs: newMisaSongs,
+        };
+        setMisa(updatedMisa);
+        await saveMisaOffline(updatedMisa);
 
+        const orderedSongIds = newMomentSongs.map((ms) => ms.id);
         try {
-            const orderedSongIds = newMomentSongs.map((ms) => ms.id);
-            await reorderMisaSongs(misa.id, orderedSongIds, momentId, token, editToken);
-        } catch (err) {
-            console.error("Error moving song:", err);
+            if (!navigator.onLine) throw new Error("offline");
+            const res = await reorderMisaSongs(misa.id, orderedSongIds, momentId, token, editToken);
+            if (!res.success) throw new Error(res.error);
+        } catch {
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "REORDER_SONGS",
+                payload: {
+                    misaId: misa.id,
+                    momentId,
+                    orderedSongIds,
+                    editToken,
+                },
+            });
+            refreshPendingActions();
         }
     };
 
@@ -674,19 +1030,30 @@ export default function MisaDetailReact({
         newMoments.splice(targetIndex, 0, moved);
 
         const orderedIds = newMoments.map((m) => m.id);
-        setMisa((prev) => {
-            const currentMisaMoments = [...(prev.misaMoments || [])];
-            const updated = currentMisaMoments.map((mm) => {
-                const newOrder = orderedIds.indexOf(mm.momentId);
-                return { ...mm, order: newOrder !== -1 ? newOrder : mm.order };
-            });
-            return { ...prev, misaMoments: updated };
+        const currentMisaMoments = [...(misa.misaMoments || [])];
+        const updated = currentMisaMoments.map((mm) => {
+            const newOrder = orderedIds.indexOf(mm.momentId);
+            return { ...mm, order: newOrder !== -1 ? newOrder : mm.order };
         });
+        const updatedMisa = { ...misa, misaMoments: updated };
+        setMisa(updatedMisa);
+        await saveMisaOffline(updatedMisa);
 
         try {
-            await reorderMisaMoments(misa.id, orderedIds, token, editToken);
-        } catch (err) {
-            console.error("Error moving moment:", err);
+            if (!navigator.onLine) throw new Error("offline");
+            const res = await reorderMisaMoments(misa.id, orderedIds, token, editToken);
+            if (!res.success) throw new Error(res.error);
+        } catch {
+            await addOfflineAction({
+                misaId: misa.id,
+                actionType: "REORDER_MOMENTS",
+                payload: {
+                    misaId: misa.id,
+                    orderedMomentIds: orderedIds,
+                    editToken,
+                },
+            });
+            refreshPendingActions();
         }
     };
 
@@ -700,7 +1067,7 @@ export default function MisaDetailReact({
                         style={{ viewTransitionName: "misa-back-btn" } as React.CSSProperties}
                         className="inline-flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-text-secondary hover:text-accent-main transition-colors group shrink-0"
                     >
-                        <i className="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+                        <AppIcon name="arrow-left" className="transition-transform group-hover:-translate-x-1" />
                         <span className="sm:hidden">Volver</span>
                         <span className="hidden sm:inline">Volver a Misas</span>
                     </a>
@@ -716,7 +1083,7 @@ export default function MisaDetailReact({
                                 className="px-2 sm:px-3 py-1 rounded-lg bg-accent-main text-white font-bold flex items-center gap-1.5 shadow-sm"
                                 title="Vista actual: Edición de cantos y momentos"
                             >
-                                <i className="fa-solid fa-pen-to-square text-[10px] sm:text-xs"></i>
+                                <AppIcon name="pen-to-square" className="text-[10px] sm:text-xs" />
                                 <span>Edición</span>
                             </span>
                             <a
@@ -725,7 +1092,7 @@ export default function MisaDetailReact({
                                 className="px-2 sm:px-3 py-1 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 font-medium transition-colors flex items-center gap-1.5"
                                 title="Cambiar a Modo Lectura para cantar o descargar"
                             >
-                                <i className="fa-solid fa-book-open text-[10px] sm:text-xs"></i>
+                                <AppIcon name="book-open" className="text-[10px] sm:text-xs" />
                                 <span>Lectura</span>
                             </a>
                         </div>
@@ -739,11 +1106,7 @@ export default function MisaDetailReact({
                                     : "bg-white/5 text-text-secondary border-white/10"
                             }`}
                         >
-                            <i
-                                className={`fa-solid ${
-                                    misa.visibility === "PUBLIC" ? "fa-globe" : "fa-lock"
-                                } text-[10px]`}
-                            ></i>
+                            <AppIcon name={misa.visibility === "PUBLIC" ? "globe" : "lock"} className={`text-[10px]`} />
                             <span>{misa.visibility === "PUBLIC" ? "Pública" : "Privada"}</span>
                         </span>
                     </div>
@@ -758,7 +1121,7 @@ export default function MisaDetailReact({
                         <div className="space-y-2">
                             {misa.ministry && (
                                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-main/10 border border-accent-main/20 text-accent-main text-xs font-semibold">
-                                    <i className="fa-solid fa-users text-xs"></i>
+                                    <AppIcon name="users" className="text-xs" />
                                     <span>{misa.ministry.name}</span>
                                 </div>
                             )}
@@ -767,18 +1130,18 @@ export default function MisaDetailReact({
                             </h1>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-text-secondary">
                                 <span className="flex items-center gap-1.5 capitalize">
-                                    <i className="fa-solid fa-calendar-day text-accent-main"></i>
+                                    <AppIcon name="calendar-day" className="text-accent-main" />
                                     <span>{datePart}</span>
                                 </span>
                                 {timePart && (
                                     <span className="flex items-center gap-1.5 font-medium text-white/90">
-                                        <i className="fa-solid fa-clock text-accent-main"></i>
+                                        <AppIcon name="clock" className="text-accent-main" />
                                         <span>{timePart}</span>
                                     </span>
                                 )}
                                 {misa.user?.name && (
                                     <span className="flex items-center gap-1.5 text-text-secondary/80">
-                                        <i className="fa-solid fa-user text-xs"></i>
+                                        <AppIcon name="user" className="text-xs" />
                                         <span>{misa.user.name}</span>
                                     </span>
                                 )}
@@ -787,6 +1150,26 @@ export default function MisaDetailReact({
 
                         {/* Top Action Toolbar */}
                         <div className="flex items-center gap-2 pt-3 lg:pt-0 border-t lg:border-t-0 border-white/5 flex-nowrap shrink-0 overflow-x-auto">
+                            {/* Pending Sync Indicator */}
+                            {pendingSyncCount > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={handleManualSync}
+                                    disabled={isSyncing}
+                                    className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer whitespace-nowrap"
+                                    title="Hay cambios guardados sin conexión. Pulsa para sincronizar."
+                                >
+                                    {isSyncing ? (
+                                        <AppIcon name="arrows-rotate" spin className="text-xs" />
+                                    ) : (
+                                        <AppIcon name="cloud-arrow-up" className="text-xs" />
+                                    )}
+                                    <span>
+                                        {pendingSyncCount} {pendingSyncCount === 1 ? "pendiente" : "pendientes"}
+                                    </span>
+                                </button>
+                            )}
+
                             {/* Edit info button */}
                             {canEdit && (
                                 <button
@@ -799,10 +1182,18 @@ export default function MisaDetailReact({
                                     className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer whitespace-nowrap"
                                     title="Editar título, fecha, hora o visibilidad"
                                 >
-                                    <i className="fa-solid fa-pen-to-square text-xs text-text-secondary"></i>
+                                    <AppIcon name="pen-to-square" className="text-xs text-text-secondary" />
                                     <span>Editar Info</span>
                                 </button>
                             )}
+
+                            {/* Download Misa for Offline Use */}
+                            <MisaOfflineDownloadButtonReact
+                                misaId={misa.id}
+                                initialMisa={misa}
+                                token={token}
+                                variant="full"
+                            />
 
                             {/* Share button */}
                             <button
@@ -811,7 +1202,7 @@ export default function MisaDetailReact({
                                 className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer whitespace-nowrap"
                                 title="Compartir Misa"
                             >
-                                <i className="fa-solid fa-share-nodes text-xs text-text-secondary"></i>
+                                <AppIcon name="share-nodes" className="text-xs text-text-secondary" />
                                 <span>Compartir</span>
                             </button>
 
@@ -824,7 +1215,7 @@ export default function MisaDetailReact({
                                     className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 text-xs font-semibold transition-colors flex items-center gap-1.5 active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                     title="Crear una copia de esta misa en tu repertorio"
                                 >
-                                    <i className="fa-regular fa-copy text-xs"></i>
+                                    <AppIcon name="copy" className="text-xs" />
                                     <span>Clonar</span>
                                 </button>
                             )}
@@ -854,7 +1245,7 @@ export default function MisaDetailReact({
                             onClick={() => setShowAddMomentModal(true)}
                             className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-accent-main hover:text-white text-text-main border border-white/10 text-xs font-semibold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                         >
-                            <i className="fa-solid fa-plus text-accent-main hover:text-white text-xs"></i>
+                            <AppIcon name="plus" className="text-accent-main hover:text-white text-xs" />
                             <span>Gestionar Momentos</span>
                         </button>
                     )}
@@ -864,7 +1255,7 @@ export default function MisaDetailReact({
                 {activeMoments.length === 0 ? (
                     <div className="bg-bg-secondary border border-white/5 rounded-2xl p-8 text-center space-y-4">
                         <div className="w-12 h-12 rounded-full bg-accent-main/10 text-accent-main flex items-center justify-center mx-auto text-xl">
-                            <i className="fa-solid fa-music"></i>
+                            <AppIcon name="music" />
                         </div>
                         <div className="space-y-1">
                             <p className="font-semibold text-white">No hay momentos en esta misa</p>
@@ -878,7 +1269,7 @@ export default function MisaDetailReact({
                                 onClick={() => setShowAddMomentModal(true)}
                                 className="px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md inline-flex items-center gap-2"
                             >
-                                <i className="fa-solid fa-plus text-xs"></i>
+                                <AppIcon name="plus" className="text-xs" />
                                 <span>Agregar Momentos</span>
                             </button>
                         )}
@@ -907,7 +1298,7 @@ export default function MisaDetailReact({
                                                         className="p-1 text-text-secondary hover:text-white disabled:opacity-20 text-[11px] cursor-pointer"
                                                         title="Subir momento"
                                                     >
-                                                        <i className="fa-solid fa-chevron-up"></i>
+                                                        <AppIcon name="chevron-up" />
                                                     </button>
                                                     <button
                                                         type="button"
@@ -916,7 +1307,7 @@ export default function MisaDetailReact({
                                                         className="p-1 text-text-secondary hover:text-white disabled:opacity-20 text-[11px] cursor-pointer"
                                                         title="Bajar momento"
                                                     >
-                                                        <i className="fa-solid fa-chevron-down"></i>
+                                                        <AppIcon name="chevron-down" />
                                                     </button>
                                                 </div>
                                             )}
@@ -940,7 +1331,7 @@ export default function MisaDetailReact({
                                                         className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg bg-accent-main/15 text-accent-main hover:bg-accent-main hover:text-white transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer active:scale-95"
                                                         title={`Agregar canto a ${moment.nombre}`}
                                                     >
-                                                        <i className="fa-solid fa-plus text-xs"></i>
+                                                        <AppIcon name="plus" className="text-xs" />
                                                         <span className="hidden sm:inline">
                                                             Agregar Canto
                                                         </span>
@@ -956,7 +1347,7 @@ export default function MisaDetailReact({
                                                         className="p-1.5 sm:p-2 rounded-lg text-text-secondary hover:text-red-400 hover:bg-red-500/10 transition-colors text-xs cursor-pointer"
                                                         title={`Quitar momento "${moment.nombre}"`}
                                                     >
-                                                        <i className="fa-solid fa-trash-can text-xs"></i>
+                                                        <AppIcon name="trash-can" className="text-xs" />
                                                     </button>
                                                 </>
                                             )}
@@ -978,7 +1369,7 @@ export default function MisaDetailReact({
                                                         }
                                                         className="mt-2 text-xs font-semibold text-accent-main hover:underline inline-flex items-center gap-1 cursor-pointer"
                                                     >
-                                                        <i className="fa-solid fa-plus text-[10px]"></i>
+                                                        <AppIcon name="plus" className="text-[10px]" />
                                                         <span>Añadir canto</span>
                                                     </button>
                                                 )}
@@ -1030,7 +1421,7 @@ export default function MisaDetailReact({
                                                                         className="cursor-grab active:cursor-grabbing text-text-secondary hover:text-white p-1 select-none flex items-center justify-center shrink-0"
                                                                         title="Arrastra para cambiar de posición"
                                                                     >
-                                                                        <i className="fa-solid fa-grip-vertical text-xs"></i>
+                                                                        <AppIcon name="grip-vertical" className="text-xs" />
                                                                     </div>
                                                                 )}
 
@@ -1066,7 +1457,7 @@ export default function MisaDetailReact({
                                                                         title="Cambiar tono de este canto"
                                                                     >
                                                                         <span>{toneToDisplay}</span>
-                                                                        <i className="fa-solid fa-sliders text-[9px]"></i>
+                                                                        <AppIcon name="sliders" className="text-[9px]" />
                                                                     </button>
                                                                 ) : (
                                                                     <span className="px-2 py-1 rounded bg-white/5 text-accent-main font-mono text-xs font-bold border border-white/5">
@@ -1090,7 +1481,7 @@ export default function MisaDetailReact({
                                                                             className="p-1 text-text-secondary hover:text-white disabled:opacity-20 text-[11px]"
                                                                             title="Subir"
                                                                         >
-                                                                            <i className="fa-solid fa-chevron-up"></i>
+                                                                            <AppIcon name="chevron-up" />
                                                                         </button>
                                                                         <button
                                                                             type="button"
@@ -1108,7 +1499,7 @@ export default function MisaDetailReact({
                                                                             className="p-1 text-text-secondary hover:text-white disabled:opacity-20 text-[11px]"
                                                                             title="Bajar"
                                                                         >
-                                                                            <i className="fa-solid fa-chevron-down"></i>
+                                                                            <AppIcon name="chevron-down" />
                                                                         </button>
                                                                     </div>
                                                                 )}
@@ -1120,7 +1511,7 @@ export default function MisaDetailReact({
                                                                         className="p-1.5 text-text-secondary hover:text-white transition-colors"
                                                                         title="Editar letra original"
                                                                     >
-                                                                        <i className="fa-solid fa-pen text-xs"></i>
+                                                                        <AppIcon name="pen" className="text-xs" />
                                                                     </a>
                                                                 )}
 
@@ -1137,7 +1528,7 @@ export default function MisaDetailReact({
                                                                         className="p-1.5 text-text-secondary hover:text-red-400 transition-colors cursor-pointer"
                                                                         title="Quitar de la misa"
                                                                     >
-                                                                        <i className="fa-solid fa-xmark text-xs"></i>
+                                                                        <AppIcon name="xmark" className="text-xs" />
                                                                     </button>
                                                                 )}
                                                             </div>
@@ -1196,7 +1587,7 @@ export default function MisaDetailReact({
                                             onClick={() => handleAddMoment(mom.id)}
                                             className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-accent-main hover:text-white text-text-main text-xs font-semibold transition-all border border-white/10 flex items-center gap-1.5 active:scale-95 cursor-pointer disabled:opacity-50"
                                         >
-                                            <i className="fa-solid fa-plus text-[10px] text-accent-main group-hover:text-white"></i>
+                                            <AppIcon name="plus" className="text-[10px] text-accent-main group-hover:text-white" />
                                             <span>{mom.nombre}</span>
                                         </button>
                                     ))}
@@ -1316,7 +1707,7 @@ export default function MisaDetailReact({
                                 Buscar Canción <span className="text-accent-main">*</span>
                             </label>
                             <div className="relative">
-                                <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-zinc-500 text-sm"></i>
+                                <AppIcon name="magnifying-glass" className="absolute left-3.5 top-3 text-zinc-500 text-sm" />
                                 <input
                                     type="text"
                                     value={searchQuery}
@@ -1326,7 +1717,7 @@ export default function MisaDetailReact({
                                 />
                                 {isSearching && (
                                     <div className="absolute right-3 top-3">
-                                        <i className="fa-solid fa-spinner animate-spin text-accent-main text-sm"></i>
+                                        <AppIcon name="spinner" spin className="animate-spin text-accent-main text-sm" />
                                     </div>
                                 )}
                             </div>
@@ -1626,7 +2017,7 @@ export default function MisaDetailReact({
                                         Propietario de la misa
                                     </label>
                                     <div className="relative">
-                                        <i className="fa-solid fa-users absolute left-3.5 top-3 text-text-secondary text-sm"></i>
+                                        <AppIcon name="users" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
                                         <select
                                             value={editMinistryId}
                                             onChange={(e) => setEditMinistryId(e.target.value)}
@@ -1664,7 +2055,7 @@ export default function MisaDetailReact({
                                         }`}
                                     >
                                         <div className="flex items-center gap-1.5 font-bold text-xs">
-                                            <i className="fa-solid fa-lock text-accent-main"></i>
+                                            <AppIcon name="lock" className="text-accent-main" />
                                             <span>Privada</span>
                                         </div>
                                         <span className="text-[10px] text-text-secondary leading-tight">
@@ -1687,7 +2078,7 @@ export default function MisaDetailReact({
                                         }`}
                                     >
                                         <div className="flex items-center gap-1.5 font-bold text-xs">
-                                            <i className="fa-solid fa-globe text-emerald-400"></i>
+                                            <AppIcon name="globe" className="text-emerald-400" />
                                             <span>Pública</span>
                                         </div>
                                         <span className="text-[10px] text-text-secondary leading-tight">
@@ -1711,7 +2102,7 @@ export default function MisaDetailReact({
                                         onClick={handleDeleteMisa}
                                         className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap"
                                     >
-                                        <i className="fa-solid fa-trash-can text-xs"></i>
+                                        <AppIcon name="trash-can" className="text-xs" />
                                         <span>Eliminar Misa</span>
                                     </button>
                                 ) : (
@@ -1731,7 +2122,7 @@ export default function MisaDetailReact({
                                         disabled={savingMisaInfo}
                                         className="flex-1 sm:flex-none px-5 py-2.5 bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap"
                                     >
-                                        <i className="fa-solid fa-check text-xs"></i>
+                                        <AppIcon name="check" className="text-xs" />
                                         <span>{savingMisaInfo ? "Guardando..." : "Guardar Cambios"}</span>
                                     </button>
                                 </div>
@@ -1755,7 +2146,7 @@ export default function MisaDetailReact({
                         <div className="flex items-center justify-between pb-3 border-b border-white/10">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-accent-main/10 border border-accent-main/20 text-accent-main flex items-center justify-center shrink-0">
-                                    <i className="fa-regular fa-copy text-base"></i>
+                                    <AppIcon name="copy" className="text-base" />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-white tracking-tight">
@@ -1772,7 +2163,7 @@ export default function MisaDetailReact({
                                 className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                 title="Cerrar"
                             >
-                                <i className="fa-solid fa-xmark text-sm"></i>
+                                <AppIcon name="xmark" className="text-sm" />
                             </button>
                         </div>
 
@@ -1799,7 +2190,7 @@ export default function MisaDetailReact({
                                         Propietario de la copia
                                     </label>
                                     <div className="relative">
-                                        <i className="fa-solid fa-users absolute left-3.5 top-3 text-text-secondary text-sm"></i>
+                                        <AppIcon name="users" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
                                         <select
                                             value={cloneMinistryId}
                                             onChange={(e) => setCloneMinistryId(e.target.value)}
@@ -1815,7 +2206,7 @@ export default function MisaDetailReact({
                                     </div>
                                     {cloneMinistryId && (
                                         <p className="text-[11px] text-zinc-400 flex items-center gap-1.5 pt-0.5">
-                                            <i className="fa-solid fa-circle-info text-accent-main text-[10px]"></i>
+                                            <AppIcon name="circle-info" className="text-accent-main text-[10px]" />
                                             <span>Los integrantes de tu grupo podrán colaborar y editar la copia.</span>
                                         </p>
                                     )}
@@ -1838,7 +2229,7 @@ export default function MisaDetailReact({
                                         }`}
                                     >
                                         <div className="flex items-center gap-1.5 font-bold text-xs">
-                                            <i className="fa-solid fa-lock text-accent-main"></i>
+                                            <AppIcon name="lock" className="text-accent-main" />
                                             <span>Privada</span>
                                         </div>
                                         <span className="text-[10px] text-text-secondary leading-tight">
@@ -1857,7 +2248,7 @@ export default function MisaDetailReact({
                                         }`}
                                     >
                                         <div className="flex items-center gap-1.5 font-bold text-xs">
-                                            <i className="fa-solid fa-globe text-emerald-400"></i>
+                                            <AppIcon name="globe" className="text-emerald-400" />
                                             <span>Pública</span>
                                         </div>
                                         <span className="text-[10px] text-text-secondary leading-tight">
@@ -1886,12 +2277,12 @@ export default function MisaDetailReact({
                                 >
                                     {isCloning ? (
                                         <>
-                                            <i className="fa-solid fa-spinner animate-spin text-xs"></i>
+                                            <AppIcon name="spinner" spin className="animate-spin text-xs" />
                                             <span>Clonando...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <i className="fa-regular fa-copy text-xs"></i>
+                                            <AppIcon name="copy" className="text-xs" />
                                             <span>Clonar Misa</span>
                                         </>
                                     )}

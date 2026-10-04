@@ -1,7 +1,11 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
 import MisaCardSkeleton from './skeletons/MisaCardSkeleton';
 import { getMisas } from '../services/misas';
 import CreateMisaModal from './CreateMisaModal';
+import MisaOfflineDownloadButtonReact from './MisaOfflineDownloadButtonReact';
+import { getDownloadedMisas } from '../utils/offlineStorage';
+import { isDeviceOnline } from '../utils/networkStatus';
 
 const parseJwt = (tokenStr) => {
     if (!tokenStr) return null;
@@ -33,9 +37,36 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
         return null;
     });
     const [showAllPasadas, setShowAllPasadas] = useState(false);
+    const [filterTab, setFilterTab] = useState(() => (isDeviceOnline() ? "all" : "offline"));
+    const [offlineMisas, setOfflineMisas] = useState([]);
 
     // Modal state for creating misa (unified)
     const [showCreateModal, setShowCreateModal] = useState(false);
+
+    const loadOfflineMisas = async () => {
+        try {
+            const downloaded = await getDownloadedMisas();
+            setOfflineMisas(downloaded);
+            if (!isDeviceOnline() && downloaded.length > 0 && (!misas || misas.length === 0)) {
+                setMisas(downloaded);
+            }
+        } catch (e) {
+            console.error("Error loading offline misas:", e);
+        }
+    };
+
+    useEffect(() => {
+        loadOfflineMisas();
+
+        const handleOfflineChange = () => {
+            loadOfflineMisas();
+        };
+
+        window.addEventListener("cancionero-offline-change", handleOfflineChange);
+        return () => {
+            window.removeEventListener("cancionero-offline-change", handleOfflineChange);
+        };
+    }, []);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -56,6 +87,8 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
 
         if (initialMisas === undefined) {
             fetchMisas();
+        } else if (initialMisas.length === 0 && !isDeviceOnline()) {
+            loadOfflineMisas();
         }
     }, [token]);
 
@@ -65,11 +98,21 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
             const { success, data, error } = await getMisas(token);
             if (success && Array.isArray(data)) {
                 setMisas(data);
-            } else if (error) {
-                console.error("Error fetching misas:", error);
+            } else {
+                console.warn("Fallo al obtener misas online, verificando descargas offline:", error);
+                const downloaded = await getDownloadedMisas();
+                if (downloaded.length > 0) {
+                    setMisas(downloaded);
+                    setFilterTab("offline");
+                }
             }
         } catch (error) {
             console.error("Error fetching misas:", error);
+            const downloaded = await getDownloadedMisas();
+            if (downloaded.length > 0) {
+                setMisas(downloaded);
+                setFilterTab("offline");
+            }
         } finally {
             setLoading(false);
         }
@@ -96,35 +139,64 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
 
 
     const renderHeader = () => (
-        <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-accent-main/10 border border-accent-main/20 flex items-center justify-center text-accent-main shadow-inner">
-                    <i className="fa-solid fa-book-bible text-lg"></i>
-                </div>
-                <span>Misas</span>
-            </h1>
-            {token || currentUser ? (
+        <div className="mb-6 space-y-4">
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-accent-main/10 border border-accent-main/20 flex items-center justify-center text-accent-main shadow-inner">
+                        <AppIcon name="book-bible" className="text-lg" />
+                    </div>
+                    <span>Misas</span>
+                </h1>
+                {token || currentUser ? (
+                    <button
+                        type="button"
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95 cursor-pointer"
+                    >
+                        <AppIcon name="plus" className="text-xs" />
+                        <span>Nueva Misa</span>
+                    </button>
+                ) : (
+                    <a
+                        href="/login?redirect=/misas"
+                        className="border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold text-xs sm:text-sm py-2 px-3.5 rounded-xl transition-all inline-flex items-center gap-2"
+                    >
+                        <AppIcon name="user" className="text-xs" />
+                        <span>Ingresar</span>
+                    </a>
+                )}
+            </div>
+
+            {/* Pestañas Todas / Descargadas */}
+            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
                 <button
                     type="button"
-                    onClick={() => setShowCreateModal(true)}
-                    className="bg-accent-main hover:bg-amber-600 text-black font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95 cursor-pointer"
+                    onClick={() => setFilterTab("all")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                        filterTab === "all"
+                            ? "bg-accent-main text-white shadow-sm"
+                            : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/5"
+                    }`}
                 >
-                    <i className="fa-solid fa-plus text-xs"></i>
-                    <span>Nueva Misa</span>
+                    <AppIcon name="list" className="text-xs" />
+                    <span>Todas</span>
                 </button>
-            ) : (
-                <a
-                    href="/login?redirect=/misas"
-                    className="border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold text-xs sm:text-sm py-2 px-3.5 rounded-xl transition-all inline-flex items-center gap-2"
+
+                <button
+                    type="button"
+                    onClick={() => setFilterTab("offline")}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                        filterTab === "offline"
+                            ? "bg-accent-main text-white shadow-sm"
+                            : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/5"
+                    }`}
                 >
-                    <i className="fa-solid fa-user text-xs"></i>
-                    <span>Ingresar</span>
-                </a>
-            )}
+                    <AppIcon name="cloud-arrow-down" className="text-xs" />
+                    <span>Descargadas ({offlineMisas.length})</span>
+                </button>
+            </div>
         </div>
     );
-
-
 
     if (loading) {
         return (
@@ -161,13 +233,13 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
 
     const hasAnyMisasToShow = myMisasVigentes.length > 0 || allMyMisasPasadas.length > 0 || publicMisasVigentes.length > 0 || allPublicMisasPasadas.length > 0;
 
-    if (!loading && (!misas.length || !hasAnyMisasToShow)) {
+    if (!loading && filterTab === "all" && (!misas.length || !hasAnyMisasToShow)) {
         return (
             <div>
                 {renderHeader()}
-                <section className="bg-[#121212] border border-white/10 rounded-2xl p-10 text-center space-y-3 min-h-[300px] flex flex-col items-center justify-center">
+                <section className="bg-bg-secondary border border-white/5 rounded-2xl p-10 text-center space-y-3 min-h-[300px] flex flex-col items-center justify-center">
                     <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-zinc-500 mb-2">
-                        <i className="fa-solid fa-book-bible text-2xl"></i>
+                        <AppIcon name="book-bible" className="text-2xl" />
                     </div>
                     <p className="text-base font-bold text-white">
                         No hay misas registradas todavía
@@ -179,17 +251,17 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
                         <button
                             type="button"
                             onClick={() => setShowCreateModal(true)}
-                            className="mt-2 px-5 py-2.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95 cursor-pointer"
+                            className="mt-2 px-5 py-2.5 bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95 cursor-pointer"
                         >
-                            <i className="fa-solid fa-plus"></i>
+                            <AppIcon name="plus" />
                             <span>Crear Primera Misa</span>
                         </button>
                     ) : (
                         <a
                             href="/login?redirect=/misas"
-                            className="mt-2 px-5 py-2.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95"
+                            className="mt-2 px-5 py-2.5 bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs rounded-xl transition-all shadow-md inline-flex items-center gap-2 active:scale-95"
                         >
-                            <i className="fa-solid fa-arrow-right-to-bracket"></i>
+                            <AppIcon name="arrow-right-to-bracket" />
                             <span>Iniciar Sesión</span>
                         </a>
                     )}
@@ -210,19 +282,33 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
             key={misa.id}
             href={`/misas/view/${misa.id}`}
             data-astro-prefetch="hover"
-            className="block bg-[#121212] hover:bg-[#181818] p-4 sm:p-6 rounded-2xl transition-all border border-white/10 hover:border-accent-main/40 relative overflow-hidden group shadow-lg flex flex-col justify-between active:scale-[0.98]"
+            className="block bg-bg-secondary hover:border-accent-main/50 p-4 sm:p-5 rounded-xl transition-all border border-white/5 relative overflow-hidden group shadow-lg flex flex-col justify-between active:scale-[0.98]"
         >
             <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
-                    {misa.visibility === 'PUBLIC' ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
-                            <i className="fa-solid fa-globe text-[10px]"></i> Pública
-                        </span>
-                    ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-zinc-400 border border-white/10">
-                            <i className="fa-solid fa-lock text-[10px]"></i> Privada
-                        </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {misa.visibility === 'PUBLIC' ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 border border-emerald-500/20">
+                                <AppIcon name="globe" className="text-[10px]" /> Pública
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-zinc-400 border border-white/10">
+                                <AppIcon name="lock" className="text-[10px]" /> Privada
+                            </span>
+                        )}
+                        {misa.ministry && (
+                            <span className="text-[11px] px-2 py-0.5 rounded bg-white/5 text-text-secondary border border-white/10 truncate max-w-[120px]">
+                                {misa.ministry.name}
+                            </span>
+                        )}
+                    </div>
+
+                    <MisaOfflineDownloadButtonReact
+                        variant="icon"
+                        misaId={misa.id}
+                        initialMisa={misa}
+                        token={token}
+                    />
                 </div>
 
                 <h3 className="text-lg font-bold mb-2.5 text-white group-hover:text-accent-main transition-colors line-clamp-2">
@@ -230,14 +316,14 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
                 </h3>
 
                 <p className="text-zinc-400 text-xs flex items-center gap-2 mb-4">
-                    <i className="fa-solid fa-calendar-day text-accent-main/80"></i>
+                    <AppIcon name="calendar-day" className="text-accent-main/80" />
                     <span className="capitalize">{formatDate(misa.dateMisa)}</span>
                 </p>
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs mt-2">
                 <span className="text-zinc-400 flex items-center gap-1.5 font-medium">
-                    <i className="fa-solid fa-music text-zinc-500"></i>
+                    <AppIcon name="music" className="text-zinc-500" />
                     {misa.misaSongs?.length || 0} {(misa.misaSongs?.length === 1) ? 'canción' : 'canciones'}
                 </span>
                 {misa.user && misa.userId !== userId && (
@@ -253,33 +339,110 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
         <div className="space-y-10">
             {renderHeader()}
 
-            {/* My Misas Section */}
-            {(myMisasVigentes.length > 0 || allMyMisasPasadas.length > 0) && (
+            {filterTab === "offline" ? (
                 <section>
-                    <h2 className="text-xl sm:text-2xl font-bold mb-4 text-white border-b border-white/10 pb-2">
-                        Mis Misas
-                    </h2>
+                    <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-2">
+                        <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                            <AppIcon name="cloud-arrow-down" className="text-accent-main text-lg" />
+                            <span>Misas Descargadas en este Dispositivo</span>
+                        </h2>
+                    </div>
 
-                    {myMisasVigentes.length > 0 && (
-                        <div className="mb-8">
-                            <h3 className="text-sm sm:text-base font-semibold mb-3 text-accent-main flex items-center gap-2">
-                                <i className="fa-solid fa-circle-check text-xs"></i>
-                                <span>Próximas Celebraciones</span>
-                            </h3>
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                {myMisasVigentes.map(renderMisaCard)}
+                    {offlineMisas.length === 0 ? (
+                        <div className="bg-bg-secondary border border-white/5 rounded-2xl p-10 text-center space-y-3 min-h-[220px] flex flex-col items-center justify-center">
+                            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-text-secondary mb-1">
+                                <AppIcon name="cloud-arrow-down" className="text-xl" />
                             </div>
+                            <p className="text-base font-bold text-white">
+                                Aún no has descargado ninguna misa
+                            </p>
+                            <p className="text-xs text-text-secondary max-w-sm">
+                                Pulsa el ícono de descarga en cualquier misa para tenerla disponible sin internet cuando vayas a la iglesia.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {offlineMisas.map(renderMisaCard)}
                         </div>
                     )}
+                </section>
+            ) : (
+                <>
+                    {/* My Misas Section */}
+                    {(myMisasVigentes.length > 0 || allMyMisasPasadas.length > 0) && (
+                        <section>
+                            <h2 className="text-xl sm:text-2xl font-bold mb-4 text-white border-b border-white/10 pb-2">
+                                Mis Misas
+                            </h2>
 
-                    {allMyMisasPasadas.length > 0 && (
+                            {myMisasVigentes.length > 0 && (
+                                <div className="mb-8">
+                                    <h3 className="text-sm sm:text-base font-semibold mb-3 text-accent-main flex items-center gap-2">
+                                        <AppIcon name="circle-check" className="text-xs" />
+                                        <span>Próximas Celebraciones</span>
+                                    </h3>
+                                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                        {myMisasVigentes.map(renderMisaCard)}
+                                    </div>
+                                </div>
+                            )}
+
+                            {allMyMisasPasadas.length > 0 && (
+                                <div>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="text-sm sm:text-base font-semibold text-zinc-400 flex items-center gap-2">
+                                            <AppIcon name="clock-rotate-left" className="text-xs" />
+                                            <span>Anteriores</span>
+                                        </h3>
+                                        {!showAllPasadas && allMyMisasPasadas.length > 6 && (
+                                            <button
+                                                onClick={() => setShowAllPasadas(true)}
+                                                className="text-accent-main hover:text-amber-400 text-xs font-semibold cursor-pointer"
+                                            >
+                                                Ver todas &rarr;
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="grid gap-4 opacity-80 hover:opacity-100 transition-opacity sm:grid-cols-2 lg:grid-cols-3">
+                                        {myMisasPasadas.map(renderMisaCard)}
+                                    </div>
+
+                                    {showAllPasadas && (
+                                        <div className="mt-4 text-center">
+                                            <button
+                                                onClick={() => setShowAllPasadas(false)}
+                                                className="text-zinc-400 hover:text-white text-xs font-semibold hover:underline cursor-pointer"
+                                            >
+                                                Ver menos
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </section>
+                    )}
+
+                    {/* Public Misas Section */}
+                    {publicMisasVigentes.length > 0 && (
+                        <section>
+                            <h2 className="text-xl sm:text-2xl font-bold mb-4 text-white border-b border-white/10 pb-2">
+                                Misas Públicas
+                            </h2>
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {publicMisasVigentes.map(renderMisaCard)}
+                            </div>
+                        </section>
+                    )}
+
+                    {allPublicMisasPasadas.length > 0 && (
                         <div>
                             <div className="flex justify-between items-center mb-3">
                                 <h3 className="text-sm sm:text-base font-semibold text-zinc-400 flex items-center gap-2">
-                                    <i className="fa-solid fa-clock-rotate-left text-xs"></i>
-                                    <span>Anteriores</span>
+                                    <AppIcon name="clock-rotate-left" className="text-xs" />
+                                    <span>Misas Públicas Anteriores</span>
                                 </h3>
-                                {!showAllPasadas && allMyMisasPasadas.length > 6 && (
+                                {!showAllPasadas && allPublicMisasPasadas.length > 6 && (
                                     <button
                                         onClick={() => setShowAllPasadas(true)}
                                         className="text-accent-main hover:text-amber-400 text-xs font-semibold cursor-pointer"
@@ -290,7 +453,7 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
                             </div>
 
                             <div className="grid gap-4 opacity-80 hover:opacity-100 transition-opacity sm:grid-cols-2 lg:grid-cols-3">
-                                {myMisasPasadas.map(renderMisaCard)}
+                                <>{publicMisasPasadas.map(renderMisaCard)}</>
                             </div>
 
                             {showAllPasadas && (
@@ -305,53 +468,7 @@ const MisaListReact = ({ token, currentUser, initialMisas }) => {
                             )}
                         </div>
                     )}
-                </section>
-            )}
-
-            {/* Public Misas Section */}
-            {publicMisasVigentes.length > 0 && (
-                <section>
-                    <h2 className="text-xl sm:text-2xl font-bold mb-4 text-white border-b border-white/10 pb-2">
-                        Misas Públicas
-                    </h2>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {publicMisasVigentes.map(renderMisaCard)}
-                    </div>
-                </section>
-            )}
-
-            {allPublicMisasPasadas.length > 0 && (
-                <div>
-                    <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-sm sm:text-base font-semibold text-zinc-400 flex items-center gap-2">
-                            <i className="fa-solid fa-clock-rotate-left text-xs"></i>
-                            <span>Misas Públicas Anteriores</span>
-                        </h3>
-                        {!showAllPasadas && allPublicMisasPasadas.length > 6 && (
-                            <button
-                                onClick={() => setShowAllPasadas(true)}
-                                className="text-accent-main hover:text-amber-400 text-xs font-semibold cursor-pointer"
-                            >
-                                Ver todas &rarr;
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="grid gap-4 opacity-80 hover:opacity-100 transition-opacity sm:grid-cols-2 lg:grid-cols-3">
-                        {publicMisasPasadas.map(renderMisaCard)}
-                    </div>
-
-                    {showAllPasadas && (
-                        <div className="mt-4 text-center">
-                            <button
-                                onClick={() => setShowAllPasadas(false)}
-                                className="text-zinc-400 hover:text-white text-xs font-semibold hover:underline cursor-pointer"
-                            >
-                                Ver menos
-                            </button>
-                        </div>
-                    )}
-                </div>
+                </>
             )}
 
             <CreateMisaModal

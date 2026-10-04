@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
 import { getMyMinistries, createMinistry, joinMinistryByCode, setMinistriesAuthToken } from '../services/ministries';
 import { updateProfile } from '../services/auth';
@@ -313,7 +314,7 @@ export default function ProfileReact({ user, token }) {
                             title="Cambiar avatar"
                             className="absolute -bottom-1 -right-1 w-7 h-7 rounded-xl bg-accent-main hover:bg-amber-500 text-black flex items-center justify-center shadow-lg transition-transform hover:scale-110 active:scale-95 border-2 border-[#171717] cursor-pointer"
                         >
-                            <i className="fa-solid fa-camera text-[11px]"></i>
+                            <AppIcon name="camera" className="text-[11px]" />
                         </button>
                     </div>
 
@@ -336,12 +337,12 @@ export default function ProfileReact({ user, token }) {
                             )}
                         </div>
                         <p className="text-zinc-400 text-sm flex items-center justify-center sm:justify-start gap-2">
-                            <i className="fa-regular fa-envelope text-zinc-500"></i>
+                            <AppIcon name="envelope" className="text-zinc-500" />
                             {currentUser?.email || 'Sin correo'}
                         </p>
                         {currentUser?.phoneNumber && (
                             <p className="text-zinc-400 text-sm flex items-center justify-center sm:justify-start gap-2">
-                                <i className="fa-solid fa-phone text-zinc-500"></i>
+                                <AppIcon name="phone" className="text-zinc-500" />
                                 {currentUser.phoneNumber}
                             </p>
                         )}
@@ -351,7 +352,7 @@ export default function ProfileReact({ user, token }) {
                                 onClick={openAvatarModal}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-accent-main hover:text-amber-400 font-medium transition-colors cursor-pointer"
                             >
-                                <i className="fa-solid fa-paintbrush"></i>
+                                <AppIcon name="paintbrush" />
                                 <span>Personalizar mi avatar</span>
                             </button>
                             <button
@@ -359,7 +360,7 @@ export default function ProfileReact({ user, token }) {
                                 onClick={openEditProfileModal}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-zinc-300 hover:text-white font-medium transition-colors cursor-pointer"
                             >
-                                <i className="fa-solid fa-user-pen"></i>
+                                <AppIcon name="user-pen" />
                                 <span>Editar mis datos</span>
                             </button>
                         </div>
@@ -371,7 +372,7 @@ export default function ProfileReact({ user, token }) {
                             href="/logout"
                             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
                         >
-                            <i className="fa-solid fa-arrow-right-from-bracket"></i>
+                            <AppIcon name="arrow-right-from-bracket" />
                             <span>Cerrar Sesión</span>
                         </a>
                     </div>
@@ -382,7 +383,7 @@ export default function ProfileReact({ user, token }) {
             {pendingRequests.length > 0 && (
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 space-y-3">
                     <h3 className="text-sm font-semibold text-amber-400 flex items-center gap-2">
-                        <i className="fa-solid fa-clock"></i>
+                        <AppIcon name="clock" />
                         <span>Solicitudes de Ingreso Pendientes ({pendingRequests.length})</span>
                     </h3>
                     <div className="grid gap-2">
@@ -402,7 +403,7 @@ export default function ProfileReact({ user, token }) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        <i className="fa-solid fa-users-viewfinder text-accent-main"></i>
+                        <AppIcon name="users-viewfinder" className="text-accent-main" />
                         <span>Mis Ministerios de Música</span>
                     </h3>
                     <p className="text-zinc-400 text-sm">
@@ -416,7 +417,7 @@ export default function ProfileReact({ user, token }) {
                         onClick={() => setShowJoinModal(true)}
                         className="h-11 sm:h-10 px-2.5 sm:px-4 bg-[#262626] hover:bg-[#333333] border border-white/10 rounded-xl text-xs sm:text-sm font-semibold text-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
                     >
-                        <i className="fa-solid fa-key text-accent-main shrink-0 text-xs sm:text-sm"></i>
+                        <AppIcon name="key" className="text-accent-main shrink-0 text-xs sm:text-sm" />
                         <span className="truncate">
                             Unirme <span className="hidden min-[380px]:inline">con Código</span>
                         </span>
@@ -426,7 +427,7 @@ export default function ProfileReact({ user, token }) {
                         onClick={() => setShowCreateModal(true)}
                         className="h-11 sm:h-10 px-2.5 sm:px-4 bg-accent-main hover:bg-amber-600 rounded-xl text-xs sm:text-sm font-bold text-black transition-all shadow-lg shadow-accent-main/20 active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
                     >
-                        <i className="fa-solid fa-plus shrink-0 text-xs sm:text-sm"></i>
+                        <AppIcon name="plus" className="shrink-0 text-xs sm:text-sm" />
                         <span className="truncate">
                             Crear <span className="hidden min-[380px]:inline">Ministerio</span>
                         </span>
@@ -444,7 +445,7 @@ export default function ProfileReact({ user, token }) {
             ) : ministries.length === 0 ? (
                 <div className="bg-[#171717] border border-white/10 border-dashed rounded-2xl p-12 text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-accent-main/10 text-accent-main flex items-center justify-center mx-auto text-2xl">
-                        <i className="fa-solid fa-music"></i>
+                        <AppIcon name="music" />
                     </div>
                     <div className="space-y-1">
                         <h4 className="text-lg font-bold text-white">Aún no perteneces a ningún ministerio</h4>
@@ -458,7 +459,7 @@ export default function ProfileReact({ user, token }) {
                             onClick={() => setShowJoinModal(true)}
                             className="h-10 px-4 bg-[#262626] hover:bg-[#333333] border border-white/10 rounded-xl text-sm font-semibold text-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <i className="fa-solid fa-key text-accent-main"></i>
+                            <AppIcon name="key" className="text-accent-main" />
                             <span>Unirme con Código</span>
                         </button>
                         <button
@@ -466,7 +467,7 @@ export default function ProfileReact({ user, token }) {
                             onClick={() => setShowCreateModal(true)}
                             className="h-10 px-5 bg-accent-main hover:bg-amber-600 text-black font-bold text-sm rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <i className="fa-solid fa-plus"></i>
+                            <AppIcon name="plus" />
                             <span>Crear Ministerio</span>
                         </button>
                     </div>
@@ -483,7 +484,7 @@ export default function ProfileReact({ user, token }) {
                                 <div className="space-y-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="w-12 h-12 rounded-xl bg-accent-main/10 border border-accent-main/20 text-accent-main flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
-                                            <i className="fa-solid fa-church"></i>
+                                            <AppIcon name="church" />
                                         </div>
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${isAdmin
                                                 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
@@ -506,12 +507,12 @@ export default function ProfileReact({ user, token }) {
                                 <div className="pt-5 mt-4 border-t border-white/5 space-y-3">
                                     <div className="flex items-center justify-between text-xs text-zinc-400">
                                         <span className="flex items-center gap-1.5">
-                                            <i className="fa-solid fa-user-group text-zinc-500"></i>
+                                            <AppIcon name="user-group" className="text-zinc-500" />
                                             {m.memberCount} {m.memberCount === 1 ? 'integrante' : 'integrantes'}
                                         </span>
                                         {m.foundedAt && (
                                             <span className="flex items-center gap-1 text-zinc-500">
-                                                <i className="fa-regular fa-calendar"></i>
+                                                <AppIcon name="calendar" />
                                                 {new Date(m.foundedAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'short' })}
                                             </span>
                                         )}
@@ -522,7 +523,7 @@ export default function ProfileReact({ user, token }) {
                                         className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-[#262626] hover:bg-accent-main hover:text-black font-semibold text-xs text-white transition-all active:scale-95"
                                     >
                                         <span>Entrar al Ministerio</span>
-                                        <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                                        <AppIcon name="arrow-right" className="text-[10px]" />
                                     </a>
                                 </div>
                             </div>
@@ -537,14 +538,14 @@ export default function ProfileReact({ user, token }) {
                     <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-5">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <i className="fa-solid fa-plus-circle text-accent-main"></i>
+                                <AppIcon name="plus-circle" className="text-accent-main" />
                                 <span>Crear Nuevo Ministerio</span>
                             </h3>
                             <button
                                 onClick={() => setShowCreateModal(false)}
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <AppIcon name="xmark" />
                             </button>
                         </div>
 
@@ -644,14 +645,14 @@ export default function ProfileReact({ user, token }) {
                     <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-5">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <i className="fa-solid fa-key text-accent-main"></i>
+                                <AppIcon name="key" className="text-accent-main" />
                                 <span>Unirse a un Ministerio</span>
                             </h3>
                             <button
                                 onClick={() => setShowJoinModal(false)}
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <AppIcon name="xmark" />
                             </button>
                         </div>
 
@@ -704,7 +705,7 @@ export default function ProfileReact({ user, token }) {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2.5">
                                     <div className="w-8 h-8 rounded-xl bg-accent-main/10 text-accent-main flex items-center justify-center text-sm">
-                                        <i className="fa-solid fa-wand-magic-sparkles"></i>
+                                        <AppIcon name="wand-magic-sparkles" />
                                     </div>
                                     <div>
                                         <h3 className="text-base font-bold text-white leading-tight">Personalizar Avatar</h3>
@@ -715,7 +716,7 @@ export default function ProfileReact({ user, token }) {
                                     onClick={() => setShowAvatarModal(false)}
                                     className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                 >
-                                    <i className="fa-solid fa-xmark"></i>
+                                    <AppIcon name="xmark" />
                                 </button>
                             </div>
 
@@ -784,7 +785,7 @@ export default function ProfileReact({ user, token }) {
                                         : 'text-zinc-400 hover:text-white hover:bg-white/5'
                                 }`}
                             >
-                                <i className="fa-solid fa-shapes text-xs sm:text-sm shrink-0"></i>
+                                <AppIcon name="shapes" className="text-xs sm:text-sm shrink-0" />
                                 <span className="truncate">
                                     <span className="hidden sm:inline">Estilo </span>Blobatar
                                 </span>
@@ -801,7 +802,7 @@ export default function ProfileReact({ user, token }) {
                                         : 'text-zinc-400 hover:text-white hover:bg-white/5'
                                 }`}
                             >
-                                <i className="fa-solid fa-link text-xs sm:text-sm shrink-0"></i>
+                                <AppIcon name="link" className="text-xs sm:text-sm shrink-0" />
                                 <span className="truncate">
                                     <span className="hidden sm:inline">Foto por </span>Enlace
                                 </span>
@@ -815,7 +816,7 @@ export default function ProfileReact({ user, token }) {
                                 <div className="space-y-3 bg-[#0a0a0a] p-3.5 rounded-2xl border border-white/10">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                                            <i className="fa-solid fa-face-smile text-accent-main"></i>
+                                            <AppIcon name="face-smile" className="text-accent-main" />
                                             <span>Expresión del Avatar</span>
                                         </span>
                                         <span className="text-xs font-mono text-accent-main font-bold">
@@ -863,7 +864,7 @@ export default function ProfileReact({ user, token }) {
                                 <div className="space-y-3 bg-[#0a0a0a] p-3.5 rounded-2xl border border-white/10">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                                            <i className="fa-solid fa-palette text-accent-main"></i>
+                                            <AppIcon name="palette" className="text-accent-main" />
                                             <span>Editar Color del Avatar</span>
                                         </span>
                                         <span className="text-xs font-mono text-accent-main font-bold">
@@ -937,7 +938,7 @@ export default function ProfileReact({ user, token }) {
                                             }}
                                             className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-medium active:scale-95 transition-transform cursor-pointer"
                                         >
-                                            <i className="fa-solid fa-dice"></i>
+                                            <AppIcon name="dice" />
                                             <span>Barajar opciones</span>
                                         </button>
                                     </div>
@@ -999,7 +1000,7 @@ export default function ProfileReact({ user, token }) {
                                             title="Usar mi nombre"
                                             className="px-3 bg-zinc-800 hover:bg-zinc-700 text-amber-400 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer shrink-0"
                                         >
-                                            <i className="fa-solid fa-user"></i>
+                                            <AppIcon name="user" />
                                             <span className="hidden sm:inline">Mi Nombre</span>
                                         </button>
                                     </div>
@@ -1062,7 +1063,7 @@ export default function ProfileReact({ user, token }) {
                                     </>
                                 ) : (
                                     <>
-                                        <i className="fa-solid fa-check"></i>
+                                        <AppIcon name="check" />
                                         <span>Guardar Avatar</span>
                                     </>
                                 )}
@@ -1080,7 +1081,7 @@ export default function ProfileReact({ user, token }) {
                         <div className="bg-[#171717] border-b border-white/10 px-5 py-4 sm:px-6 flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-xl bg-accent-main/10 text-accent-main flex items-center justify-center text-sm">
-                                    <i className="fa-solid fa-user-pen"></i>
+                                    <AppIcon name="user-pen" />
                                 </div>
                                 <div>
                                     <h3 className="text-base font-bold text-white leading-tight">Editar Mis Datos</h3>
@@ -1092,7 +1093,7 @@ export default function ProfileReact({ user, token }) {
                                 onClick={() => setShowEditProfileModal(false)}
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <AppIcon name="xmark" />
                             </button>
                         </div>
 
@@ -1148,7 +1149,7 @@ export default function ProfileReact({ user, token }) {
                                         </>
                                     ) : (
                                         <>
-                                            <i className="fa-solid fa-check"></i>
+                                            <AppIcon name="check" />
                                             <span>Guardar Cambios</span>
                                         </>
                                     )}

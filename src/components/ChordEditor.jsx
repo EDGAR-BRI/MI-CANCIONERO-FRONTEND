@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { transposeText, transposeChord } from '../utils/music';
 import ChordToolbar from './ChordToolbar';
 import SongLine from './SongLine';
+import AppIcon from './Ui/AppIcon';
 
 export default function ChordEditor({ name = "content", initialContent = "", initialKey = "C" }) {
     // Estado inicial: si viene initialContent usarlo, si no, revisar si hay datos precargados en sessionStorage
@@ -170,19 +171,7 @@ export default function ChordEditor({ name = "content", initialContent = "", ini
                             : 'text-text-secondary hover:text-white hover:bg-white/5'
                     }`}
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-4 h-4 shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                    </svg>
+                    <AppIcon name="pen-to-square" className="w-4 h-4 shrink-0" />
                     <span>Editor</span>
                 </button>
                 <button
@@ -194,19 +183,7 @@ export default function ChordEditor({ name = "content", initialContent = "", ini
                             : 'text-text-secondary hover:text-white hover:bg-white/5'
                     }`}
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-4 h-4 shrink-0"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    <AppIcon name="eye" className="w-4 h-4 shrink-0" />
                     <span>Vista Previa</span>
                 </button>
             </div>

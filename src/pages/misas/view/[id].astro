@@ -1,4 +1,5 @@
 ---
+import AppIcon from "@/components/Ui/AppIcon.astro";
 import Layout from "../../../layouts/Layout.astro";
 import type { Misa, Moment } from "../../../types/misa";
 import { getMoments } from "../../../services/moments";
@@ -6,6 +7,7 @@ import { getUserFromToken } from "../../../utils/auth";
 import SongView from "../../../components/SongView.jsx";
 import HeaderLyric from "../../../components/HeaderLyric.astro";
 import MisaAutoScrollReact from "@/components/MisaAutoScrollReact.jsx";
+import MisaOfflineDownloadButtonReact from "@/components/MisaOfflineDownloadButtonReact";
 import { API_URL } from "@/services/songs";
 
 const { id } = Astro.params;
@@ -123,7 +125,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
             isForbidden ? (
                 <div class="bg-bg-secondary border border-white/5 rounded-2xl p-8 sm:p-12 text-center my-auto max-w-md mx-auto space-y-5 shadow-xl">
                     <div class="w-14 h-14 rounded-2xl bg-white/5 text-amber-400 flex items-center justify-center mx-auto text-2xl border border-white/10">
-                        <i class="fa-solid fa-lock"></i>
+                        <AppIcon name="lock" />
                     </div>
                     <div class="space-y-2">
                         <h2 class="text-xl font-bold text-white">Misa Privada</h2>
@@ -152,7 +154,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                 href={`/login?redirect=/misas/view/${id}`}
                                 class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
                             >
-                                <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                                <AppIcon name="right-to-bracket" class="text-xs" />
                                 <span>Iniciar Sesión</span>
                             </a>
                         )}
@@ -160,7 +162,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                             href="/misas"
                             class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold text-xs transition-colors"
                         >
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                            <AppIcon name="arrow-left" class="text-xs" />
                             <span>Volver a Misas</span>
                         </a>
                     </div>
@@ -168,19 +170,28 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
             ) : error || !misa ? (
                 <div class="bg-bg-secondary border border-white/5 rounded-2xl p-8 sm:p-12 text-center my-auto max-w-md mx-auto space-y-4 shadow-xl">
                     <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto text-xl">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <AppIcon name="triangle-exclamation" />
                     </div>
                     <div class="space-y-1">
                         <h2 class="text-xl font-bold text-white">Misa no disponible</h2>
                         <p class="text-xs text-text-secondary">{error || "No se pudo cargar la información."}</p>
                     </div>
-                    <a
-                        href="/misas"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
-                    >
-                        <i class="fa-solid fa-arrow-left text-xs"></i>
-                        <span>Volver a Misas</span>
-                    </a>
+                    <div class="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
+                        <a
+                            href="/offline"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
+                        >
+                            <AppIcon name="cloud-arrow-down" class="text-xs" />
+                            <span>Ver en Modo Offline</span>
+                        </a>
+                        <a
+                            href="/misas"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold text-xs transition-colors"
+                        >
+                            <AppIcon name="arrow-left" class="text-xs" />
+                            <span>Volver a Misas</span>
+                        </a>
+                    </div>
                 </div>
             ) : (
                 <div class="w-full flex flex-col gap-6 pb-24 md:pb-12">
@@ -192,7 +203,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                 style="view-transition-name: misa-back-btn;"
                                 class="inline-flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-text-secondary hover:text-accent-main transition-colors group shrink-0"
                             >
-                                <i class="fa-solid fa-arrow-left transition-transform group-hover:-translate-x-1"></i>
+                                <AppIcon name="arrow-left" class="transition-transform group-hover:-translate-x-1" />
                                 <span class="sm:hidden">Volver</span>
                                 <span class="hidden sm:inline">Volver a Misas</span>
                             </a>
@@ -209,7 +220,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                         class="px-2 sm:px-3 py-1 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 font-medium transition-colors flex items-center gap-1.5"
                                         title="Cambiar a Modo Edición y gestión"
                                     >
-                                        <i class="fa-solid fa-pen-to-square text-[10px] sm:text-xs"></i>
+                                        <AppIcon name="pen-to-square" class="text-[10px] sm:text-xs" />
                                         <span>Edición</span>
                                     </a>
                                     <span
@@ -217,7 +228,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                         class="px-2 sm:px-3 py-1 rounded-lg bg-accent-main text-white font-bold flex items-center gap-1.5 shadow-sm"
                                         title="Vista actual: Modo Lectura"
                                     >
-                                        <i class="fa-solid fa-book-open text-[10px] sm:text-xs"></i>
+                                        <AppIcon name="book-open" class="text-[10px] sm:text-xs" />
                                         <span>Lectura</span>
                                     </span>
                                 </div>
@@ -231,11 +242,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                             : "bg-white/5 text-text-secondary border-white/10"
                                     }`}
                                 >
-                                    <i
-                                        class={`fa-solid ${
-                                            misa.visibility === "PUBLIC" ? "fa-globe" : "fa-lock"
-                                        } text-[10px]`}
-                                    ></i>
+                                    <AppIcon name={misa.visibility === "PUBLIC" ? "globe" : "lock"} class={`text-[10px]`} />
                                     <span>{misa.visibility === "PUBLIC" ? "Pública" : "Privada"}</span>
                                 </span>
                             </div>
@@ -250,7 +257,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                 <div class="space-y-2">
                                     {misa.ministry && (
                                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-main/10 border border-accent-main/20 text-accent-main text-xs font-semibold">
-                                            <i class="fa-solid fa-users text-xs"></i>
+                                            <AppIcon name="users" class="text-xs" />
                                             <span>{misa.ministry.name}</span>
                                         </div>
                                     )}
@@ -259,31 +266,39 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                     </h1>
                                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-text-secondary">
                                         <span class="flex items-center gap-1.5 capitalize">
-                                            <i class="fa-solid fa-calendar-day text-accent-main"></i>
+                                            <AppIcon name="calendar-day" class="text-accent-main" />
                                             <span>{datePart}</span>
                                         </span>
                                         {timePart && (
                                             <span class="flex items-center gap-1.5 font-medium text-white/90">
-                                                <i class="fa-solid fa-clock text-accent-main"></i>
+                                                <AppIcon name="clock" class="text-accent-main" />
                                                 <span>{timePart}</span>
                                             </span>
                                         )}
                                         {misa.user?.name && (
                                             <span class="flex items-center gap-1.5 text-text-secondary/80">
-                                                <i class="fa-solid fa-user text-xs"></i>
+                                                <AppIcon name="user" class="text-xs" />
                                                 <span>{misa.user.name}</span>
                                             </span>
                                         )}
                                         {totalSongsCount > 0 && (
                                             <span class="flex items-center gap-1.5 text-text-secondary/70">
-                                                <i class="fa-solid fa-music text-xs"></i>
+                                                <AppIcon name="music" class="text-xs" />
                                                 <span>{totalSongsCount} {totalSongsCount === 1 ? 'canto' : 'cantos'}</span>
                                             </span>
                                         )}
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-3 sm:flex sm:items-center gap-2 w-full lg:w-auto no-print">
+                                <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full lg:w-auto no-print">
+                                    <MisaOfflineDownloadButtonReact
+                                        client:load
+                                        misaId={Number(id)}
+                                        initialMisa={misa}
+                                        token={token}
+                                        variant="compact"
+                                    />
+
                                     <div
                                         class="relative w-full sm:w-auto"
                                         id="pdfDropdownContainer"
@@ -299,9 +314,11 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                             aria-expanded="false"
                                             aria-haspopup="true"
                                         >
-                                            <i class="fa-solid fa-file-pdf text-[11px] text-text-secondary group-hover:text-white transition-colors" id="pdfBtnIcon"></i>
+                                            <span id="pdfBtnIcon" class="inline-flex items-center">
+                                                <AppIcon name="file-pdf" class="w-3.5 h-3.5 text-text-secondary group-hover:text-white transition-colors" />
+                                            </span>
                                             <span id="pdfBtnText">Descargar</span>
-                                            <i class="fa-solid fa-chevron-down text-[9px] opacity-70 group-hover:opacity-100 transition-transform duration-200" id="pdfChevron"></i>
+                                            <AppIcon name="chevron-down" id="pdfChevron" class="text-[9px] w-2.5 h-2.5 opacity-70 group-hover:opacity-100 transition-transform duration-200" />
                                         </button>
                                         <div
                                             id="pdfDropdownMenu"
@@ -312,7 +329,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                                 id="downloadPdfChordsBtn"
                                                 class="w-full text-left px-3.5 py-2 hover:bg-white/5 text-white flex items-center gap-2.5 transition-colors cursor-pointer group"
                                             >
-                                                <i class="fa-solid fa-guitar text-accent-main w-4 text-center"></i>
+                                                <AppIcon name="guitar" class="text-accent-main w-4 text-center" />
                                                 <div>
                                                     <div class="font-bold text-white group-hover:text-accent-main transition-colors">Con Acordes</div>
                                                     <div class="text-[10px] text-text-secondary">Para músicos</div>
@@ -323,7 +340,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                                 id="downloadPdfLyricsBtn"
                                                 class="w-full text-left px-3.5 py-2 hover:bg-white/5 text-white flex items-center gap-2.5 transition-colors cursor-pointer border-t border-white/5 group"
                                             >
-                                                <i class="fa-solid fa-align-left text-accent-main w-4 text-center"></i>
+                                                <AppIcon name="align-left" class="text-accent-main w-4 text-center" />
                                                 <div>
                                                     <div class="font-bold text-white group-hover:text-accent-main transition-colors">Solo Letra</div>
                                                     <div class="text-[10px] text-text-secondary">Para coro</div>
@@ -339,7 +356,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                         title="Mostrar acordes en pantalla"
                                         class="w-full sm:w-auto h-9 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 group focus:outline-none whitespace-nowrap"
                                     >
-                                        <i class="fa-solid fa-music text-[11px] text-text-secondary group-hover:text-white transition-colors"></i>
+                                        <AppIcon name="music" class="text-[11px] text-text-secondary group-hover:text-white transition-colors" />
                                         <span>Acordes</span>
                                     </button>
 
@@ -355,7 +372,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                         <div class="no-print flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bg-secondary/40 border border-white/5 p-3 sm:px-4 rounded-xl">
                             <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 max-w-full scrollbar-none">
                                 <span class="text-xs text-text-secondary font-medium uppercase tracking-wider shrink-0 flex items-center gap-1.5 mr-1">
-                                    <i class="fa-solid fa-list-ul text-accent-main"></i>
+                                    <AppIcon name="list-ul" class="text-accent-main" />
                                     <span>Momentos:</span>
                                 </span>
                                 {momentsWithSongs.map(({ moment, songs }) => (
@@ -377,7 +394,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                 class="shrink-0 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer sm:ml-auto"
                                 title="Expandir o colapsar todos los momentos"
                             >
-                                <i class="fa-solid fa-arrows-up-down text-xs text-accent-main"></i>
+                                <AppIcon name="arrows-up-down" class="text-xs text-accent-main" />
                                 <span id="toggleAllMomentsText">Colapsar todos</span>
                             </button>
                         </div>
@@ -387,10 +404,10 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                     <div class="space-y-4 sm:space-y-5">
                         {momentsWithSongs.length === 0 ? (
                             <div class="bg-bg-secondary border border-white/5 rounded-xl p-8 text-center text-text-secondary space-y-2">
-                                <i class="fa-solid fa-music text-2xl text-text-secondary/50"></i>
+                                <AppIcon name="music" class="text-2xl text-text-secondary/50" />
                                 <p class="text-sm">Esta misa aún no tiene cantos asignados en ningún momento litúrgico.</p>
                                 <a href={`/misas/${id}`} class="inline-flex items-center gap-1.5 text-xs text-accent-main hover:underline font-semibold mt-2">
-                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <AppIcon name="pen-to-square" />
                                     <span>Ir al Modo Edición para agregar cantos</span>
                                 </a>
                             </div>
@@ -405,7 +422,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                         class="px-3.5 py-3 sm:px-5 sm:py-3.5 flex items-center justify-between cursor-pointer select-none hover:bg-white/[0.02] transition-colors list-none"
                                     >
                                         <div class="flex items-center gap-2.5 flex-wrap">
-                                            <i class="fa-solid fa-layer-group text-accent-main text-xs"></i>
+                                            <AppIcon name="layer-group" class="text-accent-main text-xs" />
                                             <h2 class="text-sm sm:text-base font-bold text-white uppercase tracking-wider group-hover:text-accent-main transition-colors">
                                                 {moment.nombre}
                                             </h2>
@@ -420,7 +437,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                                 <span class="hidden group-open:inline">Plegar</span>
                                             </span>
                                             <div class="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-text-secondary group-hover:text-white group-hover:bg-white/10 transition-all border border-white/5">
-                                                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200 group-open:rotate-180"></i>
+                                                <AppIcon name="chevron-down" class="text-xs transition-transform duration-200 group-open:rotate-180" />
                                             </div>
                                         </div>
                                     </summary>
@@ -498,11 +515,13 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
             const pdfBtn = document.getElementById("pdfDropdownBtn") as HTMLButtonElement | null;
             const pdfBtnIcon = document.getElementById("pdfBtnIcon");
             const pdfBtnText = document.getElementById("pdfBtnText");
-            const originalIconClass = pdfBtnIcon ? pdfBtnIcon.className : "fa-solid fa-file-pdf";
+            const originalIconHtml = pdfBtnIcon ? pdfBtnIcon.innerHTML : "";
             const originalText = pdfBtnText ? pdfBtnText.textContent : "Descargar";
 
             if (pdfBtn) pdfBtn.disabled = true;
-            if (pdfBtnIcon) pdfBtnIcon.className = "fa-solid fa-spinner fa-spin";
+            if (pdfBtnIcon) {
+                pdfBtnIcon.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 512 512" fill="currentColor"><path d="M222.7 32.1c5 16.9-4.6 34.8-21.5 39.8C121.8 95.6 64 169.1 64 256c0 106 86 192 192 192s192-86 192-192c0-86.9-57.8-160.4-137.1-184.1c-16.9-5-26.6-22.9-21.5-39.8s22.9-26.6 39.8-21.5C434.9 42.1 512 139.8 512 256c0 141.4-114.6 256-256 256S0 397.4 0 256C0 139.8 77.1 42.1 182.9 10.6c16.9-5 34.8 4.6 39.8 21.5z"/></svg>';
+            }
             if (pdfBtnText) pdfBtnText.textContent = "Generando...";
 
             try {
@@ -598,7 +617,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
             } finally {
                 isDownloadingPdf = false;
                 if (pdfBtn) pdfBtn.disabled = false;
-                if (pdfBtnIcon) pdfBtnIcon.className = originalIconClass;
+                if (pdfBtnIcon) pdfBtnIcon.innerHTML = originalIconHtml;
                 if (pdfBtnText) pdfBtnText.textContent = originalText;
             }
         };

@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from "react";
 import type { Misa } from "../types/misa";
 import { createMisa } from "../services/misas";
@@ -154,7 +155,7 @@ export default function CreateMisaModal({
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-accent-main/10 border border-accent-main/20 text-accent-main flex items-center justify-center shrink-0">
-                            <i className="fa-solid fa-book-bible text-base"></i>
+                            <AppIcon name="book-bible" className="text-base" />
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-white tracking-tight">
@@ -171,7 +172,7 @@ export default function CreateMisaModal({
                         className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                         title="Cerrar"
                     >
-                        <i className="fa-solid fa-xmark text-sm"></i>
+                        <AppIcon name="xmark" className="text-sm" />
                     </button>
                 </div>
 
@@ -183,7 +184,7 @@ export default function CreateMisaModal({
                             Título / Ocasión <span className="text-accent-main">*</span>
                         </label>
                         <div className="relative">
-                            <i className="fa-solid fa-heading absolute left-3.5 top-3 text-text-secondary text-sm"></i>
+                            <AppIcon name="heading" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
                             <input
                                 type="text"
                                 required
@@ -203,7 +204,7 @@ export default function CreateMisaModal({
                                 Fecha <span className="text-accent-main">*</span>
                             </label>
                             <div className="relative">
-                                <i className="fa-solid fa-calendar-day absolute left-3.5 top-3 text-text-secondary text-sm"></i>
+                                <AppIcon name="calendar-day" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
                                 <input
                                     type="date"
                                     required
@@ -219,7 +220,7 @@ export default function CreateMisaModal({
                                 Hora <span className="text-accent-main">*</span>
                             </label>
                             <div className="relative">
-                                <i className="fa-solid fa-clock absolute left-3.5 top-3 text-text-secondary text-sm"></i>
+                                <AppIcon name="clock" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
                                 <input
                                     type="time"
                                     required
@@ -256,7 +257,7 @@ export default function CreateMisaModal({
                                         }`}
                                     >
                                         <div className="w-8 h-8 rounded-lg bg-accent-main/20 text-accent-main flex items-center justify-center shrink-0">
-                                            <i className="fa-solid fa-users text-xs"></i>
+                                            <AppIcon name="users" className="text-xs" />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-xs font-bold truncate text-white">
@@ -276,7 +277,7 @@ export default function CreateMisaModal({
                                         }`}
                                     >
                                         <div className="w-8 h-8 rounded-lg bg-white/10 text-text-secondary flex items-center justify-center shrink-0">
-                                            <i className="fa-solid fa-user text-xs"></i>
+                                            <AppIcon name="user" className="text-xs" />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-xs font-bold text-white">Personal</div>
@@ -286,7 +287,7 @@ export default function CreateMisaModal({
                                 </div>
                             ) : (
                                 <div className="relative">
-                                    <i className="fa-solid fa-users absolute left-3.5 top-3 text-text-secondary text-sm"></i>
+                                    <AppIcon name="users" className="absolute left-3.5 top-3 text-text-secondary text-sm" />
                                     <select
                                         value={selectedMinistryId}
                                         onChange={(e) => setSelectedMinistryId(e.target.value)}
@@ -303,7 +304,7 @@ export default function CreateMisaModal({
                             )}
                             {selectedMinistryId && (
                                 <p className="text-[11px] text-zinc-400 flex items-center gap-1.5 pt-0.5">
-                                    <i className="fa-solid fa-circle-info text-accent-main text-[10px]"></i>
+                                    <AppIcon name="circle-info" className="text-accent-main text-[10px]" />
                                     <span>Cualquier miembro del grupo podrá ver y editar el repertorio de esta misa.</span>
                                 </p>
                             )}
@@ -326,7 +327,7 @@ export default function CreateMisaModal({
                                 }`}
                             >
                                 <div className="flex items-center gap-1.5 font-bold text-xs">
-                                    <i className="fa-solid fa-lock text-accent-main"></i>
+                                    <AppIcon name="lock" className="text-accent-main" />
                                     <span>Privada</span>
                                 </div>
                                 <span className="text-[11px] text-text-secondary leading-snug">
@@ -346,7 +347,7 @@ export default function CreateMisaModal({
                                 }`}
                             >
                                 <div className="flex items-center gap-1.5 font-bold text-xs">
-                                    <i className="fa-solid fa-globe text-emerald-400"></i>
+                                    <AppIcon name="globe" className="text-emerald-400" />
                                     <span>Pública</span>
                                 </div>
                                 <span className="text-[11px] text-text-secondary leading-snug">
@@ -375,12 +376,12 @@ export default function CreateMisaModal({
                         >
                             {creating ? (
                                 <>
-                                    <i className="fa-solid fa-spinner animate-spin text-xs"></i>
+                                    <AppIcon name="spinner" spin className="animate-spin text-xs" />
                                     <span>Creando...</span>
                                 </>
                             ) : (
                                 <>
-                                    <i className="fa-solid fa-plus text-xs"></i>
+                                    <AppIcon name="plus" className="text-xs" />
                                     <span>Crear Misa</span>
                                 </>
                             )}

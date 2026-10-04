@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect, useRef } from 'react';
 import Swal from 'sweetalert2';
 import { downloadSongPdf } from '../services/songs';
@@ -9,6 +10,14 @@ import {
     getToolsMinimizedPreference,
     setToolsMinimizedPreference
 } from '../utils/preferences';
+import {
+    saveSongOffline,
+    deleteSongOffline,
+    isSongOffline,
+    cacheUrlsForOffline,
+    getSongOffline
+} from '../utils/offlineStorage';
+import { getSongById } from '../services/songs';
 
 const FONT_SIZES = [14, 16, 18, 20, 24, 28];
 const SCROLL_SPEEDS = [
@@ -27,7 +36,8 @@ export const SongToolsReact = ({
     onTranspose = () => {},
     onToggleChords = () => {},
     onPrint = () => {},
-    canEdit = false
+    canEdit = false,
+    song = null
 }) => {
     // Tones and Transposition state
     const [currentKey, setCurrentKey] = useState(initialKey || 'C');
@@ -122,6 +132,66 @@ export const SongToolsReact = ({
     const [showDownloadOptions, setShowDownloadOptions] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const downloadContainerRef = useRef(null);
+
+    // Offline storage state
+    const [isSavedOffline, setIsSavedOffline] = useState(false);
+    const [isSavingOffline, setIsSavingOffline] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        if (id) {
+            isSongOffline(id).then((saved) => {
+                if (mounted) setIsSavedOffline(saved);
+            }).catch(() => {});
+        }
+
+        const handleOfflineChange = (e) => {
+            if (e?.detail?.type === 'song' && String(e?.detail?.id) === String(id)) {
+                setIsSavedOffline(e.detail.action === 'saved');
+            }
+        };
+
+        window.addEventListener('cancionero-offline-change', handleOfflineChange);
+        return () => {
+            mounted = false;
+            window.removeEventListener('cancionero-offline-change', handleOfflineChange);
+        };
+    }, [id]);
+
+    const handleToggleOfflineSave = async () => {
+        if (!id) return;
+        setIsSavingOffline(true);
+        try {
+            if (isSavedOffline) {
+                await deleteSongOffline(id);
+                setIsSavedOffline(false);
+                await showSuccessToast('Canto quitado de descargas');
+            } else {
+                let songDataToSave = song;
+                if (!songDataToSave || !songDataToSave.content) {
+                    const fetched = await getSongById(id);
+                    if (fetched.success && fetched.data) {
+                        songDataToSave = fetched.data;
+                    }
+                }
+
+                if (!songDataToSave) {
+                    await showError('No se pudo guardar', 'No se pudieron obtener los datos completos del canto.');
+                    return;
+                }
+
+                await saveSongOffline(songDataToSave);
+                await cacheUrlsForOffline([`/songs/${id}`]);
+                setIsSavedOffline(true);
+                await showSuccessToast('Guardado sin conexión', 'Ahora podrás ver este canto sin internet.');
+            }
+        } catch (err) {
+            console.error('Error al cambiar estado offline del canto:', err);
+            await showError('Error', 'Ocurrió un problema al gestionar la descarga.');
+        } finally {
+            setIsSavingOffline(false);
+        }
+    };
 
     // Sync initialKey
     useEffect(() => {
@@ -503,7 +573,7 @@ export const SongToolsReact = ({
                                         className="w-7 h-7 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
                                         title="Minimizar a botón flotante"
                                     >
-                                        <i className="fa-solid fa-down-left-and-up-right-to-center text-xs"></i>
+                                        <AppIcon name="down-left-and-up-right-to-center" className="text-xs" />
                                     </button>
                                     <button
                                         type="button"
@@ -511,7 +581,7 @@ export const SongToolsReact = ({
                                         className="w-7 h-7 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
                                         title="Contraer barra lateral"
                                     >
-                                        <i className="fa-solid fa-chevron-left text-xs"></i>
+                                        <AppIcon name="chevron-left" className="text-xs" />
                                     </button>
                                 </div>
                             </>
@@ -523,7 +593,7 @@ export const SongToolsReact = ({
                                     className="w-8 h-8 rounded-lg text-text-secondary hover:text-accent-main hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
                                     title="Expandir barra lateral"
                                 >
-                                    <i className="fa-solid fa-chevron-right text-xs"></i>
+                                    <AppIcon name="chevron-right" className="text-xs" />
                                 </button>
                                 <button
                                     type="button"
@@ -531,7 +601,7 @@ export const SongToolsReact = ({
                                     className="w-8 h-8 rounded-lg text-text-secondary hover:text-white hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
                                     title="Minimizar a botón flotante"
                                 >
-                                    <i className="fa-solid fa-down-left-and-up-right-to-center text-[10px]"></i>
+                                    <AppIcon name="down-left-and-up-right-to-center" className="text-[10px]" />
                                 </button>
                             </div>
                         )}
@@ -558,7 +628,7 @@ export const SongToolsReact = ({
                                                 className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-colors cursor-pointer active:scale-95"
                                                 title="Bajar medio tono"
                                             >
-                                                <i className="fa-solid fa-minus text-xs"></i>
+                                                <AppIcon name="minus" className="text-xs" />
                                             </button>
 
                                             <div className="flex flex-col items-center justify-center flex-1">
@@ -583,7 +653,7 @@ export const SongToolsReact = ({
                                                 className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-colors cursor-pointer active:scale-95"
                                                 title="Subir medio tono"
                                             >
-                                                <i className="fa-solid fa-plus text-xs"></i>
+                                                <AppIcon name="plus" className="text-xs" />
                                             </button>
                                         </div>
 
@@ -594,7 +664,7 @@ export const SongToolsReact = ({
                                                 className="w-full py-1 text-[11px] font-mono text-text-secondary hover:text-accent-main flex items-center justify-center gap-1 transition-colors cursor-pointer"
                                                 title="Restablecer al tono original"
                                             >
-                                                <i className="fa-solid fa-rotate-left text-[10px]"></i>
+                                                <AppIcon name="rotate-left" className="text-[10px]" />
                                                 <span>Restablecer ({initialKey})</span>
                                             </button>
                                         )}
@@ -607,7 +677,7 @@ export const SongToolsReact = ({
                                                 onClick={() => handleTransposeStep(1)}
                                                 className="w-10 h-8 rounded-lg hover:bg-white/5 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                             >
-                                                <i className="fa-solid fa-plus text-xs"></i>
+                                                <AppIcon name="plus" className="text-xs" />
                                             </button>
                                             <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                                 Subir tono (+1)
@@ -634,7 +704,7 @@ export const SongToolsReact = ({
                                                 onClick={() => handleTransposeStep(-1)}
                                                 className="w-10 h-8 rounded-lg hover:bg-white/5 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                             >
-                                                <i className="fa-solid fa-minus text-xs"></i>
+                                                <AppIcon name="minus" className="text-xs" />
                                             </button>
                                             <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                                 Bajar tono (-1)
@@ -648,7 +718,7 @@ export const SongToolsReact = ({
                                                     onClick={handleResetTranspose}
                                                     className="w-10 h-7 rounded-lg text-accent-main hover:bg-white/5 flex items-center justify-center transition-colors cursor-pointer"
                                                 >
-                                                    <i className="fa-solid fa-rotate-left text-[11px]"></i>
+                                                    <AppIcon name="rotate-left" className="text-[11px]" />
                                                 </button>
                                                 <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                                     Restablecer tono original ({initialKey})
@@ -671,7 +741,7 @@ export const SongToolsReact = ({
                                     }`}
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <i className={`fa-solid fa-music text-xs ${showChords ? 'text-accent-main' : 'text-text-secondary'}`}></i>
+                                        <AppIcon name="music" className={`text-xs ${showChords ? 'text-accent-main' : 'text-text-secondary'}`} />
                                         <span className="text-xs font-semibold">Acordes</span>
                                     </div>
                                     <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
@@ -691,7 +761,7 @@ export const SongToolsReact = ({
                                                 : 'hover:bg-white/5 text-text-secondary'
                                         }`}
                                     >
-                                        <i className="fa-solid fa-music text-sm"></i>
+                                        <AppIcon name="music" className="text-sm" />
                                     </button>
                                     <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                         {showChords ? 'Ocultar acordes' : 'Mostrar acordes'}
@@ -783,7 +853,7 @@ export const SongToolsReact = ({
                                         }`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <i className={`fa-solid ${isAutoScrolling ? 'fa-pause' : 'fa-angles-down'} text-xs`}></i>
+                                            <AppIcon name={isAutoScrolling ? 'pause' : 'angles-down'} className="text-xs" />
                                             <span>{isAutoScrolling ? 'Pausar Scroll' : 'Auto-scroll'}</span>
                                         </div>
                                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/25 text-white/90">
@@ -823,7 +893,7 @@ export const SongToolsReact = ({
                                                 : 'hover:bg-white/5 text-text-secondary hover:text-white'
                                         }`}
                                     >
-                                        <i className={`fa-solid ${isAutoScrolling ? 'fa-pause' : 'fa-angles-down'} text-sm`}></i>
+                                        <AppIcon name={isAutoScrolling ? 'pause' : 'angles-down'} className="text-sm" />
                                     </button>
                                     <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                         {isAutoScrolling ? 'Pausar auto-scroll' : 'Iniciar auto-scroll'}
@@ -838,7 +908,7 @@ export const SongToolsReact = ({
                                     onClick={toggleFocusMode}
                                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-bg-secondary hover:bg-white/10 border border-white/5 text-xs font-semibold text-text-main transition-colors cursor-pointer"
                                 >
-                                    <i className="fa-solid fa-expand text-xs text-accent-main"></i>
+                                    <AppIcon name="expand" className="text-xs text-accent-main" />
                                     <span>Modo Atril / En Vivo</span>
                                 </button>
                             ) : (
@@ -848,7 +918,7 @@ export const SongToolsReact = ({
                                         onClick={toggleFocusMode}
                                         className="w-10 h-10 rounded-xl hover:bg-white/5 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                     >
-                                        <i className="fa-solid fa-expand text-sm"></i>
+                                        <AppIcon name="expand" className="text-sm" />
                                     </button>
                                     <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                         Modo Atril (Pantalla completa)
@@ -884,13 +954,13 @@ export const SongToolsReact = ({
                                     >
                                         <div className="flex items-center gap-2.5">
                                             {isDownloading ? (
-                                                <i className="fa-solid fa-circle-notch fa-spin text-xs text-accent-main"></i>
+                                                <AppIcon name="circle-notch" spin className="text-xs text-accent-main" />
                                             ) : (
-                                                <i className="fa-solid fa-download text-xs"></i>
+                                                <AppIcon name="download" className="text-xs" />
                                             )}
                                             <span className="text-xs font-semibold">Descargar</span>
                                         </div>
-                                        <i className={`fa-solid fa-chevron-right text-[10px] transition-transform ${showDownloadOptions ? 'rotate-90' : ''}`}></i>
+                                        <AppIcon name="chevron-right" className={`text-[10px] transition-transform ${showDownloadOptions ? 'rotate-90' : ''}`} />
                                     </button>
                                 ) : (
                                     <div className="relative group">
@@ -903,9 +973,9 @@ export const SongToolsReact = ({
                                             }`}
                                         >
                                             {isDownloading ? (
-                                                <i className="fa-solid fa-circle-notch fa-spin text-sm text-accent-main"></i>
+                                                <AppIcon name="circle-notch" spin className="text-sm text-accent-main" />
                                             ) : (
-                                                <i className="fa-solid fa-download text-sm"></i>
+                                                <AppIcon name="download" className="text-sm" />
                                             )}
                                         </button>
                                         <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
@@ -929,7 +999,7 @@ export const SongToolsReact = ({
                                             className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-text-main hover:bg-accent-main hover:text-white transition-colors cursor-pointer text-left group"
                                         >
                                             <div className="flex items-center gap-2">
-                                                <i className="fa-solid fa-file-pdf text-accent-main group-hover:text-white text-xs"></i>
+                                                <AppIcon name="file-pdf" className="text-accent-main group-hover:text-white text-xs" />
                                                 <span>Con Acordes</span>
                                             </div>
                                             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-white">
@@ -942,7 +1012,7 @@ export const SongToolsReact = ({
                                             onClick={() => handleDownload(false)}
                                             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-text-main hover:bg-white/10 transition-colors cursor-pointer text-left"
                                         >
-                                            <i className="fa-solid fa-file-lines text-text-secondary text-xs"></i>
+                                            <AppIcon name="file-lines" className="text-text-secondary text-xs" />
                                             <span>Solo Letra</span>
                                         </button>
 
@@ -957,12 +1027,64 @@ export const SongToolsReact = ({
                                             }}
                                             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-text-secondary hover:text-white hover:bg-white/10 transition-colors cursor-pointer text-left"
                                         >
-                                            <i className="fa-solid fa-print text-xs"></i>
+                                            <AppIcon name="print" className="text-xs" />
                                             <span>Imprimir</span>
                                         </button>
                                     </div>
                                 )}
                             </div>
+
+                            {/* Guardar sin conexión */}
+                            {isExpanded ? (
+                                <button
+                                    type="button"
+                                    onClick={handleToggleOfflineSave}
+                                    disabled={isSavingOffline}
+                                    className={`w-full py-2 px-3 rounded-xl border flex items-center justify-between transition-colors cursor-pointer disabled:opacity-50 ${
+                                        isSavedOffline
+                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                                            : 'bg-bg-secondary border-white/5 text-text-secondary hover:text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        {isSavingOffline ? (
+                                            <AppIcon name="circle-notch" spin className="text-xs text-accent-main" />
+                                        ) : isSavedOffline ? (
+                                            <AppIcon name="cloud-arrow-down" className="text-xs text-emerald-400" />
+                                        ) : (
+                                            <AppIcon name="cloud-arrow-down" className="text-xs" />
+                                        )}
+                                        <span className="text-xs font-semibold">
+                                            {isSavedOffline ? 'Descargado' : 'Guardar offline'}
+                                        </span>
+                                    </div>
+                                    {isSavedOffline && (
+                                        <AppIcon name="check" className="text-[10px] text-emerald-400" />
+                                    )}
+                                </button>
+                            ) : (
+                                <div className="relative group">
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleOfflineSave}
+                                        disabled={isSavingOffline}
+                                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 ${
+                                            isSavedOffline
+                                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                : 'hover:bg-white/5 text-text-secondary hover:text-white'
+                                        }`}
+                                    >
+                                        {isSavingOffline ? (
+                                            <AppIcon name="circle-notch" spin className="text-sm text-accent-main" />
+                                        ) : (
+                                            <AppIcon name="cloud-arrow-down" className="text-sm" />
+                                        )}
+                                    </button>
+                                    <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
+                                        {isSavedOffline ? 'Disponible sin conexión (Clic para quitar)' : 'Guardar para usar sin internet'}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Compartir */}
                             {isExpanded ? (
@@ -971,7 +1093,7 @@ export const SongToolsReact = ({
                                     onClick={handleShare}
                                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-bg-secondary hover:bg-white/10 border border-white/5 text-xs font-semibold text-text-secondary hover:text-white transition-colors cursor-pointer"
                                 >
-                                    <i className="fa-solid fa-share-nodes text-xs"></i>
+                                    <AppIcon name="share-nodes" className="text-xs" />
                                     <span>Compartir</span>
                                 </button>
                             ) : (
@@ -981,7 +1103,7 @@ export const SongToolsReact = ({
                                         onClick={handleShare}
                                         className="w-10 h-10 rounded-xl hover:bg-white/5 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                     >
-                                        <i className="fa-solid fa-share-nodes text-sm"></i>
+                                        <AppIcon name="share-nodes" className="text-sm" />
                                     </button>
                                     <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                         Compartir canción
@@ -996,7 +1118,7 @@ export const SongToolsReact = ({
                                         href={`/songs/edit/${id}`}
                                         className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-bg-secondary hover:bg-white/10 border border-white/5 text-xs font-semibold text-accent-main transition-colors cursor-pointer"
                                     >
-                                        <i className="fa-solid fa-pencil text-xs"></i>
+                                        <AppIcon name="pencil" className="text-xs" />
                                         <span>Editar Canción</span>
                                     </a>
                                 ) : (
@@ -1005,7 +1127,7 @@ export const SongToolsReact = ({
                                             href={`/songs/edit/${id}`}
                                             className="w-10 h-10 rounded-xl hover:bg-white/5 text-accent-main flex items-center justify-center transition-colors"
                                         >
-                                            <i className="fa-solid fa-pencil text-sm"></i>
+                                            <AppIcon name="pencil" className="text-sm" />
                                         </a>
                                         <div className="absolute left-full ml-3 px-2 py-1 bg-bg-secondary border border-white/10 rounded-lg text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50">
                                             Editar canción
@@ -1038,7 +1160,7 @@ export const SongToolsReact = ({
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
                                 title="Bajar medio tono"
                             >
-                                <i className="fa-solid fa-minus text-xs"></i>
+                                <AppIcon name="minus" className="text-xs" />
                             </button>
 
                             {/* Tono badge central */}
@@ -1063,7 +1185,7 @@ export const SongToolsReact = ({
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
                                 title="Subir medio tono"
                             >
-                                <i className="fa-solid fa-plus text-xs"></i>
+                                <AppIcon name="plus" className="text-xs" />
                             </button>
                         </>
                     ) : (
@@ -1076,7 +1198,7 @@ export const SongToolsReact = ({
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-95 transition-transform cursor-pointer disabled:opacity-30"
                                 title="Disminuir tamaño de letra"
                             >
-                                <i className="fa-solid fa-minus text-xs"></i>
+                                <AppIcon name="minus" className="text-xs" />
                             </button>
 
                             {/* Letra badge central */}
@@ -1097,7 +1219,7 @@ export const SongToolsReact = ({
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center active:scale-95 transition-transform cursor-pointer disabled:opacity-30"
                                 title="Aumentar tamaño de letra"
                             >
-                                <i className="fa-solid fa-plus text-xs"></i>
+                                <AppIcon name="plus" className="text-xs" />
                             </button>
                         </>
                     )}
@@ -1113,7 +1235,7 @@ export const SongToolsReact = ({
                         }`}
                         title={showChords ? 'Ocultar acordes' : 'Mostrar acordes'}
                     >
-                        <i className="fa-solid fa-music text-xs"></i>
+                        <AppIcon name="music" className="text-xs" />
                     </button>
 
                     {/* Auto-scroll */}
@@ -1125,7 +1247,7 @@ export const SongToolsReact = ({
                         }`}
                         title="Auto-scroll"
                     >
-                        <i className={`fa-solid ${isAutoScrolling ? 'fa-pause' : 'fa-angles-down'} text-xs`}></i>
+                        <AppIcon name={isAutoScrolling ? 'pause' : 'angles-down'} className="text-xs" />
                     </button>
 
                     <div className="h-4 w-px bg-white/10 mx-0.5"></div>
@@ -1136,7 +1258,7 @@ export const SongToolsReact = ({
                         onClick={() => setIsMobileDrawerOpen(true)}
                         className="px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center gap-1.5 text-xs font-semibold cursor-pointer active:scale-95 transition-transform"
                     >
-                        <i className="fa-solid fa-sliders text-xs text-accent-main"></i>
+                        <AppIcon name="sliders" className="text-xs text-accent-main" />
                         <span>Más</span>
                     </button>
 
@@ -1147,7 +1269,7 @@ export const SongToolsReact = ({
                         className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
                         title="Minimizar a botón flotante"
                     >
-                        <i className="fa-solid fa-down-left-and-up-right-to-center text-[10px]"></i>
+                        <AppIcon name="down-left-and-up-right-to-center" className="text-[10px]" />
                     </button>
                 </div>
             )}
@@ -1177,7 +1299,7 @@ export const SongToolsReact = ({
                         title="Mostrar herramientas (Tono, Acordes, Scroll)"
                         aria-label="Mostrar herramientas de canción"
                     >
-                        <i className="fa-solid fa-sliders text-lg transition-transform duration-300 group-hover:rotate-45"></i>
+                        <AppIcon name="sliders" className="text-lg transition-transform duration-300 group-hover:rotate-45" />
 
                         {/* Micro-badge si el tono está transportado (solo con acordes activos) */}
                         {showChords && semitonesFromOriginal !== 0 && (
@@ -1237,14 +1359,14 @@ export const SongToolsReact = ({
                                         className="w-8 h-8 rounded-full bg-white/5 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                         title="Minimizar a botón flotante"
                                     >
-                                        <i className="fa-solid fa-down-left-and-up-right-to-center text-xs"></i>
+                                        <AppIcon name="down-left-and-up-right-to-center" className="text-xs" />
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setIsMobileDrawerOpen(false)}
                                         className="w-8 h-8 rounded-full bg-white/5 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                                     >
-                                        <i className="fa-solid fa-xmark text-sm"></i>
+                                        <AppIcon name="xmark" className="text-sm" />
                                     </button>
                                 </div>
                             </div>
@@ -1274,7 +1396,7 @@ export const SongToolsReact = ({
                                         onClick={() => handleTransposeStep(-1)}
                                         className="flex-1 py-2.5 rounded-xl bg-white/5 active:bg-white/10 text-white font-bold text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                                     >
-                                        <i className="fa-solid fa-minus text-xs"></i>
+                                        <AppIcon name="minus" className="text-xs" />
                                         <span>Bajar</span>
                                     </button>
 
@@ -1299,7 +1421,7 @@ export const SongToolsReact = ({
                                         onClick={() => handleTransposeStep(1)}
                                         className="flex-1 py-2.5 rounded-xl bg-white/5 active:bg-white/10 text-white font-bold text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                                     >
-                                        <i className="fa-solid fa-plus text-xs"></i>
+                                        <AppIcon name="plus" className="text-xs" />
                                         <span>Subir</span>
                                     </button>
                                 </div>
@@ -1315,7 +1437,7 @@ export const SongToolsReact = ({
                             {/* Acordes */}
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <i className="fa-solid fa-music text-accent-main text-xs"></i>
+                                    <AppIcon name="music" className="text-accent-main text-xs" />
                                     <span className="text-sm font-semibold text-text-main">Mostrar Acordes</span>
                                 </div>
                                 <button
@@ -1332,7 +1454,7 @@ export const SongToolsReact = ({
                             {/* Tamaño de letra */}
                             <div className="flex items-center justify-between pt-1 border-t border-white/5">
                                 <div className="flex items-center gap-2">
-                                    <i className="fa-solid fa-font text-text-secondary text-xs"></i>
+                                    <AppIcon name="font" className="text-text-secondary text-xs" />
                                     <span className="text-sm font-semibold text-text-main">Tamaño de Letra</span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -1362,7 +1484,7 @@ export const SongToolsReact = ({
                             <div className="pt-1 border-t border-white/5 space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <i className="fa-solid fa-angles-down text-accent-main text-xs"></i>
+                                        <AppIcon name="angles-down" className="text-accent-main text-xs" />
                                         <span className="text-sm font-semibold text-text-main">Auto-scroll</span>
                                     </div>
                                     <button
@@ -1407,7 +1529,7 @@ export const SongToolsReact = ({
                                     }}
                                     className="w-full py-2.5 rounded-xl bg-white/5 active:bg-white/10 text-text-main font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
                                 >
-                                    <i className="fa-solid fa-expand text-accent-main"></i>
+                                    <AppIcon name="expand" className="text-accent-main" />
                                     <span>Modo Atril (Pantalla Completa)</span>
                                 </button>
                             </div>
@@ -1419,6 +1541,25 @@ export const SongToolsReact = ({
                                 Exportar y Compartir
                             </span>
 
+                            {/* Guardar sin conexión móvil */}
+                            <button
+                                type="button"
+                                onClick={handleToggleOfflineSave}
+                                disabled={isSavingOffline}
+                                className={`w-full py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 border ${
+                                    isSavedOffline
+                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                        : 'bg-white/5 border-white/10 text-white active:bg-white/10'
+                                }`}
+                            >
+                                {isSavingOffline ? (
+                                    <AppIcon name="circle-notch" spin className="text-xs" />
+                                ) : (
+                                    <AppIcon name={isSavedOffline ? 'check' : 'cloud-arrow-down'} />
+                                )}
+                                <span>{isSavedOffline ? 'Disponible sin conexión (Descargado)' : 'Guardar para uso sin conexión'}</span>
+                            </button>
+
                             <div className="grid grid-cols-2 gap-2">
                                 <button
                                     type="button"
@@ -1426,7 +1567,7 @@ export const SongToolsReact = ({
                                     disabled={isDownloading}
                                     className="py-2.5 px-3 rounded-xl bg-white/5 active:bg-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                                 >
-                                    <i className="fa-solid fa-file-pdf text-accent-main"></i>
+                                    <AppIcon name="file-pdf" className="text-accent-main" />
                                     <span>PDF Acordes</span>
                                 </button>
 
@@ -1436,7 +1577,7 @@ export const SongToolsReact = ({
                                     disabled={isDownloading}
                                     className="py-2.5 px-3 rounded-xl bg-white/5 active:bg-white/10 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                                 >
-                                    <i className="fa-solid fa-file-lines text-text-secondary"></i>
+                                    <AppIcon name="file-lines" className="text-text-secondary" />
                                     <span>PDF Letra</span>
                                 </button>
                             </div>
@@ -1451,7 +1592,7 @@ export const SongToolsReact = ({
                                     }}
                                     className="py-2.5 px-3 rounded-xl bg-white/5 active:bg-white/10 text-text-secondary hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                                 >
-                                    <i className="fa-solid fa-print"></i>
+                                    <AppIcon name="print" />
                                     <span>Imprimir</span>
                                 </button>
 
@@ -1460,7 +1601,7 @@ export const SongToolsReact = ({
                                     onClick={handleShare}
                                     className="py-2.5 px-3 rounded-xl bg-white/5 active:bg-white/10 text-text-secondary hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                                 >
-                                    <i className="fa-solid fa-share-nodes"></i>
+                                    <AppIcon name="share-nodes" />
                                     <span>Compartir</span>
                                 </button>
                             </div>
@@ -1470,7 +1611,7 @@ export const SongToolsReact = ({
                                     href={`/songs/edit/${id}`}
                                     className="w-full py-2.5 px-3 rounded-xl bg-accent-main/10 border border-accent-main/30 text-accent-main text-xs font-semibold flex items-center justify-center gap-2 transition-colors block text-center"
                                 >
-                                    <i className="fa-solid fa-pencil"></i>
+                                    <AppIcon name="pencil" />
                                     <span>Editar Canción</span>
                                 </a>
                             )}
@@ -1495,7 +1636,7 @@ export const SongToolsReact = ({
                         className="w-8 h-8 rounded-full bg-accent-main text-white flex items-center justify-center hover:bg-accent-main/90 transition-colors shadow-md cursor-pointer active:scale-95"
                         title={isAutoScrolling ? "Pausar scroll" : "Reanudar scroll"}
                     >
-                        <i className={`fa-solid ${isAutoScrolling ? 'fa-pause' : 'fa-play'} text-xs`}></i>
+                        <AppIcon name={isAutoScrolling ? 'pause' : 'play'} className="text-xs" />
                     </button>
 
                     <div className="flex items-center gap-1.5 text-xs font-mono text-text-secondary">
@@ -1506,7 +1647,7 @@ export const SongToolsReact = ({
                             className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 disabled:opacity-30 cursor-pointer"
                             title="Disminuir velocidad"
                         >
-                            <i className="fa-solid fa-minus text-[10px]"></i>
+                            <AppIcon name="minus" className="text-[10px]" />
                         </button>
                         <span className="text-white font-bold w-12 text-center font-mono">
                             {SCROLL_SPEEDS.find(s => s.level === scrollSpeed)?.label}
@@ -1518,7 +1659,7 @@ export const SongToolsReact = ({
                             className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 disabled:opacity-30 cursor-pointer"
                             title="Aumentar velocidad"
                         >
-                            <i className="fa-solid fa-plus text-[10px]"></i>
+                            <AppIcon name="plus" className="text-[10px]" />
                         </button>
                     </div>
 
@@ -1528,7 +1669,7 @@ export const SongToolsReact = ({
                         className="w-7 h-7 rounded-full hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center ml-1 cursor-pointer transition-colors"
                         title="Cerrar control de auto-scroll"
                     >
-                        <i className="fa-solid fa-xmark text-xs"></i>
+                        <AppIcon name="xmark" className="text-xs" />
                     </button>
                 </div>
             )}
@@ -1543,7 +1684,7 @@ export const SongToolsReact = ({
                         onClick={toggleFocusMode}
                         className="px-4 py-2 bg-bg-secondary/90 hover:bg-bg-secondary border border-white/15 rounded-full text-xs font-medium text-white shadow-2xl flex items-center gap-2 backdrop-blur-md transition-all cursor-pointer"
                     >
-                        <i className="fa-solid fa-compress text-accent-main"></i>
+                        <AppIcon name="compress" className="text-accent-main" />
                         <span>Salir del modo atril</span>
                     </button>
                 </div>

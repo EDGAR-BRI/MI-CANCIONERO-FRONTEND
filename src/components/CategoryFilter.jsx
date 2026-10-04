@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../services/songs';
+import AppIcon from './Ui/AppIcon';
 
 const getCategoryIcon = (name = '') => {
     const lower = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (lower.includes('adorac')) return 'fa-heart';
-    if (lower.includes('alabanz')) return 'fa-hands-clapping';
-    if (lower.includes('maria') || lower.includes('virgen')) return 'fa-crown';
-    if (lower.includes('cuaresma') || lower.includes('pasion')) return 'fa-cross';
-    if (lower.includes('pascua') || lower.includes('resurrecc')) return 'fa-sun';
-    if (lower.includes('navidad')) return 'fa-gift';
-    if (lower.includes('adviento')) return 'fa-fire-flame-curved';
-    if (lower.includes('espiritu') || lower.includes('pentecost')) return 'fa-dove';
-    if (lower.includes('joven') || lower.includes('juventud')) return 'fa-guitar';
-    if (lower.includes('vocacion') || lower.includes('mision')) return 'fa-globe';
-    if (lower.includes('nino') || lower.includes('infantil')) return 'fa-child';
-    if (lower.includes('comunion') || lower.includes('eucarist')) return 'fa-wine-glass';
-    if (lower.includes('entrada')) return 'fa-door-open';
-    if (lower.includes('piedad') || lower.includes('perdon')) return 'fa-hands-praying';
-    if (lower.includes('gloria')) return 'fa-sun';
-    if (lower.includes('aleluya')) return 'fa-book-open';
-    if (lower.includes('ofertorio')) return 'fa-bread-slice';
-    if (lower.includes('santo')) return 'fa-dove';
-    if (lower.includes('paz') || lower.includes('cordero')) return 'fa-heart';
-    if (lower.includes('salida') || lower.includes('envio')) return 'fa-person-walking-arrow-right';
-    if (lower.includes('inactiv')) return 'fa-eye-slash';
-    return 'fa-music';
+    if (lower.includes('adorac')) return 'heart';
+    if (lower.includes('alabanz')) return 'hands-clapping';
+    if (lower.includes('maria') || lower.includes('virgen')) return 'crown';
+    if (lower.includes('cuaresma') || lower.includes('pasion')) return 'cross';
+    if (lower.includes('pascua') || lower.includes('resurrecc')) return 'sun';
+    if (lower.includes('navidad')) return 'gift';
+    if (lower.includes('adviento')) return 'fire-flame-curved';
+    if (lower.includes('espiritu') || lower.includes('pentecost')) return 'dove';
+    if (lower.includes('joven') || lower.includes('juventud')) return 'guitar';
+    if (lower.includes('vocacion') || lower.includes('mision')) return 'globe';
+    if (lower.includes('nino') || lower.includes('infantil')) return 'child';
+    if (lower.includes('comunion') || lower.includes('eucarist')) return 'wine-glass';
+    if (lower.includes('entrada')) return 'door-open';
+    if (lower.includes('piedad') || lower.includes('perdon')) return 'hands-praying';
+    if (lower.includes('gloria')) return 'sun';
+    if (lower.includes('aleluya')) return 'book-open';
+    if (lower.includes('ofertorio')) return 'bread-slice';
+    if (lower.includes('santo')) return 'dove';
+    if (lower.includes('paz') || lower.includes('cordero')) return 'heart';
+    if (lower.includes('salida') || lower.includes('envio')) return 'person-walking-arrow-right';
+    if (lower.includes('inactiv')) return 'eye-slash';
+    return 'music';
 };
 
 export default function CategoryFilter({ isAdmin, currentCategoryId = null }) {
@@ -71,7 +72,7 @@ export default function CategoryFilter({ isAdmin, currentCategoryId = null }) {
                         : "bg-bg-secondary text-text-secondary hover:text-white hover:bg-white/10 border-white/5 hover:border-accent-main/30"
                 }`}
             >
-                <i className={`fa-solid fa-layer-group text-xs ${!currentCategoryId ? "text-white" : "text-accent-main"}`}></i>
+                <AppIcon name="layer-group" className={`text-xs ${!currentCategoryId ? "text-white" : "text-accent-main"}`} />
                 <span>Explorar Todas</span>
             </a>
 
@@ -104,7 +105,7 @@ export default function CategoryFilter({ isAdmin, currentCategoryId = null }) {
                             }
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap shrink-0 flex items-center gap-2 border ${itemClass}`}
                         >
-                            <i className={`fa-solid ${icon} text-xs ${iconClass}`}></i>
+                            <AppIcon name={icon} className={`text-xs ${iconClass}`} />
                             <span>{cat.name}</span>
                         </a>
                     );

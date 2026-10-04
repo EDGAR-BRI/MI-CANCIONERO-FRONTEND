@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
 import {
     getMinistryById,
@@ -258,7 +259,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
     if (!ministry) {
         return (
             <div className="bg-[#171717] border border-white/10 rounded-2xl p-12 text-center space-y-4">
-                <i className="fa-solid fa-triangle-exclamation text-3xl text-amber-500"></i>
+                <AppIcon name="triangle-exclamation" className="text-3xl text-amber-500" />
                 <h3 className="text-xl font-bold text-white">Ministerio no disponible</h3>
                 <a href="/perfil" className="inline-block px-4 py-2 bg-accent-main text-black font-bold text-sm rounded-xl">
                     Volver a mi perfil
@@ -280,7 +281,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-5 sm:gap-6">
                     <div className="flex items-start gap-3.5 sm:gap-5 min-w-0 flex-1">
                         <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-tr from-accent-main/20 to-amber-500/10 border border-accent-main/30 text-accent-main flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-lg">
-                            <i className="fa-solid fa-church"></i>
+                            <AppIcon name="church" />
                         </div>
 
                         <div className="space-y-2 min-w-0 flex-1">
@@ -302,18 +303,18 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
 
                             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-zinc-400 pt-1">
                                 <span className="flex items-center gap-1.5 shrink-0">
-                                    <i className="fa-solid fa-user-group text-accent-main"></i>
+                                    <AppIcon name="user-group" className="text-accent-main" />
                                     {ministry.activeMembers?.length || 0} integrantes
                                 </span>
                                 {ministry.foundedAt && (
                                     <span className="flex items-center gap-1.5 shrink-0">
-                                        <i className="fa-regular fa-calendar text-accent-main"></i>
+                                        <AppIcon name="calendar" className="text-accent-main" />
                                         Fundado en {new Date(ministry.foundedAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long' })}
                                     </span>
                                 )}
                                 {ministry.requireApproval && (
                                     <span className="flex items-center gap-1 text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
-                                        <i className="fa-solid fa-shield-halved"></i>
+                                        <AppIcon name="shield-halved" />
                                         Requiere aprobación
                                     </span>
                                 )}
@@ -327,7 +328,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                             onClick={handleShareWhatsApp}
                             className="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-md active:scale-95 whitespace-nowrap"
                         >
-                            <i className="fa-brands fa-whatsapp text-sm"></i>
+                            <AppIcon name="whatsapp" className="text-sm" />
                             <span><span className="hidden sm:inline">Compartir en </span>WhatsApp</span>
                         </button>
                         <button
@@ -343,12 +344,12 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                             <span className="inline-flex items-center gap-1.5 transition-transform duration-200">
                                 {copiedLink ? (
                                     <>
-                                        <i className="fa-solid fa-check text-emerald-400 text-sm transition-transform duration-300 scale-125"></i>
+                                        <AppIcon name="check" className="text-emerald-400 text-sm transition-transform duration-300 scale-125" />
                                         <span className="font-bold text-emerald-300">¡Copiado!</span>
                                     </>
                                 ) : (
                                     <>
-                                        <i className="fa-regular fa-copy text-sm"></i>
+                                        <AppIcon name="copy" className="text-sm" />
                                         <span>Copiar Enlace</span>
                                     </>
                                 )}
@@ -366,7 +367,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                 : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
                             }`}
                     >
-                        <i className="fa-solid fa-users"></i>
+                        <AppIcon name="users" />
                         <span>Integrantes ({ministry.activeMembers?.length || 0})</span>
                     </button>
 
@@ -378,7 +379,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                     : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
                                 }`}
                         >
-                            <i className="fa-solid fa-user-clock"></i>
+                            <AppIcon name="user-clock" />
                             <span>Solicitudes</span>
                             {pendingCount > 0 && (
                                 <span className="ml-1 px-1.5 py-0.2 bg-red-500 text-white rounded-full text-[10px] font-extrabold animate-pulse">
@@ -395,7 +396,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                 : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
                             }`}
                     >
-                        <i className="fa-solid fa-book-bible"></i>
+                        <AppIcon name="book-bible" />
                         <span><span className="hidden sm:inline">Repertorio & </span>Misas ({ministry.misas?.length || 0})</span>
                     </button>
 
@@ -407,7 +408,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                     : 'bg-[#222222] text-zinc-400 hover:text-white hover:bg-[#2c2c2c]'
                                 }`}
                         >
-                            <i className="fa-solid fa-gear"></i>
+                            <AppIcon name="gear" />
                             <span>Ajustes</span>
                         </button>
                     )}
@@ -430,7 +431,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                 onClick={() => setShowAddMemberModal(true)}
                                 className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-accent-main hover:bg-amber-600 rounded-xl text-xs font-bold text-black transition-all shadow-md active:scale-95 shrink-0"
                             >
-                                <i className="fa-solid fa-user-plus text-[11px]"></i>
+                                <AppIcon name="user-plus" className="text-[11px]" />
                                 <span>
                                     <span className="hidden sm:inline">Agregar Integrante</span>
                                     <span className="sm:hidden">Agregar</span>
@@ -472,7 +473,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                                     <>
                                                         <span className="text-zinc-600 hidden xs:inline">•</span>
                                                         <span className="flex items-center gap-1 text-zinc-400 shrink-0">
-                                                            <i className="fa-solid fa-phone text-[10px] text-zinc-500"></i>
+                                                            <AppIcon name="phone" className="text-[10px] text-zinc-500" />
                                                             <span>{m.phoneNumber}</span>
                                                         </span>
                                                     </>
@@ -508,7 +509,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                                     title="Expulsar integrante"
                                                     className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors shrink-0"
                                                 >
-                                                    <i className="fa-solid fa-user-xmark text-xs"></i>
+                                                    <AppIcon name="user-xmark" className="text-xs" />
                                                 </button>
                                             </>
                                         )}
@@ -541,7 +542,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
 
                     {pendingCount === 0 ? (
                         <div className="bg-[#171717] border border-white/10 rounded-2xl p-10 text-center space-y-2">
-                            <i className="fa-solid fa-circle-check text-2xl text-emerald-500"></i>
+                            <AppIcon name="circle-check" className="text-2xl text-emerald-500" />
                             <p className="text-sm font-semibold text-white">No hay solicitudes pendientes</p>
                             <p className="text-xs text-zinc-400">
                                 Cuando alguien intente unirse con el enlace, sus peticiones aparecerán aquí.
@@ -566,7 +567,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                                     <>
                                                         <span className="text-zinc-600 hidden xs:inline">•</span>
                                                         <span className="flex items-center gap-1 text-zinc-400 shrink-0">
-                                                            <i className="fa-solid fa-phone text-[10px] text-zinc-500"></i>
+                                                            <AppIcon name="phone" className="text-[10px] text-zinc-500" />
                                                             <span>{req.phoneNumber}</span>
                                                         </span>
                                                     </>
@@ -608,14 +609,14 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                             href="/misas/add"
                             className="inline-flex items-center gap-2 px-4 py-2 bg-accent-main hover:bg-amber-600 text-black text-xs font-bold rounded-xl transition-all shadow-md"
                         >
-                            <i className="fa-solid fa-plus"></i>
+                            <AppIcon name="plus" />
                             <span>Crear Misa</span>
                         </a>
                     </div>
 
                     {(!ministry.misas || ministry.misas.length === 0) ? (
                         <div className="bg-[#171717] border border-white/10 rounded-2xl p-10 text-center space-y-2">
-                            <i className="fa-solid fa-book-bible text-2xl text-zinc-500"></i>
+                            <AppIcon name="book-bible" className="text-2xl text-zinc-500" />
                             <p className="text-sm font-semibold text-white">Aún no hay misas registradas</p>
                             <p className="text-xs text-zinc-400">
                                 Planifica canciones y momentos litúrgicos para los próximos servicios.
@@ -644,7 +645,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                     </div>
                                     <span className="text-xs text-zinc-400 mt-4 flex items-center gap-1 group-hover:text-white">
                                         <span>Ver repertorio</span>
-                                        <i className="fa-solid fa-arrow-right text-[10px]"></i>
+                                        <AppIcon name="arrow-right" className="text-[10px]" />
                                     </span>
                                 </a>
                             ))}
@@ -768,12 +769,12 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                 >
                                     {copiedLink ? (
                                         <>
-                                            <i className="fa-solid fa-check text-emerald-400"></i>
+                                            <AppIcon name="check" className="text-emerald-400" />
                                             <span>¡Copiado!</span>
                                         </>
                                     ) : (
                                         <>
-                                            <i className="fa-regular fa-copy"></i>
+                                            <AppIcon name="copy" />
                                             <span>Copiar</span>
                                         </>
                                     )}
@@ -811,14 +812,14 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-4">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <i className="fa-solid fa-user-plus text-accent-main"></i>
+                                <AppIcon name="user-plus" className="text-accent-main" />
                                 <span>Agregar Integrante al Ministerio</span>
                             </h3>
                             <button
                                 onClick={() => setShowAddMemberModal(false)}
                                 className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <AppIcon name="xmark" />
                             </button>
                         </div>
 
@@ -827,7 +828,7 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                 Buscar por Nombre o Correo
                             </label>
                             <div className="relative">
-                                <i className="fa-solid fa-search absolute left-3.5 top-3 text-zinc-500 text-sm"></i>
+                                <AppIcon name="search" className="absolute left-3.5 top-3 text-zinc-500 text-sm" />
                                 <input
                                     type="text"
                                     value={searchQuery}

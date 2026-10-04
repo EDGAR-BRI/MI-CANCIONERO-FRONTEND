@@ -66,6 +66,7 @@ const canEdit =
             title={song?.title}
             canEdit={!!canEdit}
             initialKey={song?.key}
+            song={song}
         />
 
         <main class="flex-1 px-3 py-4 sm:p-6 md:p-10 min-w-0 print:px-8 print:py-0 pb-36 md:pb-12 song-focus-container">
@@ -91,6 +92,7 @@ const canEdit =
                         initialContent={song?.content}
                         initialKey={song?.key}
                         originalKey={song?.key}
+                        songId={id}
                     />
                 </div>
                 <div class="lg:col-span-1 no-print no-focus-mode">

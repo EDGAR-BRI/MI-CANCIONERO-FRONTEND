@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
 import {
     getMyMinistries,
@@ -137,7 +138,7 @@ export default function MinistriesViewReact({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-                        <i className="fa-solid fa-users-viewfinder text-accent-main"></i>
+                        <AppIcon name="users-viewfinder" className="text-accent-main" />
                         <span>Mis Ministerios de Música</span>
                     </h1>
                     <p className="text-zinc-400 text-xs sm:text-sm mt-1">
@@ -151,7 +152,7 @@ export default function MinistriesViewReact({
                         onClick={() => setShowJoinModal(true)}
                         className="h-10 px-3 sm:px-4 bg-[#262626] hover:bg-[#333333] border border-white/10 rounded-xl text-xs sm:text-sm font-semibold text-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
                     >
-                        <i className="fa-solid fa-key text-accent-main shrink-0 text-xs sm:text-sm"></i>
+                        <AppIcon name="key" className="text-accent-main shrink-0 text-xs sm:text-sm" />
                         <span className="truncate">
                             Unirme <span className="hidden min-[380px]:inline">con Código</span>
                         </span>
@@ -161,7 +162,7 @@ export default function MinistriesViewReact({
                         onClick={() => setShowCreateModal(true)}
                         className="h-10 px-3 sm:px-4 bg-accent-main hover:bg-amber-600 rounded-xl text-xs sm:text-sm font-bold text-black transition-all shadow-lg shadow-accent-main/20 active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
                     >
-                        <i className="fa-solid fa-plus shrink-0 text-xs sm:text-sm"></i>
+                        <AppIcon name="plus" className="shrink-0 text-xs sm:text-sm" />
                         <span className="truncate">
                             Crear <span className="hidden min-[380px]:inline">Ministerio</span>
                         </span>
@@ -173,7 +174,7 @@ export default function MinistriesViewReact({
             {pendingRequests.length > 0 && (
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 sm:p-5 space-y-3">
                     <h3 className="text-xs sm:text-sm font-semibold text-amber-400 flex items-center gap-2">
-                        <i className="fa-solid fa-clock"></i>
+                        <AppIcon name="clock" />
                         <span>Solicitudes de Ingreso Pendientes ({pendingRequests.length})</span>
                     </h3>
                     <div className="grid gap-2">
@@ -199,7 +200,7 @@ export default function MinistriesViewReact({
             ) : ministries.length === 0 ? (
                 <div className="bg-[#171717] border border-white/10 border-dashed rounded-2xl p-8 sm:p-12 text-center space-y-4">
                     <div className="w-16 h-16 rounded-full bg-accent-main/10 text-accent-main flex items-center justify-center mx-auto text-2xl">
-                        <i className="fa-solid fa-music"></i>
+                        <AppIcon name="music" />
                     </div>
                     <div className="space-y-1">
                         <h4 className="text-lg font-bold text-white">Aún no perteneces a ningún ministerio</h4>
@@ -213,7 +214,7 @@ export default function MinistriesViewReact({
                             onClick={() => setShowJoinModal(true)}
                             className="h-10 px-4 bg-[#262626] hover:bg-[#333333] border border-white/10 rounded-xl text-xs sm:text-sm font-semibold text-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <i className="fa-solid fa-key text-accent-main"></i>
+                            <AppIcon name="key" className="text-accent-main" />
                             <span>Unirme con Código</span>
                         </button>
                         <button
@@ -221,7 +222,7 @@ export default function MinistriesViewReact({
                             onClick={() => setShowCreateModal(true)}
                             className="h-10 px-5 bg-accent-main hover:bg-amber-600 text-black font-bold text-xs sm:text-sm rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                         >
-                            <i className="fa-solid fa-plus"></i>
+                            <AppIcon name="plus" />
                             <span>Crear Ministerio</span>
                         </button>
                     </div>
@@ -238,7 +239,7 @@ export default function MinistriesViewReact({
                                 <div className="space-y-3">
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="w-12 h-12 rounded-xl bg-accent-main/10 border border-accent-main/20 text-accent-main flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
-                                            <i className="fa-solid fa-church"></i>
+                                            <AppIcon name="church" />
                                         </div>
                                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${isAdmin
                                                 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
@@ -261,12 +262,12 @@ export default function MinistriesViewReact({
                                 <div className="pt-4 mt-4 border-t border-white/5 space-y-3">
                                     <div className="flex items-center justify-between text-xs text-zinc-400">
                                         <span className="flex items-center gap-1.5">
-                                            <i className="fa-solid fa-user-group text-zinc-500"></i>
+                                            <AppIcon name="user-group" className="text-zinc-500" />
                                             {m.memberCount} {m.memberCount === 1 ? 'integrante' : 'integrantes'}
                                         </span>
                                         {m.foundedAt && (
                                             <span className="flex items-center gap-1 text-zinc-500">
-                                                <i className="fa-regular fa-calendar"></i>
+                                                <AppIcon name="calendar" />
                                                 {new Date(m.foundedAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'short' })}
                                             </span>
                                         )}
@@ -277,7 +278,7 @@ export default function MinistriesViewReact({
                                         className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#262626] hover:bg-accent-main hover:text-black font-semibold text-xs sm:text-sm text-white transition-all active:scale-95"
                                     >
                                         <span>Entrar al Ministerio</span>
-                                        <i className="fa-solid fa-arrow-right text-[11px]"></i>
+                                        <AppIcon name="arrow-right" className="text-[11px]" />
                                     </a>
                                 </div>
                             </div>
@@ -292,14 +293,14 @@ export default function MinistriesViewReact({
                     <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative space-y-5">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <i className="fa-solid fa-plus text-accent-main"></i>
+                                <AppIcon name="plus" className="text-accent-main" />
                                 <span>Nuevo Ministerio de Música</span>
                             </h3>
                             <button
                                 onClick={() => setShowCreateModal(false)}
                                 className="text-zinc-400 hover:text-white p-1 text-lg"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <AppIcon name="xmark" />
                             </button>
                         </div>
 
@@ -399,7 +400,7 @@ export default function MinistriesViewReact({
                                         </>
                                     ) : (
                                         <>
-                                            <i className="fa-solid fa-check"></i>
+                                            <AppIcon name="check" />
                                             <span>Crear y Entrar</span>
                                         </>
                                     )}
@@ -416,14 +417,14 @@ export default function MinistriesViewReact({
                     <div className="bg-[#171717] border border-white/15 rounded-2xl w-full max-w-md p-6 shadow-2xl relative space-y-5">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <i className="fa-solid fa-key text-accent-main"></i>
+                                <AppIcon name="key" className="text-accent-main" />
                                 <span>Unirme a un Ministerio</span>
                             </h3>
                             <button
                                 onClick={() => setShowJoinModal(false)}
                                 className="text-zinc-400 hover:text-white p-1 text-lg"
                             >
-                                <i className="fa-solid fa-xmark"></i>
+                                <AppIcon name="xmark" />
                             </button>
                         </div>
 
@@ -465,7 +466,7 @@ export default function MinistriesViewReact({
                                         </>
                                     ) : (
                                         <>
-                                            <i className="fa-solid fa-arrow-right-to-bracket"></i>
+                                            <AppIcon name="arrow-right-to-bracket" />
                                             <span>Unirme Ahora</span>
                                         </>
                                     )}

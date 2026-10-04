@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect, useRef } from 'react';
 import { showSuccessToast } from '../utils/alerts';
 import { getChordsPreference, setChordsPreference } from '../utils/preferences';
@@ -334,7 +335,7 @@ export default function MisaAutoScrollReact() {
                             : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border-white/10"
                 }`}
             >
-                <i className={`fa-solid ${isAutoScrolling ? 'fa-pause' : 'fa-angles-down'} text-[11px] ${isAutoScrolling ? 'text-white' : 'text-text-secondary group-hover:text-white'} transition-colors`}></i>
+                <AppIcon name={isAutoScrolling ? 'pause' : 'angles-down'} className="text-[11px] ${isAutoScrolling ? 'text-white' : 'text-text-secondary group-hover:text-white'} transition-colors" />
                 <span>{isAutoScrolling ? "Pausar" : "Auto-scroll"}</span>
             </button>
 
@@ -383,7 +384,7 @@ export default function MisaAutoScrollReact() {
                         }`}
                         title={showChords ? "Ocultar acordes" : "Mostrar acordes"}
                     >
-                        <i className="fa-solid fa-music text-[11px]"></i>
+                        <AppIcon name="music" className="text-[11px]" />
                         <span className="hidden xs:inline sm:inline">Acordes</span>
                     </button>
 
@@ -423,7 +424,7 @@ export default function MisaAutoScrollReact() {
                         }`}
                         title={isAutoScrolling ? "Pausar scroll" : "Iniciar auto-scroll"}
                     >
-                        <i className={`fa-solid ${isAutoScrolling ? 'fa-pause' : 'fa-angles-down'} text-[11px]`}></i>
+                        <AppIcon name={isAutoScrolling ? 'pause' : 'angles-down'} className="text-[11px]" />
                         <span className="hidden xs:inline sm:inline">Scroll</span>
                     </button>
 
@@ -438,7 +439,7 @@ export default function MisaAutoScrollReact() {
                         }`}
                         title="Modo atril (pantalla completa)"
                     >
-                        <i className="fa-solid fa-expand text-[11px]"></i>
+                        <AppIcon name="expand" className="text-[11px]" />
                         <span>Atril</span>
                     </button>
 
@@ -451,7 +452,7 @@ export default function MisaAutoScrollReact() {
                         className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
                         title="Minimizar a botón flotante"
                     >
-                        <i className="fa-solid fa-down-left-and-up-right-to-center text-[10px]"></i>
+                        <AppIcon name="down-left-and-up-right-to-center" className="text-[10px]" />
                     </button>
                 </div>
             )}
@@ -478,7 +479,7 @@ export default function MisaAutoScrollReact() {
                         title="Ajustes de la misa (Acordes, Atril, Scroll)"
                         aria-label="Ajustes de la misa"
                     >
-                        <i className="fa-solid fa-sliders text-lg transition-transform duration-300 group-hover:rotate-45"></i>
+                        <AppIcon name="sliders" className="text-lg transition-transform duration-300 group-hover:rotate-45" />
                     </button>
                 </div>
             )}
@@ -493,7 +494,7 @@ export default function MisaAutoScrollReact() {
                     <div className="relative bg-bg-secondary border-t border-white/10 rounded-t-2xl p-4 pb-12 space-y-3 z-10 max-w-md mx-auto w-full shadow-2xl">
                         <div className="flex items-center justify-between pb-2 border-b border-white/10">
                             <span className="text-sm font-bold text-white flex items-center gap-2">
-                                <i className="fa-solid fa-sliders text-accent-main"></i>
+                                <AppIcon name="sliders" className="text-accent-main" />
                                 <span>Ajustes de Misa</span>
                             </span>
                             <button
@@ -501,7 +502,7 @@ export default function MisaAutoScrollReact() {
                                 onClick={() => setIsDrawerOpen(false)}
                                 className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center cursor-pointer"
                             >
-                                <i className="fa-solid fa-xmark text-xs"></i>
+                                <AppIcon name="xmark" className="text-xs" />
                             </button>
                         </div>
 
@@ -516,7 +517,7 @@ export default function MisaAutoScrollReact() {
                                         : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white"
                                 }`}
                             >
-                                <i className="fa-solid fa-music"></i>
+                                <AppIcon name="music" />
                                 <span>{showChords ? "Ocultar Acordes" : "Mostrar Acordes"}</span>
                             </button>
 
@@ -533,7 +534,7 @@ export default function MisaAutoScrollReact() {
                                         : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white"
                                 }`}
                             >
-                                <i className="fa-solid fa-expand"></i>
+                                <AppIcon name="expand" />
                                 <span>Modo Atril</span>
                             </button>
                         </div>
@@ -541,7 +542,7 @@ export default function MisaAutoScrollReact() {
                         {/* Control de Tamaño de Letra en el Drawer */}
                         <div className="bg-bg-main/60 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <i className="fa-solid fa-font text-text-secondary text-xs"></i>
+                                <AppIcon name="font" className="text-text-secondary text-xs" />
                                 <span className="text-xs font-semibold text-text-main">Tamaño de Letra</span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -626,7 +627,7 @@ export default function MisaAutoScrollReact() {
                         className="w-8 h-8 rounded-full bg-accent-main text-white flex items-center justify-center hover:bg-accent-main/90 transition-colors shadow-md cursor-pointer active:scale-95"
                         title={isAutoScrolling ? "Pausar scroll" : "Reanudar scroll"}
                     >
-                        <i className={`fa-solid ${isAutoScrolling ? 'fa-pause' : 'fa-play'} text-xs`}></i>
+                        <AppIcon name={isAutoScrolling ? 'pause' : 'play'} className="text-xs" />
                     </button>
 
                     <div className="flex items-center gap-1.5 text-xs font-mono text-text-secondary">
@@ -637,7 +638,7 @@ export default function MisaAutoScrollReact() {
                             className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 disabled:opacity-30 cursor-pointer"
                             title="Disminuir velocidad"
                         >
-                            <i className="fa-solid fa-minus text-[10px]"></i>
+                            <AppIcon name="minus" className="text-[10px]" />
                         </button>
                         <span className="text-white font-bold w-12 text-center font-mono">
                             {SCROLL_SPEEDS.find(s => s.level === scrollSpeed)?.label}
@@ -649,7 +650,7 @@ export default function MisaAutoScrollReact() {
                             className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/10 disabled:opacity-30 cursor-pointer"
                             title="Aumentar velocidad"
                         >
-                            <i className="fa-solid fa-plus text-[10px]"></i>
+                            <AppIcon name="plus" className="text-[10px]" />
                         </button>
                     </div>
 
@@ -659,7 +660,7 @@ export default function MisaAutoScrollReact() {
                         className="w-7 h-7 rounded-full hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center ml-1 cursor-pointer transition-colors"
                         title="Cerrar control de auto-scroll"
                     >
-                        <i className="fa-solid fa-xmark text-xs"></i>
+                        <AppIcon name="xmark" className="text-xs" />
                     </button>
                 </div>
             )}
@@ -672,7 +673,7 @@ export default function MisaAutoScrollReact() {
                         onClick={toggleFocusMode}
                         className="px-4 py-2 bg-bg-secondary/90 hover:bg-bg-secondary border border-white/15 rounded-full text-xs font-medium text-white shadow-2xl flex items-center gap-2 backdrop-blur-md transition-all cursor-pointer"
                     >
-                        <i className="fa-solid fa-compress text-accent-main"></i>
+                        <AppIcon name="compress" className="text-accent-main" />
                         <span>Salir del modo atril</span>
                     </button>
                 </div>

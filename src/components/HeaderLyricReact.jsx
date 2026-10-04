@@ -1,13 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { transposeKey } from "../utils/music";
 import { getYouTubeId } from "./YouTubePlayerReact";
+import AppIcon from "./Ui/AppIcon";
 
 export const HeaderLyricReact = ({ id, title, author, artist, tone, category, categories: categoriesProp, user, videoUrl }) => {
     const categories = categoriesProp && categoriesProp.length > 0
         ? categoriesProp
         : (category ? [category] : []);
-    const authorName = author?.name || (typeof author === 'string' ? author : (artist || "Desconocido"));
+    const initialAuthorName = author?.name || (typeof author === 'string' ? author : (artist || "Desconocido"));
     const hasVideo = !!(videoUrl && getYouTubeId(videoUrl));
+
+    const [songTitle, setSongTitle] = useState(title);
+    const [songAuthor, setSongAuthor] = useState(initialAuthorName);
+
+    useEffect(() => {
+        if (title) setSongTitle(title);
+        if (initialAuthorName) setSongAuthor(initialAuthorName);
+    }, [title, initialAuthorName]);
+
+    useEffect(() => {
+        if (!songTitle && id) {
+            import('../utils/offlineStorage').then(({ getSongOffline }) => {
+                getSongOffline(id).then((offlineSong) => {
+                    if (offlineSong) {
+                        if (offlineSong.title) setSongTitle(offlineSong.title);
+                        if (offlineSong.author) {
+                            const name = typeof offlineSong.author === 'string' ? offlineSong.author : offlineSong.author?.name;
+                            if (name) setSongAuthor(name);
+                        }
+                    }
+                }).catch(() => {});
+            });
+        }
+    }, [id, songTitle]);
 
     const handlePlayVideo = () => {
         window.dispatchEvent(new CustomEvent('play-song-video'));
@@ -65,11 +90,11 @@ export const HeaderLyricReact = ({ id, title, author, artist, tone, category, ca
                         className="text-3xl sm:text-4xl font-extrabold text-text-main mb-1"
                         style={{ viewTransitionName: `song-title-${id}` }}
                     >
-                        {title || "Título Desconocido"}
+                        {songTitle || title || "Título Desconocido"}
                     </h1>
                     <h2 className="text-lg sm:text-xl text-accent-main font-medium">
                         <span className="text-text-secondary">Autor:</span>{" "}
-                        <span style={{ viewTransitionName: `song-artist-${id}` }}>{authorName}</span>
+                        <span style={{ viewTransitionName: `song-artist-${id}` }}>{songAuthor || initialAuthorName}</span>
                     </h2>
                 </div>
 
@@ -82,9 +107,7 @@ export const HeaderLyricReact = ({ id, title, author, artist, tone, category, ca
                         aria-label="Reproducir video de YouTube"
                     >
                         <span className="w-7 h-7 rounded-lg bg-red-600/20 text-red-500 border border-red-500/30 flex items-center justify-center shrink-0 group-hover:bg-red-600 group-hover:text-white transition-all">
-                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                            </svg>
+                            <AppIcon name="fa6-brands:youtube" className="w-4 h-4 fill-current" />
                         </span>
                         <div className="flex flex-col text-left">
                             <span className="text-[10px] text-text-secondary uppercase tracking-wider font-semibold leading-none">YouTube</span>

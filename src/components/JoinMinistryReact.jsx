@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
 import { joinMinistryByCode, setMinistriesAuthToken } from '../services/ministries';
 import { showSuccessToast, showError } from '../utils/alerts';
@@ -43,7 +44,7 @@ export default function JoinMinistryReact({ code, isLoggedIn, token }) {
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto text-2xl ${
                     isPending ? 'bg-amber-500/15 text-amber-400' : 'bg-emerald-500/15 text-emerald-400'
                 }`}>
-                    <i className={isPending ? "fa-solid fa-clock" : "fa-solid fa-check"}></i>
+                    <AppIcon name={isPending ? "clock" : "check"} className="text-2xl" />
                 </div>
 
                 <div className="space-y-2">
@@ -74,7 +75,7 @@ export default function JoinMinistryReact({ code, isLoggedIn, token }) {
         <div className="bg-[#171717] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-lg mx-auto shadow-2xl space-y-6">
             <div className="text-center space-y-2">
                 <div className="w-16 h-16 rounded-2xl bg-accent-main/10 border border-accent-main/20 text-accent-main flex items-center justify-center mx-auto text-2xl shadow-lg">
-                    <i className="fa-solid fa-music"></i>
+                    <AppIcon name="music" />
                 </div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">
                     Invitación a Ministerio de Música
@@ -125,7 +126,7 @@ export default function JoinMinistryReact({ code, isLoggedIn, token }) {
                         disabled={joining || !inputCode.trim()}
                         className="w-full py-3 bg-accent-main hover:bg-amber-600 text-black font-bold text-sm rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                        <i className="fa-solid fa-right-to-bracket"></i>
+                        <AppIcon name="right-to-bracket" />
                         <span>{joining ? 'Verificando...' : 'Confirmar y Unirme al Grupo'}</span>
                     </button>
                 </form>

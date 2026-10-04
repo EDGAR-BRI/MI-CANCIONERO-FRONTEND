@@ -1,3 +1,4 @@
+import AppIcon from "@/components/Ui/AppIcon";
 import React, { useState, useEffect } from 'react';
 import { getMyMinistries, type MinistrySummary } from '../services/ministries';
 import type { Misa } from '../types/misa';
@@ -116,7 +117,7 @@ export default function HomeDashboardReact({
                     >
                         <div className="flex items-center justify-between mb-3">
                             <div className="w-10 h-10 rounded-lg bg-white/5 text-accent-main flex items-center justify-center">
-                                <i className="fa-solid fa-users text-lg"></i>
+                                <AppIcon name="users" className="text-lg" />
                             </div>
                             <span className="text-xs font-mono bg-white/5 px-2 py-0.5 rounded text-text-secondary">
                                 {isLoggedIn ? (ministries.length > 0 ? `${ministries.length}` : '0') : 'Ver'}
@@ -125,7 +126,7 @@ export default function HomeDashboardReact({
                         <div>
                             <h2 className="text-base font-bold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                                 <span>Mis Grupos</span>
-                                <i className="fa-solid fa-arrow-right text-xs opacity-0 group-hover:opacity-100 transition-opacity text-accent-main"></i>
+                                <AppIcon name="arrow-right" className="text-xs opacity-0 group-hover:opacity-100 transition-opacity text-accent-main" />
                             </h2>
                             <p className="text-xs text-text-secondary mt-0.5 truncate">
                                 {isLoggedIn
@@ -145,7 +146,7 @@ export default function HomeDashboardReact({
                     >
                         <div className="flex items-center justify-between mb-3">
                             <div className="w-10 h-10 rounded-lg bg-accent-main/10 text-accent-main flex items-center justify-center">
-                                <i className="fa-solid fa-plus text-base"></i>
+                                <AppIcon name="plus" className="text-base" />
                             </div>
                             <span className="text-xs font-mono bg-white/5 px-2 py-0.5 rounded text-accent-main">
                                 + Misa
@@ -154,7 +155,7 @@ export default function HomeDashboardReact({
                         <div>
                             <h2 className="text-base font-bold text-white group-hover:text-accent-main transition-colors flex items-center justify-between">
                                 <span>Nueva Misa</span>
-                                <i className="fa-solid fa-book-bible text-xs text-text-secondary"></i>
+                                <AppIcon name="book-bible" className="text-xs text-text-secondary" />
                             </h2>
                             <p className="text-xs text-text-secondary mt-0.5 truncate">
                                 Planificar repertorio
@@ -168,7 +169,7 @@ export default function HomeDashboardReact({
             <section aria-label="Próximas Misas">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                        <i className="fa-solid fa-book-bible text-lg text-accent-main"></i>
+                        <AppIcon name="book-bible" className="text-lg text-accent-main" />
                         <h2 className="text-lg font-bold text-white tracking-tight">
                             Próxima Misa
                         </h2>
@@ -179,7 +180,7 @@ export default function HomeDashboardReact({
                         className="text-xs font-medium text-accent-main hover:text-white transition-colors flex items-center gap-1 active:scale-[0.98]"
                     >
                         <span>Ver todas</span>
-                        <i className="fa-solid fa-angle-right text-[10px]"></i>
+                        <AppIcon name="angle-right" className="text-[10px]" />
                     </a>
                 </div>
 
@@ -209,12 +210,12 @@ export default function HomeDashboardReact({
                                         {/* Badge de pertenencia (Ministerio o Personal) */}
                                         {hasMinistry && nextMisa.ministry ? (
                                             <span className="text-xs bg-white/5 px-2.5 py-1 rounded-full text-text-secondary flex items-center gap-1.5 max-w-[160px] truncate">
-                                                <i className="fa-solid fa-users text-[10px] text-accent-main"></i>
+                                                <AppIcon name="users" className="text-[10px] text-accent-main" />
                                                 <span className="truncate">{nextMisa.ministry.name}</span>
                                             </span>
                                         ) : (
                                             <span className="text-xs bg-white/5 px-2.5 py-1 rounded-full text-text-secondary flex items-center gap-1.5">
-                                                <i className="fa-solid fa-user text-[10px]"></i>
+                                                <AppIcon name="user" className="text-[10px]" />
                                                 <span>Personal</span>
                                             </span>
                                         )}
@@ -230,7 +231,7 @@ export default function HomeDashboardReact({
                                     {/* Cantos */}
                                     <div className="flex items-center gap-2 mb-5">
                                         <span className="text-xs bg-white/5 px-2.5 py-1 rounded text-text-secondary font-mono flex items-center gap-1.5">
-                                            <i className="fa-solid fa-music text-accent-main"></i>
+                                            <AppIcon name="music" className="text-accent-main" />
                                             <span>
                                                 {songCount} {songCount === 1 ? 'canto listo' : 'cantos listos'}
                                             </span>
@@ -253,7 +254,7 @@ export default function HomeDashboardReact({
                                             title="Modo Edición / Organizar cantos"
                                             className="bg-white/5 hover:bg-white/10 text-white font-medium text-sm py-2.5 px-4 rounded-xl border border-white/10 transition-colors flex items-center gap-2 shrink-0 active:scale-[0.98]"
                                         >
-                                            <i className="fa-solid fa-pen-to-square text-accent-main text-xs"></i>
+                                            <AppIcon name="pen-to-square" className="text-accent-main text-xs" />
                                             <span>Editar</span>
                                         </a>
                                     </div>
@@ -290,7 +291,7 @@ export default function HomeDashboardReact({
                                             </div>
                                             <div className="flex items-center gap-2 text-xs text-text-secondary shrink-0">
                                                 <span>{misa.misaSongs?.length || 0} cantos</span>
-                                                <i className="fa-solid fa-angle-right text-xs"></i>
+                                                <AppIcon name="angle-right" className="text-xs" />
                                             </div>
                                         </a>
                                     );
@@ -302,7 +303,7 @@ export default function HomeDashboardReact({
                     /* Estado vacío con estilo de la app */
                     <div className="bg-bg-secondary border border-white/5 rounded-xl p-8 text-center space-y-3">
                         <div className="w-12 h-12 rounded-xl bg-white/5 text-text-secondary flex items-center justify-center mx-auto">
-                            <i className="fa-solid fa-calendar-plus text-xl"></i>
+                            <AppIcon name="calendar-plus" className="text-xl" />
                         </div>
                         <h3 className="text-base font-bold text-white">
                             No tienes misas programadas próximamente
@@ -315,7 +316,7 @@ export default function HomeDashboardReact({
                             onClick={handleOpenCreateModal}
                             className="inline-flex items-center gap-2 px-4 py-2 bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
                         >
-                            <i className="fa-solid fa-plus text-xs"></i>
+                            <AppIcon name="plus" className="text-xs" />
                             <span>Planificar Misa de este Domingo</span>
                         </button>
                     </div>

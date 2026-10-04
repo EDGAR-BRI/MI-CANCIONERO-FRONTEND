@@ -1,4 +1,5 @@
 ---
+import AppIcon from "@/components/Ui/AppIcon.astro";
 import Layout from "../../layouts/Layout.astro";
 import { getMoments } from "@/services/moments";
 import { getUserFromToken } from "@/utils/auth";
@@ -60,7 +61,7 @@ if (id) {
             isForbidden ? (
                 <div class="bg-bg-secondary border border-white/5 rounded-2xl p-8 sm:p-12 text-center my-auto max-w-md mx-auto space-y-5 shadow-xl">
                     <div class="w-14 h-14 rounded-2xl bg-white/5 text-amber-400 flex items-center justify-center mx-auto text-2xl border border-white/10">
-                        <i class="fa-solid fa-lock"></i>
+                        <AppIcon name="lock" />
                     </div>
                     <div class="space-y-2">
                         <h2 class="text-xl font-bold text-white">Misa Privada</h2>
@@ -89,7 +90,7 @@ if (id) {
                                 href={`/login?redirect=/misas/${id}`}
                                 class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
                             >
-                                <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                                <AppIcon name="right-to-bracket" class="text-xs" />
                                 <span>Iniciar Sesión</span>
                             </a>
                         )}
@@ -97,7 +98,7 @@ if (id) {
                             href="/misas"
                             class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold text-xs transition-colors"
                         >
-                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                            <AppIcon name="arrow-left" class="text-xs" />
                             <span>Volver a Misas</span>
                         </a>
                     </div>
@@ -105,19 +106,28 @@ if (id) {
             ) : error || !misa ? (
                 <div class="bg-bg-secondary border border-white/5 rounded-2xl p-8 sm:p-12 text-center my-auto max-w-md mx-auto space-y-4 shadow-xl">
                     <div class="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto text-xl">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <AppIcon name="triangle-exclamation" />
                     </div>
                     <div class="space-y-1">
                         <h2 class="text-xl font-bold text-white">Misa no disponible</h2>
                         <p class="text-xs text-text-secondary">{error || "No se pudo cargar la información."}</p>
                     </div>
-                    <a
-                        href="/misas"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
-                    >
-                        <i class="fa-solid fa-arrow-left text-xs"></i>
-                        <span>Volver a Misas</span>
-                    </a>
+                    <div class="flex flex-col sm:flex-row gap-2.5 justify-center pt-2">
+                        <a
+                            href="/offline"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs transition-colors shadow-md"
+                        >
+                            <AppIcon name="cloud-arrow-down" class="text-xs" />
+                            <span>Ver en Modo Offline</span>
+                        </a>
+                        <a
+                            href="/misas"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 font-bold text-xs transition-colors"
+                        >
+                            <AppIcon name="arrow-left" class="text-xs" />
+                            <span>Volver a Misas</span>
+                        </a>
+                    </div>
                 </div>
             ) : (
                 <MisaDetailReact
