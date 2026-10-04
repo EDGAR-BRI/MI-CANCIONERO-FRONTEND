@@ -297,6 +297,7 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                         initialMisa={misa}
                                         token={token}
                                         variant="compact"
+                                        className="w-full sm:w-auto"
                                     />
 
                                     <div
@@ -348,20 +349,6 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                                             </button>
                                         </div>
                                     </div>
-
-                                    <button
-                                        id="toggleChordsBtn"
-                                        type="button"
-                                        aria-pressed="false"
-                                        title="Mostrar acordes en pantalla"
-                                        class="w-full sm:w-auto h-9 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 group focus:outline-none whitespace-nowrap"
-                                    >
-                                        <AppIcon name="music" class="text-[11px] text-text-secondary group-hover:text-white transition-colors" />
-                                        <span>Acordes</span>
-                                    </button>
-
-                                    {/* Auto-scroll para la lectura de la misa */}
-                                    <MisaAutoScrollReact client:load />
                                 </div>
                             </div>
                         </div>
@@ -472,6 +459,9 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                             ))
                         )}
                     </div>
+
+                    {/* Barra flotante de lectura, acordes, atril y auto-scroll */}
+                    <MisaAutoScrollReact client:load />
                 </div>
             )
         }
@@ -480,33 +470,9 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
     <script>
         import { showError, showSuccessToast } from "@/utils/alerts";
         import { API_URL } from "@/services/songs";
-        import { getChordsPreference, setChordsPreference } from "@/utils/preferences";
+        import { getChordsPreference } from "@/utils/preferences";
 
-        let isChordsActive = false;
         let isDownloadingPdf = false;
-
-        const updateChordsBtnUI = (btn: HTMLElement, active: boolean) => {
-            const icon = btn.querySelector("i");
-            if (active) {
-                btn.classList.remove("bg-white/5", "hover:bg-white/10", "text-text-secondary", "border-white/10");
-                btn.classList.add("bg-accent-main", "hover:bg-accent-main/90", "text-white", "border-transparent", "shadow-md");
-                btn.setAttribute("aria-pressed", "true");
-                btn.title = "Ocultar acordes en pantalla";
-                if (icon) {
-                    icon.classList.remove("text-text-secondary", "group-hover:text-white");
-                    icon.classList.add("text-white");
-                }
-            } else {
-                btn.classList.remove("bg-accent-main", "hover:bg-accent-main/90", "border-transparent", "shadow-md");
-                btn.classList.add("bg-white/5", "hover:bg-white/10", "text-text-secondary", "border-white/10");
-                btn.setAttribute("aria-pressed", "false");
-                btn.title = "Mostrar acordes en pantalla";
-                if (icon) {
-                    icon.classList.remove("text-white");
-                    icon.classList.add("text-text-secondary", "group-hover:text-white");
-                }
-            }
-        };
 
         const downloadMisaPdf = async (misaId: string, withChords: boolean) => {
             if (isDownloadingPdf) return;
@@ -674,29 +640,14 @@ const totalSongsCount = momentsWithSongs.reduce((acc, curr) => acc + curr.songs.
                 });
             }
 
-            // Chords toggle
-            const toggleChordsBtn = document.getElementById("toggleChordsBtn");
-            if (toggleChordsBtn) {
-                isChordsActive = getChordsPreference(false);
-                updateChordsBtnUI(toggleChordsBtn, isChordsActive);
-                if (isChordsActive) {
-                    window.dispatchEvent(
-                        new CustomEvent("song-toggle-chords", {
-                            detail: { show: true },
-                        })
-                    );
-                }
-
-                toggleChordsBtn.onclick = () => {
-                    isChordsActive = !isChordsActive;
-                    updateChordsBtnUI(toggleChordsBtn, isChordsActive);
-                    setChordsPreference(isChordsActive);
-                    window.dispatchEvent(
-                        new CustomEvent("song-toggle-chords", {
-                            detail: { show: isChordsActive },
-                        })
-                    );
-                };
+            // Sincronizar preferencia de acordes guardada
+            const isChordsActive = getChordsPreference(false);
+            if (isChordsActive) {
+                window.dispatchEvent(
+                    new CustomEvent("song-toggle-chords", {
+                        detail: { show: true },
+                    })
+                );
             }
 
             // Moment quick navigation jump pills

@@ -154,24 +154,27 @@ export default function MisaOfflineDownloadButtonReact({
                 type="button"
                 onClick={handleToggle}
                 disabled={isLoading}
-                title={isSaved ? "Disponible sin conexión (clic para quitar)" : "Descargar para uso sin conexión"}
-                className={`h-9 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50 ${
+                title={isSaved ? "Disponible sin conexión (clic para quitar)" : "Guardar para uso sin conexión"}
+                className={`w-full sm:w-auto h-9 px-2.5 sm:px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50 whitespace-nowrap ${
                     isSaved
                         ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                         : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10"
                 } ${className}`}
             >
                 {isLoading ? (
-                    <AppIcon name="circle-notch" spin className="text-[11px]" />
+                    <>
+                        <AppIcon name="circle-notch" spin className="text-[11px]" />
+                        <span>Guardando...</span>
+                    </>
                 ) : isSaved ? (
                     <>
                         <AppIcon name="check" className="text-[10px]" />
-                        <span className="hidden sm:inline">Descargada</span>
+                        <span>Guardada</span>
                     </>
                 ) : (
                     <>
                         <AppIcon name="cloud-arrow-down" className="text-[11px]" />
-                        <span className="hidden sm:inline">Descargar</span>
+                        <span>Sin conexión</span>
                     </>
                 )}
             </button>
