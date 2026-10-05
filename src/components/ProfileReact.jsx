@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getMyMinistries, createMinistry, joinMinistryByCode, setMinistriesAuthToken } from '../services/ministries';
 import { updateProfile } from '../services/auth';
 import { showSuccessToast, showError } from '../utils/alerts';
+import { isPWAStandalone, installPWA } from '@/utils/pwa';
 import UserAvatar from './UserAvatar';
 import { Blobatar } from '@blobatar/react';
 import * as expressions from 'blobatar/expression';
@@ -13,6 +14,41 @@ export default function ProfileReact({ user, token }) {
     const [loading, setLoading] = useState(true);
     const [ministries, setMinistries] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
+
+    // PWA installation state
+    const [isPwaInstalled, setIsPwaInstalled] = useState(false);
+    const [installingPwa, setInstallingPwa] = useState(false);
+
+    useEffect(() => {
+        const updatePwaState = () => {
+            setIsPwaInstalled(isPWAStandalone());
+        };
+
+        updatePwaState();
+
+        const mediaQuery = window.matchMedia('(display-mode: standalone)');
+        mediaQuery.addEventListener('change', updatePwaState);
+        window.addEventListener('pwa-app-installed', updatePwaState);
+        window.addEventListener('appinstalled', updatePwaState);
+
+        return () => {
+            mediaQuery.removeEventListener('change', updatePwaState);
+            window.removeEventListener('pwa-app-installed', updatePwaState);
+            window.removeEventListener('appinstalled', updatePwaState);
+        };
+    }, []);
+
+    const handleInstallPwa = async () => {
+        setInstallingPwa(true);
+        try {
+            const res = await installPWA();
+            if (res.installed) {
+                setIsPwaInstalled(true);
+            }
+        } finally {
+            setInstallingPwa(false);
+        }
+    };
 
     // Modals state
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -367,6 +403,26 @@ export default function ProfileReact({ user, token }) {
                                 <AppIcon name="user-pen" />
                                 <span>Editar mis datos</span>
                             </button>
+                            {isPwaInstalled ? (
+                                <span
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400 font-medium"
+                                    title="Cancionero está funcionando como aplicación instalada"
+                                >
+                                    <AppIcon name="circle-check" />
+                                    <span>App instalada</span>
+                                </span>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleInstallPwa}
+                                    disabled={installingPwa}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-accent-main/15 hover:bg-accent-main/25 border border-accent-main/30 text-xs text-accent-main hover:text-white font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                                    title="Instalar Cancionero como App en tu dispositivo"
+                                >
+                                    <AppIcon name="download" />
+                                    <span>{installingPwa ? 'Instalando...' : 'Instalar App'}</span>
+                                </button>
+                            )}
                         </div>
                     </div>
 

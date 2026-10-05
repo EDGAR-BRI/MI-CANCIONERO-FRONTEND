@@ -70,6 +70,14 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 		<meta property="twitter:title" content={title} />
 		<meta property="twitter:description" content={description} />
 		<meta property="twitter:image" content={new URL(image, Astro.url)} />
+		<script is:inline>
+			// Capturar inmediatamente beforeinstallprompt antes de que cualquier script diferido se cargue
+			window.addEventListener("beforeinstallprompt", (e) => {
+				e.preventDefault();
+				window.deferredPrompt = e;
+				window.dispatchEvent(new CustomEvent("pwa-deferred-prompt-ready"));
+			});
+		</script>
 		<ClientRouter />
 		<slot name="head" />
 	</head>

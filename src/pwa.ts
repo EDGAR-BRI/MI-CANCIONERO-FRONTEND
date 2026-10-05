@@ -33,7 +33,16 @@ document.addEventListener('astro:page-load', () => {
 
 // Guardar el evento beforeinstallprompt para soporte de instalación WebAPK
 window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
     (window as any).deferredPrompt = e;
+    window.dispatchEvent(new CustomEvent('pwa-deferred-prompt-ready'));
     console.log('[PWA] Aplicación lista para instalación WebAPK');
+});
+
+// Detectar cuando la aplicación se instaló exitosamente
+window.addEventListener('appinstalled', () => {
+    (window as any).deferredPrompt = null;
+    window.dispatchEvent(new CustomEvent('pwa-app-installed'));
+    console.log('[PWA] Aplicación instalada exitosamente');
 });
 

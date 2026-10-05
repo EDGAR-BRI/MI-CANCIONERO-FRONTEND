@@ -62,6 +62,17 @@ import AppIcon from "@/components/Ui/AppIcon.astro";
 			checkAndShow();
 		});
 
+		window.addEventListener("pwa-deferred-prompt-ready", () => {
+			checkAndShow();
+		});
+
+		window.addEventListener("pwa-app-installed", () => {
+			if (banner) {
+				banner.classList.add("hidden");
+				banner.classList.remove("flex");
+			}
+		});
+
 		// Chequear al cargar o navegar
 		document.addEventListener("astro:page-load", () => {
 			checkAndShow();
@@ -76,6 +87,7 @@ import AppIcon from "@/components/Ui/AppIcon.astro";
 				const { outcome } = await promptEvent.userChoice;
 				if (outcome === "accepted") {
 					window.deferredPrompt = null;
+					window.dispatchEvent(new CustomEvent("pwa-app-installed"));
 					if (banner) {
 						banner.classList.add("hidden");
 						banner.classList.remove("flex");
