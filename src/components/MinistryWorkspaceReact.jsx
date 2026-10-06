@@ -591,8 +591,8 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     <div className="flex items-center justify-between">
                         <h3 className="text-lg font-bold text-white">Repertorios de Misas</h3>
                         <a
-                            href="/misas/add"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-accent-main hover:bg-amber-600 text-black text-xs font-bold rounded-xl transition-all shadow-md"
+                            href={`/misas/add?ministryId=${ministry.id}`}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-accent-main hover:bg-accent-main/90 text-white text-xs font-bold rounded-xl transition-colors shadow-md"
                         >
                             <AppIcon name="plus" />
                             <span>Crear Misa</span>
@@ -600,12 +600,21 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                     </div>
 
                     {(!ministry.misas || ministry.misas.length === 0) ? (
-                        <div className="bg-[#171717] border border-white/10 rounded-2xl p-10 text-center space-y-2">
+                        <div className="bg-[#171717] border border-white/10 rounded-2xl p-10 text-center space-y-3">
                             <AppIcon name="book-bible" className="text-2xl text-zinc-500" />
                             <p className="text-sm font-semibold text-white">Aún no hay misas registradas</p>
                             <p className="text-xs text-zinc-400">
                                 Planifica canciones y momentos litúrgicos para los próximos servicios.
                             </p>
+                            <div>
+                                <a
+                                    href={`/misas/add?ministryId=${ministry.id}`}
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold rounded-xl transition-colors"
+                                >
+                                    <AppIcon name="plus" />
+                                    <span>Planificar primera misa</span>
+                                </a>
+                            </div>
                         </div>
                     ) : (
                         <div className="grid gap-4 sm:grid-cols-2">

@@ -8,7 +8,7 @@ import { useBodyScrollLock } from "@/utils/useBodyScrollLock";
 
 export interface CreateMisaModalProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose?: () => void;
     token?: string;
     currentUser?: any;
     initialMinistries?: MinistrySummary[];
@@ -40,6 +40,18 @@ export default function CreateMisaModal({
     redirectToCreated = true,
 }: CreateMisaModalProps) {
     useBodyScrollLock(isOpen);
+
+    const handleClose = () => {
+        if (typeof onClose === "function") {
+            onClose();
+        } else if (typeof window !== "undefined") {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = "/misas";
+            }
+        }
+    };
     const [newTitle, setNewTitle] = useState("");
     const [newDate, setNewDate] = useState(getUpcomingSundayString());
     const [newTime, setNewTime] = useState("10:00");
@@ -137,9 +149,12 @@ export default function CreateMisaModal({
                     ? String(ministries[0].id)
                     : "";
                 setSelectedMinistryId(fallbackId);
-                onClose();
 
-                if (onSuccess) {
+                if (typeof onClose === "function") {
+                    onClose();
+                }
+
+                if (typeof onSuccess === "function") {
                     onSuccess(data);
                 }
 
@@ -162,7 +177,7 @@ export default function CreateMisaModal({
             role="dialog"
             aria-modal="true"
             className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overscroll-contain"
-            onClick={() => !creating && onClose()}
+            onClick={() => !creating && handleClose()}
         >
             <div
                 className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl relative flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden my-auto"
@@ -185,7 +200,7 @@ export default function CreateMisaModal({
                     </div>
                     <button
                         type="button"
-                        onClick={() => !creating && onClose()}
+                        onClick={() => !creating && handleClose()}
                         className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white flex items-center justify-center transition-colors cursor-pointer"
                         title="Cerrar"
                     >
@@ -383,7 +398,7 @@ export default function CreateMisaModal({
                     <div className="px-5 sm:px-6 py-3.5 border-t border-white/10 flex items-center justify-end gap-3 shrink-0 bg-bg-secondary/95 backdrop-blur-xs">
                         <button
                             type="button"
-                            onClick={() => onClose()}
+                            onClick={() => !creating && handleClose()}
                             disabled={creating}
                             className="px-4 py-2.5 text-xs font-semibold text-text-secondary hover:text-white rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
                         >

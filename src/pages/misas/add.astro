@@ -18,9 +18,6 @@ const defaultMinistryId = Astro.url.searchParams.get("ministryId") || "";
         <CreateMisaModal
             client:load
             isOpen={true}
-            onClose={() => {
-                window.location.href = "/misas";
-            }}
             token={token}
             currentUser={user}
             defaultMinistryId={defaultMinistryId}
