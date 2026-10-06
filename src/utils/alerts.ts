@@ -1,7 +1,16 @@
 import Swal, { type SweetAlertOptions } from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import { OFFLINE_ICONS } from '@/components/Ui/icons-bundle';
+import { normalizeIconName } from '@/utils/iconMap';
 
-const CLOSE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 384 512" fill="currentColor"><path d="M342.6 150.6c12.5-12.5 32.8-12.5 45.3 0s12.5 32.8 0 45.3L245.3 248l142.6 142.6c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L200 293.3l-142.6 142.6c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L154.7 248 12.1 105.4c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L200 202.7l142.6-142.6z"/></svg>`;
+const getSystemIconHtml = (name: string): string => {
+    const key = normalizeIconName(name);
+    const icon = OFFLINE_ICONS[key];
+    if (!icon) return '&times;';
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${icon.width || 512} ${icon.height || 512}" width="1em" height="1em" fill="currentColor" aria-hidden="true">${icon.body}</svg>`;
+};
+
+const CLOSE_ICON_HTML = getSystemIconHtml('xmark');
 
 const swalDark: SweetAlertOptions = {
     background: "#1A1A1A",
@@ -9,7 +18,7 @@ const swalDark: SweetAlertOptions = {
     confirmButtonColor: "#FF5722",
     cancelButtonColor: "rgba(255, 255, 255, 0.1)",
     showCloseButton: true,
-    closeButtonHtml: CLOSE_ICON_SVG,
+    closeButtonHtml: CLOSE_ICON_HTML,
     closeButtonAriaLabel: 'Cerrar alerta',
     customClass: {
         popup: 'swal2-dark-popup',

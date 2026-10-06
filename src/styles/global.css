@@ -420,7 +420,8 @@ body {
     width: 0.875rem !important;
     height: 0.875rem !important;
     pointer-events: none !important;
-    stroke: currentColor !important;
+    flex-shrink: 0 !important;
+    display: block !important;
 }
 
 /* Close button in modal dialogs */
@@ -749,11 +750,13 @@ svg[width="1em"] {
 /* ==========================================================================
    GESTIÓN DE MODALES Y OCULTAMIENTO DE BARRA INFERIOR MÓVIL
    ========================================================================== */
+html.modal-open,
 html:has(body.modal-open),
 html:has(body.search-open),
 html:has(body:has([data-modal-open="true"]:not(.hidden))),
 html:has(body:has(dialog[open])) {
     overflow: hidden !important;
+    overscroll-behavior: contain !important;
 }
 
 body.modal-open #bottom-nav,

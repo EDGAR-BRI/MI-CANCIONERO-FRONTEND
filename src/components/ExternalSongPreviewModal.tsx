@@ -106,17 +106,6 @@ export default function ExternalSongPreviewModal({
         };
     }, [isOpen, song, apiUrl, enrichWithAi, token, user]);
 
-    // Scroll lock y estado modal para ocultar BottomNav
-    useEffect(() => {
-        if (!isOpen || !song) return;
-        document.body.classList.add('modal-open');
-        const originalOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = originalOverflow;
-        };
-    }, [isOpen, song]);
 
     // Cerrar con tecla Escape
     useEffect(() => {
@@ -212,6 +201,11 @@ export default function ExternalSongPreviewModal({
             aria-modal="true"
             className={`fixed inset-0 ${zIndexClass || 'z-[130]'} flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fade-in overscroll-contain`}
             onClick={onClose}
+            onTouchMove={(e) => {
+                if (e.target === e.currentTarget) {
+                    e.preventDefault();
+                }
+            }}
         >
             <div
                 className="w-full max-w-3xl bg-bg-secondary border border-white/10 rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden my-auto"
@@ -347,22 +341,22 @@ export default function ExternalSongPreviewModal({
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-4 sm:p-5 border-t border-white/10 bg-bg-secondary flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="p-3 sm:p-5 border-t border-white/10 bg-bg-secondary flex flex-wrap items-center justify-between gap-2.5 shrink-0">
                     <button
                         type="button"
                         onClick={handleCopy}
                         disabled={loading || !songData}
-                        className="px-3.5 py-2 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                     >
-                        <AppIcon name="copy" className="w-4 h-4" />
-                        <span>Copiar Cifrado</span>
+                        <AppIcon name="copy" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden xs:inline">Copiar </span><span>Cifrado</span>
                     </button>
 
-                    <div className="flex items-center gap-2.5 ml-auto">
+                    <div className="flex items-center gap-2 sm:gap-2.5 ml-auto">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                            className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
                         >
                             Cerrar
                         </button>
@@ -373,28 +367,30 @@ export default function ExternalSongPreviewModal({
                                     type="button"
                                     onClick={handleOpenInEditor}
                                     disabled={loading || !songData || saving}
-                                    className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                    className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                                 >
-                                    <AppIcon name="pen-to-square" className="w-4 h-4 text-accent-main" />
-                                    <span>Editar en Formulario</span>
+                                    <AppIcon name="pen-to-square" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent-main" />
+                                    <span className="hidden sm:inline">Editar en Formulario</span>
+                                    <span className="sm:hidden">Editar</span>
                                 </button>
 
                                 <button
                                     type="button"
                                     onClick={handleDirectSave}
                                     disabled={loading || !songData || saving}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold bg-accent-main hover:bg-accent-main/90 text-white transition-colors flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+                                    className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold bg-accent-main hover:bg-accent-main/90 text-white transition-colors flex items-center gap-1.5 sm:gap-2 shadow-md cursor-pointer disabled:opacity-50"
                                 >
-                                    <AppIcon name="check" className="w-4 h-4" />
-                                    <span>Guardar en Cancionero</span>
+                                    <AppIcon name="check" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                    <span className="hidden sm:inline">Guardar en Cancionero</span>
+                                    <span className="sm:hidden">Guardar</span>
                                 </button>
                             </>
                         ) : (
                             <a
                                 href="/login"
-                                className="px-4 py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-accent-main border border-white/10 transition-colors"
+                                className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-accent-main border border-white/10 transition-colors"
                             >
-                                Iniciar sesión para guardar
+                                Iniciar sesión
                             </a>
                         )}
                     </div>

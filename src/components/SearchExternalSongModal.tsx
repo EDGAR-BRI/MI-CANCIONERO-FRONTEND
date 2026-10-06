@@ -63,17 +63,6 @@ export default function SearchExternalSongModal({
         };
     }, [controlledOnClose]);
 
-    // Scroll lock y estado modal para ocultar BottomNav
-    useEffect(() => {
-        if (!isOpen) return;
-        document.body.classList.add('modal-open');
-        const originalOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.classList.remove('modal-open');
-            document.body.style.overflow = originalOverflow;
-        };
-    }, [isOpen]);
 
     // Focus automático al abrir
     useEffect(() => {
@@ -250,6 +239,11 @@ export default function SearchExternalSongModal({
             aria-modal="true"
             className="fixed inset-0 z-[120] flex items-center justify-center p-2.5 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in overscroll-contain"
             onClick={closeModal}
+            onTouchMove={(e) => {
+                if (e.target === e.currentTarget) {
+                    e.preventDefault();
+                }
+            }}
         >
             {/* Modal Card */}
             <div
@@ -333,7 +327,7 @@ export default function SearchExternalSongModal({
                 </div>
 
                 {/* Results List */}
-                <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 min-h-[260px] max-h-[480px]">
+                <div className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-2 min-h-[220px] max-h-[480px] scrollbar-thin">
                     {loading ? (
                         <div className="space-y-2 py-4">
                             {[1, 2, 3, 4].map((i) => (
@@ -356,22 +350,22 @@ export default function SearchExternalSongModal({
                                     <div
                                         key={`${itemKey}_${idx}`}
                                         onClick={() => !importingItem && handleRequestPreview(song)}
-                                        className={`group flex items-center justify-between p-2.5 sm:p-3.5 rounded-xl bg-bg-main/60 border border-white/5 hover:border-accent-main/50 hover:bg-white/5 transition-all cursor-pointer ${
+                                        className={`group flex items-center justify-between gap-2.5 sm:gap-3.5 p-2.5 sm:p-3 rounded-xl bg-bg-main/60 border border-white/5 hover:border-accent-main/50 hover:bg-white/5 transition-all cursor-pointer ${
                                             isImporting ? 'opacity-80 pointer-events-none ring-1 ring-accent-main' : ''
                                         }`}
                                     >
-                                        <div className="flex-1 min-w-0 pr-2 sm:pr-3">
-                                            <div className="flex items-center gap-2 min-w-0">
+                                        <div className="flex-1 min-w-0 pr-1 sm:pr-2">
+                                            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                                                 <h3 className="text-sm sm:text-base font-semibold text-text-main group-hover:text-accent-main transition-colors truncate">
                                                     {song.title}
                                                 </h3>
                                                 {isAdmin && (
                                                     <span
-                                                        className={`w-2 h-2 rounded-full shrink-0 ${
-                                                            song.source === 'lacuerda' ? 'bg-amber-400' : 'bg-sky-400'
-                                                        }`}
-                                                        title={song.source === 'lacuerda' ? 'LaCuerda.net' : 'Recursos Católicos'}
-                                                    />
+                                                        className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/5 text-text-secondary border border-white/10 shrink-0 select-none"
+                                                        title={song.source === 'lacuerda' ? 'Fuente: LaCuerda.net' : 'Fuente: Recursos Católicos'}
+                                                    >
+                                                        {song.source === 'lacuerda' ? 'LC' : 'RC'}
+                                                    </span>
                                                 )}
                                             </div>
                                             <p className="text-xs text-text-secondary truncate mt-0.5">
@@ -383,22 +377,28 @@ export default function SearchExternalSongModal({
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleRequestPreview(song);
                                                 }}
-                                                className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 transition-colors cursor-pointer"
+                                                className="h-8.5 w-8.5 sm:h-auto sm:w-auto p-0 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white border border-white/10 transition-colors cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
+                                                title="Vista previa"
+                                                aria-label={`Vista previa de ${song.title}`}
                                             >
-                                                Vista previa
+                                                <AppIcon name="eye" className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                                                <span className="hidden sm:inline">Vista previa</span>
                                             </button>
 
                                             {isImporting ? (
-                                                <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-accent-main/20 text-accent-main text-xs font-semibold">
-                                                    <AppIcon name="spinner" spin className="h-3.5 w-3.5" />
-                                                    <span className="hidden xs:inline">Importando...</span>
+                                                <div
+                                                    className="h-8.5 w-8.5 sm:h-auto sm:w-auto p-0 sm:px-3 sm:py-1.5 rounded-xl bg-accent-main/20 text-accent-main text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0"
+                                                    title="Importando canción..."
+                                                >
+                                                    <AppIcon name="spinner" spin className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                                                    <span className="hidden sm:inline">Importando...</span>
                                                 </div>
                                             ) : (
                                                 <button
@@ -407,10 +407,12 @@ export default function SearchExternalSongModal({
                                                         e.stopPropagation();
                                                         handleImportSong(song);
                                                     }}
-                                                    className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-semibold bg-accent-main hover:bg-accent-main/90 text-white transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 shadow-sm"
+                                                    className="h-8.5 w-8.5 sm:h-auto sm:w-auto p-0 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold bg-accent-main hover:bg-accent-main/90 text-white transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 shrink-0 shadow-sm"
+                                                    title="Seleccionar canción"
+                                                    aria-label={`Seleccionar ${song.title}`}
                                                 >
-                                                    <span>Seleccionar</span>
-                                                    <span>→</span>
+                                                    <span className="hidden sm:inline">Seleccionar</span>
+                                                    <AppIcon name="arrow-right" className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                                                 </button>
                                             )}
                                         </div>
@@ -462,7 +464,7 @@ export default function SearchExternalSongModal({
                     <button
                         type="button"
                         onClick={closeModal}
-                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium border border-white/10 transition-colors ml-auto cursor-pointer"
+                        className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium border border-white/10 transition-colors ml-auto cursor-pointer text-center"
                     >
                         Cerrar
                     </button>
