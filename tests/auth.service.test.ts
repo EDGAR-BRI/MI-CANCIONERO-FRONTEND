@@ -99,6 +99,33 @@ describe('Auth Service (front/src/services/auth)', () => {
             );
         });
 
+        it('debe enviar currentPassword y newPassword correctamente al backend', async () => {
+            const updatedUser = { id: 'u-1', name: 'Usuario' };
+            vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+                ok: true,
+                json: async () => updatedUser
+            } as Response);
+
+            const result = await updateProfile({
+                name: 'Usuario',
+                currentPassword: 'oldPassword123',
+                newPassword: 'newPassword123'
+            }, 'jwt-token-123');
+
+            expect(result.success).toBe(true);
+            expect(globalThis.fetch).toHaveBeenCalledWith(
+                `${API_URL}/auth/me`,
+                expect.objectContaining({
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        name: 'Usuario',
+                        currentPassword: 'oldPassword123',
+                        newPassword: 'newPassword123'
+                    })
+                })
+            );
+        });
+
         it('debe devolver error cuando la respuesta no es ok', async () => {
             vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
                 ok: false,

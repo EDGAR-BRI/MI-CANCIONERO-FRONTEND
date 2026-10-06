@@ -38,6 +38,8 @@ export interface UpdateProfileData {
     name?: string;
     avatarUrl?: string | null;
     phoneNumber?: string | null;
+    currentPassword?: string;
+    newPassword?: string;
 }
 
 export const updateProfile = async (data: UpdateProfileData, token?: string) => {

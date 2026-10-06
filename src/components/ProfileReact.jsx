@@ -157,16 +157,31 @@ export default function ProfileReact({ user, token }) {
         setShowAvatarModal(true);
     };
 
-    // Edit profile (name, phone) state
+    // Edit profile (name, phone, password) state
     const [showEditProfileModal, setShowEditProfileModal] = useState(false);
-    const [profileForm, setProfileForm] = useState({ name: '', phoneNumber: '' });
+    const [profileForm, setProfileForm] = useState({
+        name: '',
+        phoneNumber: '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [showPasswordFields, setShowPasswordFields] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const [savingProfile, setSavingProfile] = useState(false);
 
     const openEditProfileModal = () => {
         setProfileForm({
             name: currentUser?.name || '',
-            phoneNumber: currentUser?.phoneNumber || ''
+            phoneNumber: currentUser?.phoneNumber || '',
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
         });
+        setShowPasswordFields(false);
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
         setShowEditProfileModal(true);
     };
 
@@ -176,15 +191,44 @@ export default function ProfileReact({ user, token }) {
             showError("Campo requerido", "El nombre no puede estar vacío.");
             return;
         }
+
+        const wantsPasswordChange = showPasswordFields || Boolean(profileForm.newPassword || profileForm.currentPassword);
+        if (wantsPasswordChange) {
+            if (!profileForm.newPassword) {
+                showError("Campo requerido", "Ingresa la nueva contraseña que deseas establecer.");
+                return;
+            }
+            if (profileForm.newPassword.length < 6) {
+                showError("Contraseña muy corta", "La nueva contraseña debe tener al menos 6 caracteres.");
+                return;
+            }
+            if (profileForm.newPassword !== profileForm.confirmPassword) {
+                showError("Las contraseñas no coinciden", "La nueva contraseña y su confirmación deben ser exactamente iguales.");
+                return;
+            }
+            if (!currentUser?.isGoogleUser && !profileForm.currentPassword) {
+                showError("Contraseña actual requerida", "Debes ingresar tu contraseña actual para confirmar el cambio.");
+                return;
+            }
+        }
+
         setSavingProfile(true);
-        const res = await updateProfile({
+        const updatePayload = {
             name: profileForm.name.trim(),
             phoneNumber: profileForm.phoneNumber.trim() || null
-        }, token);
+        };
+        if (wantsPasswordChange && profileForm.newPassword) {
+            updatePayload.newPassword = profileForm.newPassword;
+            if (profileForm.currentPassword) {
+                updatePayload.currentPassword = profileForm.currentPassword;
+            }
+        }
+
+        const res = await updateProfile(updatePayload, token);
         setSavingProfile(false);
 
         if (res.success) {
-            showSuccessToast("¡Perfil actualizado!", "Tus datos se han guardado exitosamente.");
+            showSuccessToast("¡Perfil actualizado!", wantsPasswordChange ? "Tus datos y contraseña se han actualizado correctamente." : "Tus datos se han guardado exitosamente.");
             const updatedUser = res.data?.user || res.data?.data?.user;
             if (updatedUser) {
                 setCurrentUser(updatedUser);
@@ -1183,14 +1227,14 @@ export default function ProfileReact({ user, token }) {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="bg-bg-secondary border-b border-white/10 px-5 py-4 sm:px-6 flex items-center justify-between">
+                        <div className="bg-bg-secondary border-b border-white/10 px-5 py-4 sm:px-6 flex items-center justify-between shrink-0">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-accent-main/10 text-accent-main flex items-center justify-center text-sm">
+                                <div className="w-8 h-8 rounded-xl bg-accent-main/10 text-accent-main flex items-center justify-center text-sm shrink-0">
                                     <AppIcon name="user-pen" />
                                 </div>
                                 <div>
                                     <h3 className="text-base font-bold text-white leading-tight">Editar Mis Datos</h3>
-                                    <p className="text-[11px] text-zinc-400 leading-tight">Actualiza tu nombre visible y teléfono de contacto</p>
+                                    <p className="text-[11px] text-zinc-400 leading-tight">Actualiza tu nombre, teléfono y contraseña de acceso</p>
                                 </div>
                             </div>
                             <button
@@ -1205,58 +1249,149 @@ export default function ProfileReact({ user, token }) {
                         </div>
 
                         {/* Form */}
-                        <form onSubmit={handleSaveProfile} className="p-5 sm:p-6 space-y-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                                    Nombre completo o visible:
-                                </label>
-                                <input
-                                    type="text"
-                                    value={profileForm.name}
-                                    onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder="Ej: Edgar Músico"
-                                    required
-                                    className="w-full px-4 py-2.5 bg-[#0a0a0a] border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
-                                />
+                        <form onSubmit={handleSaveProfile} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                            {/* Scrollable Body */}
+                            <div className="p-5 sm:p-6 space-y-4 overflow-y-auto overscroll-contain flex-1 scrollbar-thin">
+                                <div>
+                                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                                        Nombre completo o visible:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profileForm.name}
+                                        onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                                        placeholder="Ej: Edgar Músico"
+                                        required
+                                        className="w-full px-4 py-2.5 bg-[#0a0a0a] border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
+                                        Teléfono / WhatsApp (opcional):
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={profileForm.phoneNumber}
+                                        onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                                        placeholder="Ej: +584121234567"
+                                        className="w-full px-4 py-2.5 bg-[#0a0a0a] border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
+                                    />
+                                    <p className="text-[11px] text-zinc-500 mt-1">
+                                        Formato internacional con código de país (ej. +58 para Venezuela, +52 México, etc.).
+                                    </p>
+                                </div>
+
+                                {/* Cambio de Contraseña Opcional */}
+                                <div className="pt-2 border-t border-white/5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPasswordFields(!showPasswordFields)}
+                                        className="flex items-center justify-between w-full py-2 text-left text-xs font-semibold text-zinc-300 hover:text-white transition-colors cursor-pointer group"
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            <AppIcon name="lock" className="text-accent-main text-sm" />
+                                            <span>Cambiar contraseña</span>
+                                        </span>
+                                        <span className="text-[11px] text-zinc-500 group-hover:text-accent-main transition-colors flex items-center gap-1 font-normal">
+                                            <span>{showPasswordFields ? 'Cancelar cambio' : 'Modificar'}</span>
+                                            <AppIcon name={showPasswordFields ? 'chevron-up' : 'chevron-down'} className="text-[10px]" />
+                                        </span>
+                                    </button>
+
+                                    {showPasswordFields && (
+                                        <div className="space-y-3 mt-2 p-3.5 bg-bg-main/60 rounded-xl border border-white/5">
+                                            {!currentUser?.isGoogleUser ? (
+                                                <div>
+                                                    <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                                                        Contraseña actual:
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type={showCurrentPassword ? "text" : "password"}
+                                                            value={profileForm.currentPassword}
+                                                            onChange={(e) => setProfileForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                                            placeholder="Tu contraseña actual"
+                                                            className="w-full pl-3.5 pr-10 py-2 bg-bg-main border border-white/10 focus:border-accent-main rounded-xl text-white text-xs outline-none transition-colors"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors cursor-pointer text-xs"
+                                                            title={showCurrentPassword ? "Ocultar" : "Mostrar"}
+                                                        >
+                                                            <AppIcon name={showCurrentPassword ? "eye-slash" : "eye"} className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[11px] text-zinc-400">
+                                                    Tu cuenta fue creada con Google. Puedes definir una contraseña si deseas iniciar sesión también mediante correo y contraseña.
+                                                </p>
+                                            )}
+
+                                            <div>
+                                                <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                                                    Nueva contraseña:
+                                                </label>
+                                                <div className="relative">
+                                                    <input
+                                                        type={showNewPassword ? "text" : "password"}
+                                                        value={profileForm.newPassword}
+                                                        onChange={(e) => setProfileForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                                                        placeholder="Mínimo 6 caracteres"
+                                                        className="w-full pl-3.5 pr-10 py-2 bg-bg-main border border-white/10 focus:border-accent-main rounded-xl text-white text-xs outline-none transition-colors"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors cursor-pointer text-xs"
+                                                        title={showNewPassword ? "Ocultar" : "Mostrar"}
+                                                    >
+                                                        <AppIcon name={showNewPassword ? "eye-slash" : "eye"} className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1">
+                                                    Confirmar nueva contraseña:
+                                                </label>
+                                                <input
+                                                    type={showNewPassword ? "text" : "password"}
+                                                    value={profileForm.confirmPassword}
+                                                    onChange={(e) => setProfileForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                                    placeholder="Repite la nueva contraseña"
+                                                    className="w-full px-3.5 py-2 bg-bg-main border border-white/10 focus:border-accent-main rounded-xl text-white text-xs outline-none transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                                    Teléfono / WhatsApp (opcional):
-                                </label>
-                                <input
-                                    type="tel"
-                                    value={profileForm.phoneNumber}
-                                    onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                                    placeholder="Ej: +584121234567"
-                                    className="w-full px-4 py-2.5 bg-[#0a0a0a] border border-white/10 focus:border-accent-main rounded-xl text-white text-sm outline-none transition-colors"
-                                />
-                                <p className="text-[11px] text-zinc-500 mt-1">
-                                    Formato internacional con código de país (ej. +58 para Venezuela, +52 México, etc.).
-                                </p>
-                            </div>
-
-                            <div className="pt-2 flex items-center justify-end gap-3">
+                            {/* Actions Footer */}
+                            <div className="px-5 sm:px-6 py-3.5 border-t border-white/10 flex items-center justify-end gap-3 shrink-0 bg-bg-secondary/95 backdrop-blur-xs">
                                 <button
                                     type="button"
                                     onClick={() => setShowEditProfileModal(false)}
-                                    className="px-4 py-2.5 text-sm text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                                    className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-text-secondary hover:text-white transition-colors cursor-pointer"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingProfile}
-                                    className="px-6 py-2.5 bg-accent-main hover:bg-amber-600 text-black font-bold text-sm rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                                    className="px-5 sm:px-6 py-2.5 bg-accent-main hover:bg-accent-main/90 text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                                 >
                                     {savingProfile ? (
                                         <>
-                                            <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                                            <AppIcon name="spinner" spin className="animate-spin text-sm" />
                                             <span>Guardando...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <AppIcon name="check" />
+                                            <AppIcon name="check" className="text-sm" />
                                             <span>Guardar Cambios</span>
                                         </>
                                     )}

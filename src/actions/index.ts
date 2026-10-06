@@ -209,6 +209,8 @@ export const server = {
             name: z.string().optional(),
             avatarUrl: z.string().nullable().optional(),
             phoneNumber: z.string().nullable().optional(),
+            currentPassword: z.string().optional(),
+            newPassword: z.string().optional(),
         }),
         handler: async (inputData, context) => {
             const token = context.cookies.get("token")?.value;
