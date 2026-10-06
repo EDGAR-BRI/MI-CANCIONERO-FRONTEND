@@ -1,0 +1,140 @@
+---
+import { getUserFromToken } from "@/utils/auth";
+import UserAvatar from "./UserAvatar.jsx";
+import AppIcon from "@/components/Ui/AppIcon.astro";
+
+const token = Astro.cookies.get("token")?.value;
+const user = getUserFromToken(token);
+
+const currentPath = Astro.url.pathname;
+const isCurrent = (path: string) => {
+    if (path === "/admin") {
+        return currentPath === "/admin" || currentPath === "/admin/";
+    }
+    return currentPath.startsWith(path);
+};
+
+const navItems = [
+    { label: "Resumen", href: "/admin", icon: "gauge" },
+    { label: "Usuarios", href: "/admin/users", icon: "users" },
+    { label: "Canciones", href: "/admin/songs", icon: "music" },
+    { label: "Categorías", href: "/admin/categories", icon: "tags" },
+    { label: "Autores", href: "/admin/authors", icon: "feather-pointed" },
+    { label: "Roles", href: "/admin/roles", icon: "shield-halved" },
+    { label: "Sistema", href: "/admin/system", icon: "server" },
+];
+---
+
+<header
+    class="w-full max-w-full bg-bg-secondary/95 backdrop-blur-md border-b border-white/10 sticky top-0 z-40 shadow-sm transition-all duration-300 select-none"
+>
+    <!-- Top Row: Logo, Admin Brand, Quick Actions -->
+    <div class="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3 min-w-0">
+        <!-- Logo & Admin Title -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            <a
+                href="/"
+                class="flex items-center gap-2 p-1 -m-1 rounded-xl active:scale-95 transition-transform cursor-pointer"
+                title="Ir al inicio de Cancionero"
+                data-astro-prefetch
+            >
+                <img
+                    src="/icono.svg"
+                    alt="Cancionero"
+                    class="h-7 sm:h-8 w-auto pointer-events-none select-none"
+                    draggable="false"
+                />
+            </a>
+
+            <span class="text-white/20 text-sm font-light select-none">/</span>
+
+            <a
+                href="/admin"
+                class="flex items-center gap-1.5 text-white font-bold tracking-tight hover:text-accent-main transition-colors cursor-pointer"
+                data-astro-prefetch
+            >
+                <AppIcon name="shield-halved" class="text-accent-main text-sm sm:text-base shrink-0" />
+                <span class="text-sm sm:text-base font-bold">AdminPanel</span>
+            </a>
+
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-accent-main/15 text-accent-main border border-accent-main/30 shrink-0">
+                ADMIN
+            </span>
+        </div>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            <a
+                href="/"
+                class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-text-secondary hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer active:scale-95"
+                title="Volver a la app principal"
+                data-astro-prefetch
+            >
+                <AppIcon name="arrow-left" class="text-xs" />
+                <span class="hidden sm:inline">Volver a la App</span>
+                <span class="sm:hidden">App</span>
+            </a>
+
+            {user && (
+                <a
+                    href="/perfil"
+                    class="flex items-center gap-2 p-1 rounded-xl hover:bg-white/5 transition-colors group cursor-pointer active:scale-95"
+                    title={`Perfil de ${user.name || 'Admin'}`}
+                    data-astro-prefetch
+                >
+                    <UserAvatar
+                        client:load
+                        user={user}
+                        size="w-7 h-7 sm:w-8 sm:h-8"
+                        animate="always"
+                    />
+                    <span class="hidden md:inline text-xs text-text-secondary group-hover:text-white transition-colors font-medium truncate max-w-[130px]">
+                        {user.name ? user.name.split(" ")[0] : "Admin"}
+                    </span>
+                </a>
+            )}
+        </div>
+    </div>
+
+    <!-- Sub-Row: Admin Navigation Modules (Scrollable Pills / Tabs) -->
+    <nav
+        class="border-t border-white/5 bg-black/20"
+        aria-label="Módulos de administración"
+    >
+        <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {
+                navItems.map((item) => {
+                    const active = isCurrent(item.href);
+                    return (
+                        <a
+                            href={item.href}
+                            data-astro-prefetch
+                            class={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-colors border ${
+                                active
+                                    ? "bg-accent-main/20 text-accent-main border-accent-main/40 font-semibold shadow-xs"
+                                    : "text-text-secondary hover:text-white hover:bg-white/5 border-transparent"
+                            }`}
+                        >
+                            <AppIcon
+                                name={item.icon}
+                                class={`text-xs shrink-0 ${active ? "text-accent-main" : "text-text-secondary"}`}
+                            />
+                            <span>{item.label}</span>
+                        </a>
+                    );
+                })
+            }
+        </div>
+    </nav>
+</header>
+
+<script>
+    const scrollActivePillIntoView = () => {
+        const activeLink = document.querySelector('nav[aria-label="Módulos de administración"] a.font-semibold');
+        if (activeLink) {
+            activeLink.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+        }
+    };
+    scrollActivePillIntoView();
+    document.addEventListener('astro:page-load', scrollActivePillIntoView);
+</script>

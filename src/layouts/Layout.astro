@@ -26,6 +26,7 @@ const canonicalURL = new URL(
 );
 
 import Header from "../components/Header.astro";
+import AdminHeader from "../components/AdminHeader.astro";
 import Footer from "@/components/footer.astro";
 import BottomNav from "@/components/BottomNav.astro";
 import NavigationProgressBar from "@/components/NavigationProgressBar.astro";
@@ -34,6 +35,7 @@ import PwaInstallPrompt from "@/components/PwaInstallPrompt.astro";
 import OfflineBannerReact from "@/components/OfflineBannerReact";
 
 const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsWith("/perfil") || showMobileFooter;
+const isAdmin = Astro.url.pathname === "/admin" || Astro.url.pathname.startsWith("/admin");
 ---
 
 <!doctype html>
@@ -84,7 +86,13 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 	<body class="bg-bg-main text-text-main min-h-screen w-full max-w-full overflow-x-hidden flex flex-col">
 		<SplashScreen transition:persist="splash" />
 		<NavigationProgressBar transition:persist="nav-progress" />
-		<Header transition:persist="header" class="" />
+		{
+			isAdmin ? (
+				<AdminHeader transition:persist="admin-header" />
+			) : (
+				<Header transition:persist="header" class="" />
+			)
+		}
 		<OfflineBannerReact client:load transition:persist="offline-banner" />
 		<div
 			class={`flex-1 flex flex-col w-full max-w-full min-w-0 ${!isProfile ? 'pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0' : ''}`}
@@ -92,7 +100,7 @@ const isProfile = Astro.url.pathname === "/perfil" || Astro.url.pathname.startsW
 			<div class="flex-1 w-full max-w-full min-w-0 flex flex-col">
 				<slot />
 			</div>
-			<div class={`mt-auto ${isProfile ? 'block' : 'hidden md:block'}`}>
+			<div class={`mt-auto ${isProfile || isAdmin ? 'hidden' : 'hidden md:block'}`}>
 				<Footer />
 			</div>
 		</div>
