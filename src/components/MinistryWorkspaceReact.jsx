@@ -472,15 +472,6 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                             </div>
                                             <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-400 mt-0.5 min-w-0">
                                                 <span className="truncate">{m.email}</span>
-                                                {m.phoneNumber && (
-                                                    <>
-                                                        <span className="text-zinc-600 hidden xs:inline">•</span>
-                                                        <span className="flex items-center gap-1 text-zinc-400 shrink-0">
-                                                            <AppIcon name="phone" className="text-[10px] text-zinc-500" />
-                                                            <span>{m.phoneNumber}</span>
-                                                        </span>
-                                                    </>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -566,15 +557,6 @@ export default function MinistryWorkspaceReact({ ministryId, currentUser, token 
                                             <span className="font-semibold text-white text-sm block truncate">{req.name}</span>
                                             <div className="flex flex-wrap items-center gap-x-2 text-xs text-zinc-400 min-w-0">
                                                 <span className="truncate">{req.email}</span>
-                                                {req.phoneNumber && (
-                                                    <>
-                                                        <span className="text-zinc-600 hidden xs:inline">•</span>
-                                                        <span className="flex items-center gap-1 text-zinc-400 shrink-0">
-                                                            <AppIcon name="phone" className="text-[10px] text-zinc-500" />
-                                                            <span>{req.phoneNumber}</span>
-                                                        </span>
-                                                    </>
-                                                )}
                                             </div>
                                             <span className="text-[10px] text-zinc-500 block mt-0.5">
                                                 Solicitado: {new Date(req.requestedAt).toLocaleDateString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}

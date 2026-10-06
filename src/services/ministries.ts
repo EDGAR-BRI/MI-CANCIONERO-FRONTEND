@@ -9,7 +9,6 @@ export interface MinistryMember {
     name: string;
     email: string;
     avatarUrl?: string | null;
-    phoneNumber?: string | null;
     role: MinistryRole;
     joinedAt: string;
 }
@@ -20,7 +19,6 @@ export interface MinistryPendingRequest {
     name: string;
     email: string;
     avatarUrl?: string | null;
-    phoneNumber?: string | null;
     requestedAt: string;
 }
 
@@ -85,7 +83,6 @@ export interface SearchUserResult {
     name: string;
     email: string;
     avatarUrl?: string | null;
-    phoneNumber?: string | null;
 }
 
 let activeAuthToken: string | null = null;

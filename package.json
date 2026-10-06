@@ -1,14 +1,14 @@
 {
   "name": "letras-acordes",
   "type": "module",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "scripts": {
     "dev": "astro dev --host",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "icons:bundle": "node scripts/generate-icon-bundle.js",
-    "prepare": "node scripts/setup-git-hooks.js",
+    "prepare": "node scripts/setup-git-hooks.mjs",
     "version:patch": "npm version patch",
     "version:minor": "npm version minor",
     "version:major": "npm version major",
